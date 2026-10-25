@@ -152,7 +152,7 @@ export function registerIpc(deps: {
       filters: [{ name: "WhisperFlow backup", extensions: ["json"] }],
     });
     if (result.canceled || !result.filePath) return { exported: false };
-    const [config, history] = await Promise.all([engine.getConfig(), engine.listHistory(undefined, 500)]);
+    const [config, history] = await Promise.all([engine.getConfig(), engine.listHistory({ limit: 500 })]);
     writeFileSync(
       result.filePath,
       JSON.stringify({ app: "WhisperFlow", version: app.getVersion(), exportedAt: Date.now(), config, history }, null, 2),
