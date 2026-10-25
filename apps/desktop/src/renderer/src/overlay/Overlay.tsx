@@ -68,8 +68,8 @@ export function Overlay() {
   if (event.state === "idle" || event.state === "cancelled") return null;
 
   return (
-    <div className="mx-auto mt-2 w-[500px] select-none">
-      <div className="rounded-2xl border border-line bg-surface/90 p-4 shadow-2xl shadow-black/60 backdrop-blur-md">
+    <div className="mx-auto mt-2 w-[500px] select-none rounded-2xl bg-gradient-to-r from-accent/40 via-line to-accent/25 p-[1px] shadow-[0_10px_44px_rgba(34,211,238,0.14)]">
+      <div className="rounded-[calc(1rem-1px)] border border-line/70 bg-surface/92 p-4 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <StatusDot state={event.state} />
           <p className="text-xs font-medium uppercase tracking-widest text-ink-dim">{label(event.state)}</p>

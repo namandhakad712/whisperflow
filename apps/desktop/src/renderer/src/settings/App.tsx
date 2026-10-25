@@ -74,8 +74,10 @@ export function App() {
             <a
               key={t.id}
               href={`#/${t.id}`}
-              className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                t.id === tab ? "bg-surface-2 font-medium text-ink" : "text-ink-dim hover:text-ink"
+              className={`relative block rounded-lg px-3 py-2 text-sm transition-colors before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-accent before:transition-opacity ${
+                t.id === tab
+                  ? "bg-surface-2 font-medium text-ink before:opacity-100"
+                  : "text-ink-dim before:opacity-0 hover:text-ink"
               }`}
             >
               {t.label}
