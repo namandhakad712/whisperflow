@@ -168,6 +168,21 @@ export function GeneralTab() {
           </select>
         </div>
         <div className="flex items-center justify-between gap-6 px-5 py-5">
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold">Custom overlay backdrop</p>
+            <p className="mt-1 truncate text-sm text-ink-dim">
+              {config.general.overlayBackdrop || "None — paste an image/GIF path or URL"}
+            </p>
+          </div>
+          <input
+            type="text"
+            value={config.general.overlayBackdrop}
+            placeholder="C:\\pics\\wave.gif"
+            onChange={(e) => void useSettings.getState().patchConfig({ general: { overlayBackdrop: e.target.value } })}
+            className="w-52 shrink-0 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent/60"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-6 px-5 py-5">
           <div>
             <p className="text-[15px] font-semibold">Save dictation history</p>
             <p className="mt-1 text-sm text-ink-dim">Stored locally only. Never synced.</p>

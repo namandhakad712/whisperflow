@@ -11,6 +11,7 @@ const BAR_HISTORY_MS = 28;
  */
 export function Overlay() {
   const [event, setEvent] = useState<DictationStateEvent>({ state: "idle" });
+  const [backdrop, setBackdrop] = useState<string>("");
   const captureRef = useRef<Capture | null>(null);
   const startingRef = useRef(false);
   const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
@@ -18,6 +19,7 @@ export function Overlay() {
 
   useEffect(() => {
     const unsub = window.whisperflow.dictation.onState((ev) => setEvent(ev));
+    void window.whisperflow.settings.get().then((c) => setBackdrop((c as { general?: { overlayBackdrop?: string } }).general?.overlayBackdrop ?? ""));
     return () => {
       unsub();
       captureRef.current?.stop();
@@ -69,7 +71,12 @@ export function Overlay() {
 
   return (
     <div className="mx-auto mt-2 w-[500px] select-none rounded-2xl bg-gradient-to-r from-accent/40 via-line to-accent/25 p-[1px] shadow-[0_10px_44px_rgba(34,211,238,0.14)]">
-      <div className="rounded-[calc(1rem-1px)] border border-line/70 bg-surface/92 p-4 backdrop-blur-xl">
+      <div
+        className="relative overflow-hidden rounded-[calc(1rem-1px)] border border-line/70 bg-surface/92 p-4 backdrop-blur-xl"
+        style={backdrop ? { backgroundImage: `url(${backdrop})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+      >
+        {backdrop && <div className="absolute inset-0 bg-bg/70" aria-hidden="true" />}
+        <div className="relative">
         <div className="flex items-center gap-3">
           <StatusDot state={event.state} />
           <p className="text-xs font-medium uppercase tracking-widest text-ink-dim">{label(event.state)}</p>
@@ -120,6 +127,7 @@ export function Overlay() {
         {event.state === "error" && (
           <p className="mt-4 line-clamp-3 text-sm text-red-400">{event.error ?? "Something went wrong"}</p>
         )}
+        </div>
       </div>
     </div>
   );

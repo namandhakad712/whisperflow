@@ -98,6 +98,8 @@ export const GeneralConfigSchema = z.object({
   launchAtLogin: z.boolean().default(true),
   historyEnabled: z.boolean().default(true),
   overlayFollowsCursor: z.boolean().default(true),
+    /** Custom overlay backdrop: path/URL to an image or GIF the user picked. */
+    overlayBackdrop: z.string().default(""),
 });
 export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 
