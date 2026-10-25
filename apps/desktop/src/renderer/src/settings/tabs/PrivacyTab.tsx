@@ -38,6 +38,36 @@ export function PrivacyTab() {
               Clear history
             </Button>
           </Row>
+          <Row
+            label="Export backup"
+            hint="One JSON file with your full config + history. Updates never touch your settings."
+          >
+            <Button
+              variant="ghost"
+              onClick={() =>
+                void window.whisperflowExtras.app.exportBackup().then((r) => {
+                  if (r.exported && r.path) {
+                    window.alert(`Backup saved:\n${r.path}`);
+                  }
+                })
+              }
+            >
+              Export…
+            </Button>
+          </Row>
+          <Row
+            label="App updates"
+            hint="Checks GitHub Releases at launch and every 6 hours; installs on quit. Settings are preserved."
+          >
+            <Button
+              variant="ghost"
+              onClick={() =>
+                void window.whisperflowExtras.app.checkForUpdates().then((r) => window.alert(r.message))
+              }
+            >
+              Check now
+            </Button>
+          </Row>
           <Row label="Downloaded models" hint="models/ + bin/ — reclaim gigabytes via the Models tab.">
             <Button variant="ghost" onClick={() => (window.location.hash = "/models")}>
               Manage models

@@ -24,7 +24,7 @@ import Base from "../layouts/Base.astro";
       const body = encodeURIComponent(
         `My ideal WhisperFlow plan:\n- Words: ${words}\n- Features: ${feats}\n- I would pay: ${price}/mo\n- (Optional) what would make it a no-brainer:\n`,
       );
-      window.location.href = `mailto:whisperflow@users.noreply.github.com?subject=${encodeURIComponent("My ideal WhisperFlow plan")}&body=${body}`;
+      window.location.href = `mailto:whisperflow@naman.is-a.dev?subject=${encodeURIComponent("My ideal WhisperFlow plan")}&body=${body}`;
       document.getElementById("thanks").classList.remove("hidden");
     }
     document.addEventListener("change", calc);

@@ -1,10 +1,12 @@
 import { app } from "electron";
 
 /**
- * Auto-update wiring. Inert until electron-builder.yml `publish` points at a
- * real GitHub repository with releases; checkForUpdates() simply rejects in
- * dev/unpublished builds and we swallow it.
+ * Auto-update wiring. Publishes to GitHub Releases (electron-builder.yml);
+ * settings/history live in userData and survive updates untouched.
+ * Checks at launch, every 6 hours, and on demand via checkNow().
  */
+let checkNow: () => Promise<string> = async () => "dev build — updates skipped";
+
 export function initUpdater(log: (...args: unknown[]) => void): void {
   if (!app.isPackaged) {
     log("updater: skipped (dev build)");
@@ -16,10 +18,23 @@ export function initUpdater(log: (...args: unknown[]) => void): void {
       autoUpdater.logger = null;
       autoUpdater.autoDownload = true;
       autoUpdater.on("update-downloaded", () => log("updater: update downloaded, installs on quit"));
-      await autoUpdater.checkForUpdates();
-      setInterval(() => void autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
+      const check = async () => {
+        try {
+          const r = await autoUpdater.checkForUpdates();
+          return r?.updateInfo?.version ? `latest: ${r.updateInfo.version}` : "up to date";
+        } catch (err) {
+          return `check failed: ${String(err).slice(0, 80)}`;
+        }
+      };
+      checkNow = check;
+      await check();
+      setInterval(() => void check(), 6 * 60 * 60 * 1000);
     } catch (err) {
       log("updater: unavailable:", err);
     }
   })();
+}
+
+export function checkForUpdatesNow(): Promise<string> {
+  return checkNow();
 }

@@ -41,6 +41,21 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:description" content={description} />
   </head>
   <body class="flex min-h-screen flex-col">
+    <script is:inline>
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add("revealed"); io.unobserve(e.target); }
+          });
+        }, { threshold: 0.08 });
+        document.addEventListener("DOMContentLoaded", function () {
+          document.querySelectorAll("section > div, .card, .glass-panel, details").forEach(function (el) {
+            el.classList.add("reveal"); io.observe(el);
+          });
+        });
+      })();
+    </script>
     <Header />
     <main class="flex-1">
       <slot />

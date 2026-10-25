@@ -1,11 +1,13 @@
-import { app, ipcMain, type Tray } from "electron";
+import { app, dialog, ipcMain, type Tray } from "electron";
 import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import { IPC, type DictionaryEntry, type VoiceCommand } from "@whisperflow/shared";
 import type { EnginePort } from "../engine/enginePort";
 import type { DictationController } from "../audio/dictationController";
 import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { applyLaunchAtLogin } from "../lifecycle/autostart";
+import { checkForUpdatesNow } from "../lifecycle/updater";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
@@ -140,6 +142,24 @@ export function registerIpc(deps: {
   ipcMain.handle("app/setLaunchAtLogin", (_e, enabled: boolean) => {
     applyLaunchAtLogin(enabled);
     deps.tray.refresh?.(enabled);
+  });
+  ipcMain.handle("app/checkForUpdates", async () => ({ message: await checkForUpdatesNow() }));
+  ipcMain.handle("app/exportBackup", async () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const result = await dialog.showSaveDialog({
+      title: "Export WhisperFlow backup",
+      defaultPath: `whisperflow-backup-${stamp}.json`,
+      filters: [{ name: "WhisperFlow backup", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return { exported: false };
+    const [config, history] = await Promise.all([engine.getConfig(), engine.listHistory(undefined, 500)]);
+    writeFileSync(
+      result.filePath,
+      JSON.stringify({ app: "WhisperFlow", version: app.getVersion(), exportedAt: Date.now(), config, history }, null, 2),
+      "utf-8",
+    );
+    log("backup exported to", result.filePath);
+    return { exported: true, path: result.filePath };
   });
   ipcMain.handle("app/rebindHotkey", (_e, accelerator: string) => {
     const ok = hotkeys.bindMain(accelerator);

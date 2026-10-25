@@ -24,10 +24,46 @@ export class RemoteOpenAIProvider implements PolishProvider {
       throw new Error("Local-only mode is enabled — remote providers are blocked.");
     }
     const { baseUrl, apiKey, model: remoteModel } = cfg.polish.remote;
-    if (!baseUrl || !remoteModel) {
+
+    // pi-ai path: unified adapter with automatic provider discovery (optional dep).
+    if (!baseUrl) {
+      const viaPi = await this.polishViaPiAi(input);
+      if (viaPi !== null) {
+        yield viaPi;
+        return;
+      }
       throw new Error("Remote polish is not configured (base URL / model missing).");
     }
+    if (!remoteModel) {
+      throw new Error("Remote polish is not configured (model missing).");
+    }
+    yield await this.polishViaOpenAi(input, cfg);
+  }
 
+  /** Best-effort pi-ai (unified multi-provider adapter). Returns null when unavailable. */
+  private async polishViaPiAi(input: PolishInput): Promise<string | null> {
+    try {
+      const mod = (await import("@earendil-works/pi-ai")) as unknown as {
+        Chat?: new (opts: Record<string, unknown>) => {
+          complete(opts: Record<string, unknown>): Promise<string>;
+        };
+        prompt: (parts: Array<{ role: string; content: string }>) => unknown;
+      };
+      const messages = buildPolishMessages(input);
+      const chat = new mod.Chat!({});
+      return await chat.complete({
+        prompt: mod.prompt([
+          { role: "system", content: messages.system },
+          { role: "user", content: messages.user },
+        ]),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async polishViaOpenAi(input: PolishInput, cfg: WhisperFlowConfig): Promise<string> {
+    const { baseUrl, apiKey, model: remoteModel } = cfg.polish.remote;
     const messages = buildPolishMessages(input);
     const res = await fetch(baseUrl.replace(/\/+$/, "") + "/chat/completions", {
       method: "POST",
@@ -52,6 +88,6 @@ export class RemoteOpenAIProvider implements PolishProvider {
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const text = json.choices?.[0]?.message?.content?.trim();
     if (!text) throw new Error("polish endpoint returned an empty completion");
-    yield text;
+    return text;
   }
 }
