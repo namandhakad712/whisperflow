@@ -18,7 +18,6 @@ coverage/
 # Models & binaries (downloaded at runtime, never committed)
 *.gguf
 *.bin
-models/
 bin-cache/
 
 # Environment & secrets
