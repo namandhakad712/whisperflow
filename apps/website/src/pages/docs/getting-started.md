@@ -14,7 +14,7 @@ description: Install WhisperFlow from source, download models, and make your fir
 ## Run from source
 
 ```bash
-git clone https://github.com/whisperflow/whisperflow.git
+git clone https://github.com/namandhakad712/whisperflow.git
 cd whisperflow
 npm install
 npm run dev

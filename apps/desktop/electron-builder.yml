@@ -35,6 +35,6 @@ nsis:
 # electron-updater no-ops safely at runtime.
 publish:
   provider: github
-  owner: whisperflow
+  owner: namandhakad712
   repo: whisperflow
   releaseType: draft

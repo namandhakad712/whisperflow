@@ -43,7 +43,7 @@ export function AboutTab() {
           <div className="flex justify-between">
             <dt className="text-ink-dim">Source</dt>
             <dd>
-              <a className="text-accent hover:underline" href="https://github.com/whisperflow/whisperflow">
+              <a className="text-accent hover:underline" href="https://github.com/namandhakad712/whisperflow">
                 github.com/whisperflow
               </a>
             </dd>

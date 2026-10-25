@@ -39,7 +39,7 @@ lock, which makes network calls impossible.
 
 ## Project
 
-- Source: [github.com/whisperflow/whisperflow](https://github.com/whisperflow/whisperflow)
+- Source: [github.com/namandhakad712/whisperflow](https://github.com/namandhakad712/whisperflow)
 - License: Apache-2.0
 - Status: v0.1 in active development (Windows)
 

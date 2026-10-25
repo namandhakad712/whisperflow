@@ -184,7 +184,7 @@ dev + tests via engine factory injection):
 
 - electron-vite + electron-builder (NSIS, x64). productName `WhisperFlow`, appId `dev.whisperflow.desktop`, artifact `WhisperFlow-Setup-<v>.exe`.
 - Renderer: React 19 + TypeScript + Tailwind CSS 4 + Zustand. Two HTML entries: `settings.html` (settings + history + onboarding routes) and `overlay.html` (overlay + hidden capture logic).
-- Auto-update: electron-updater wired but **inert** until `publish` config points at a real GitHub repo (placeholder `whisperflow/whisperflow`).
+- Auto-update: electron-updater wired but **inert** until `publish` config points at a real GitHub repo (placeholder `namandhakad712/whisperflow`).
 - Native-adjacent things done WITHOUT native modules: hotkeys (`globalShortcut`), injection (PowerShell SendInput child process + Electron clipboard with clipboard save/restore), audio (renderer WebAudio).
 
 ## Website (apps/website)
