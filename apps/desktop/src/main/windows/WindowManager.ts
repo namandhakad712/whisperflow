@@ -32,7 +32,7 @@ export class WindowManager {
       minHeight: 640,
       show: false,
       autoHideMenuBar: true,
-      backgroundColor: "#070b14",
+      backgroundColor: "#ffffeb",
       title: "WhisperFlow",
       webPreferences: {
         preload: this.opts.preloadPath,

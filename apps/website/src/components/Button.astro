@@ -1,7 +1,7 @@
 ---
 interface Props {
   href: string;
-  variant?: "primary" | "ghost";
+  variant?: "primary" | "ghost" | "ink";
   class?: string;
 }
 const { href, variant = "primary", class: className = "" } = Astro.props;
@@ -9,10 +9,12 @@ const { href, variant = "primary", class: className = "" } = Astro.props;
 <a
   href={href}
   class:list={[
-    "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors",
+    "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-all hover:-translate-y-px",
     variant === "primary"
-      ? "bg-accent text-bg hover:bg-accent-strong"
-      : "border border-line bg-surface text-ink hover:border-accent/60",
+      ? "bg-lavender text-ink hover:bg-lavender-deep"
+      : variant === "ink"
+        ? "bg-ink text-bg hover:opacity-85"
+        : "border border-ink text-ink hover:bg-ink/5",
     className,
   ]}
 >

@@ -5,36 +5,31 @@ const nav = [
   { href: "/features/", label: "Features" },
   { href: "/docs/", label: "Docs" },
   { href: "/pricing/", label: "Pricing" },
-  { href: "/sponsors/", label: "Sponsors" },
 ];
 const path = Astro.url.pathname;
 ---
-<header class="sticky top-0 z-50 border-b border-line/70 bg-bg/80 backdrop-blur-md">
+<div class="bg-forest text-center text-xs font-medium tracking-wide text-[#ffffeb]">
+  <p class="mx-auto max-w-6xl px-4 py-2">
+    <span class="sticker bg-coral text-[#ffffeb]">free forever</span>
+    <span class="ml-2">Unlimited local dictation — no accounts, no word caps, no cloud.</span>
+  </p>
+</div>
+<header class="sticky top-0 z-50 border-b border-line bg-bg/90 backdrop-blur-md">
   <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-    <a href="/" class="flex items-center gap-2.5 font-semibold tracking-tight">
-      <Logo />
-      <span>WhisperFlow</span>
-    </a>
-    <nav class="hidden items-center gap-1 md:flex" aria-label="Main">
+    <a href="/" aria-label="WhisperFlow home"><Logo class="h-6" /></a>
+    <nav class="hidden items-center gap-1 rounded-full border border-line bg-cream p-1 md:flex" aria-label="Main">
       {nav.map((item) => (
         <a
           href={item.href}
           class:list={[
-            "rounded-lg px-3 py-2 text-sm transition-colors",
-            path.startsWith(item.href) ? "bg-surface-2 text-ink" : "text-ink-dim hover:text-ink",
+            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            path.startsWith(item.href) ? "bg-ink text-bg" : "hover:bg-ink/5",
           ]}
         >
           {item.label}
         </a>
       ))}
     </nav>
-    <div class="flex items-center gap-2">
-      <a
-        href="/download/"
-        class="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-bg transition-colors hover:bg-accent-strong"
-      >
-        Download
-      </a>
-    </div>
+    <a href="/download/" class="btn-primary !py-2.5 text-sm">Get started on Windows</a>
   </div>
 </header>

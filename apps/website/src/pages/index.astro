@@ -1,167 +1,233 @@
 ---
 import Base from "../layouts/Base.astro";
-import Button from "../components/Button.astro";
-import OverlayDemo from "../components/OverlayDemo.astro";
-import FeatureCard from "../components/FeatureCard.astro";
+
+const marquee = ["whisper.cpp", "llama.cpp", "HuggingFace", "Qwen 2.5", "Electron", "Apache-2.0", "SQLite", "Open models"];
 
 const features = [
   {
-    icon: "mic",
-    title: "Push-to-talk everywhere",
-    body: "One global hotkey — default Ctrl+Shift+Space — works in any app with a text field. Speak, release, done.",
+    title: "100+ languages, one key",
+    body: "Whisper models understand the languages you actually speak — including the mid-sentence switches.",
+    chip: "🌍",
   },
   {
-    icon: "cpu",
-    title: "Runs on your machine",
-    body: "whisper.cpp transcription and an on-device LLM polish your words locally. No audio ever leaves your computer.",
+    title: "Your words, remembered",
+    body: "Add names and jargon to a personal dictionary. Near-misses get corrected automatically, every dictation.",
+    chip: "📖",
   },
   {
-    icon: "wand",
-    title: "AI polish & tones",
-    body: "Filler words removed, punctuation fixed, structure cleaned. Pick a tone — neutral, casual, professional — or write your own instructions.",
+    title: "Tones, not rewrites",
+    body: "Neutral, casual, professional — or your own instructions. Meaning stays yours; only the mess goes away.",
+    chip: "🎛️",
   },
   {
-    icon: "book",
-    title: "Personal dictionary",
-    body: "Names, jargon, acronyms. Fuzzy correction catches what the model mishears, and the polisher learns your vocabulary.",
-  },
-  {
-    icon: "history",
-    title: "Searchable history",
-    body: "Every dictation stored locally in SQLite. Search it, delete it, or clear it all — it never syncs anywhere.",
-  },
-  {
-    icon: "shield",
-    title: "Local-only lock",
-    body: "Flip one switch and WhisperFlow is physically incapable of making a network request. Auditable, open, Apache-2.0.",
+    title: "Say a command",
+    body: "“Scratch that” takes it back. Define any phrase to insert signatures, snippets, templates.",
+    chip: "🎙️",
   },
 ];
 
-const steps = [
-  { n: "01", title: "Hold the key", body: "The overlay appears with a live waveform. Start talking — naturally, with all your ums and yeahs." },
-  { n: "02", title: "Speak your mind", body: "Streaming transcription shows words as you say them. Silence detection knows when you're finished." },
-  { n: "03", title: "Get polished text", body: "The local LLM cleans it up, your dictionary fixes names, and the text lands right where your cursor is." },
+const proof = [
+  {
+    tag: "private by default",
+    text: "Audio never leaves the machine. Transcription and polish run on your hardware — flip one switch and the app physically cannot make a network call.",
+    card: "bg-pink",
+  },
+  {
+    tag: "no meter running",
+    text: "Unlimited words. No trial, no account, no sync. The only limit is your disk space for models.",
+    card: "bg-lavender",
+  },
+  {
+    tag: "open to the core",
+    text: "Apache-2.0, every line auditable. Swap models, bring your own endpoint, or fork the whole thing.",
+    card: "bg-cream",
+  },
+];
+
+const faqs = [
+  ["Is it really free?", "Yes — the core app is free forever, with no word caps or accounts. Optional sponsor tiers fund development; they don't unlock dictation, because dictation isn't locked."],
+  ["Does it need the internet?", "Only once, to download models from HuggingFace. After that it works fully offline — on planes, in airports, in far-flung hotel Wi-Fi."],
+  ["How is this different from cloud dictation?", "Cloud tools stream your voice to servers and meter your words. WhisperFlow transcribes locally with whisper.cpp and polishes locally with a small LLM — private, unlimited, free."],
+  ["What hardware does it need?", "Any modern PC. 8 GB RAM runs the balanced setup; 16 GB unlocks the best models. The onboarding wizard checks and recommends for you."],
+  ["Windows only?", "Windows ships first; the engine is cross-platform and macOS/Linux packaging is on the roadmap. Contributions welcome."],
 ];
 ---
-<Base>
-  <!-- Hero -->
-  <section class="hero-backdrop relative overflow-hidden">
-    <div class="grid-lines absolute inset-0" aria-hidden="true"></div>
-    <div class="relative mx-auto max-w-6xl px-4 pb-20 pt-20 sm:px-6 sm:pt-28">
-      <div class="mx-auto max-w-3xl text-center">
-        <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1 text-xs text-ink-dim">
-          <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
-          Apache-2.0 · local-first · no telemetry
-        </p>
-        <h1 class="mt-6 text-4xl font-bold tracking-tight sm:text-6xl">
-          Your voice, your models,<br class="hidden sm:block" />
-          <span class="text-accent">your machine.</span>
-        </h1>
-        <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-ink-dim">
-          WhisperFlow is open-source AI voice dictation. Hold a key, speak naturally, and get
-          polished text in any app — transcribed and refined entirely on your own hardware by
-          open HuggingFace models. Unlimited words. Zero cloud required.
-        </p>
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button href="/download/">Download WhisperFlow</Button>
-          <Button href="/features/" variant="ghost">Explore features</Button>
-        </div>
-        <p class="mt-4 text-xs text-ink-dim">Windows first · macOS &amp; Linux on the roadmap · free forever</p>
+<Base
+  title="WhisperFlow — Type less. Say more."
+  description="Open-source, local-first AI voice dictation. Hold a key, speak naturally, get polished text in any app — powered by whisper.cpp and llama.cpp on your machine. Free forever, unlimited, no cloud."
+>
+  <!-- ============ HERO ============ -->
+  <section class="relative overflow-hidden">
+    <!-- original flowing-line motif -->
+    <svg class="pointer-events-none absolute -top-10 right-[-10%] h-[560px] w-[900px] text-ink/20" viewBox="0 0 900 560" fill="none" aria-hidden="true">
+      <path class="squiggle" d="M-20 90 C 220 40, 260 260, 470 210 S 760 60, 940 160 M-20 300 C 180 260, 320 420, 520 380 S 820 300, 940 380 M200 560 C 260 430, 520 500, 620 430" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div class="relative mx-auto max-w-6xl px-4 pb-20 pt-20 text-center sm:px-6 sm:pt-28">
+      <h1 class="font-display text-6xl leading-[1.02] tracking-tight sm:text-8xl">
+        Type less.<br /><em class="font-display italic">Say more.</em>
+      </h1>
+      <p class="mx-auto mt-6 max-w-xl text-lg leading-8 text-ink-soft">
+        WhisperFlow turns your voice into clean, polished text in any app — transcribed and
+        refined entirely on your own machine by open models. Free, unlimited, un-private-able.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="/download/" class="btn-primary">Get started on Windows</a>
+        <a href="/features/" class="btn-ghost">See how it works</a>
       </div>
-      <div class="relative mx-auto mt-16 max-w-2xl">
-        <div class="absolute -inset-x-8 -top-8 h-40 bg-accent/10 blur-3xl" aria-hidden="true"></div>
-        <OverlayDemo />
+      <p class="mt-4 text-xs text-ink-faint">Free forever · No account · No word caps</p>
+
+      <!-- try-it demo pill -->
+      <div class="mx-auto mt-14 max-w-xl">
+        <div class="card relative p-1.5 shadow-[0_18px_50px_rgba(26,26,26,0.08)]">
+          <div class="rounded-[12px] border border-line/70 bg-cream px-5 py-4 text-left">
+            <div class="flex items-center justify-between">
+              <span class="rounded-full border border-line bg-bg px-2.5 py-0.5 font-mono text-[11px] text-ink-soft">Ctrl+Shift+Space</span>
+              <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-forest">
+                <span class="h-2 w-2 rounded-full bg-forest"></span> local
+              </span>
+            </div>
+            <div class="mt-4 flex h-10 items-center justify-center gap-1" aria-hidden="true">
+              {[14, 30, 22, 40, 34, 16, 38, 24, 12, 30, 20, 36].map((h, i) => (
+                <span class="w-1.5 rounded-full bg-ink/70" style={`height:${h}px;opacity:${0.35 + (i % 4) * 0.15}`}></span>
+              ))}
+              <span class="mx-1 inline-block h-5 w-[2px] animate-pulse bg-coral"></span>
+              {[28, 18, 34, 22, 12, 30, 40, 20, 32, 16].map((h, i) => (
+                <span class="w-1.5 rounded-full bg-ink/70" style={`height:${h}px;opacity:${0.35 + (i % 3) * 0.15}`}></span>
+              ))}
+            </div>
+            <p class="mt-3 font-mono text-sm text-ink-soft">
+              so basically um just ship the demo <span class="text-ink-faint">→</span>
+              <span class="ml-1.5 rounded bg-lavender px-1.5 py-0.5 text-ink">“So basically, just ship the demo.”</span>
+            </p>
+          </div>
+          <span class="sticker absolute -right-3 -top-3 bg-coral text-[#ffffeb]">on-device</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- How it works -->
-  <section class="border-t border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <h2 class="text-center text-3xl font-bold tracking-tight">Three steps, one breath</h2>
-      <div class="mt-12 grid gap-6 md:grid-cols-3">
-        {steps.map((s) => (
-          <div class="rounded-2xl border border-line bg-surface/60 p-6">
-            <p class="font-mono text-sm text-accent">{s.n}</p>
-            <h3 class="mt-3 font-semibold">{s.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-ink-dim">{s.body}</p>
+  <!-- ============ MARQUEE ============ -->
+  <section class="overflow-hidden border-y border-line py-5" aria-label="Built on">
+    <p class="mb-3 text-center text-xs font-bold uppercase tracking-widest text-ink-faint">Built on open shoulders</p>
+    <div class="relative">
+      <div class="marquee">
+        {[...marquee, ...marquee].map((word) => (
+          <span class="font-display text-2xl italic text-ink/60">{word}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOREST BAND ============ -->
+  <section class="bg-forest text-[#ffffeb]">
+    <div class="mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
+      <p class="sticker bg-[#ffffeb] text-forest" style="transform: rotate(2deg)">the pitch</p>
+      <h2 class="font-display mx-auto mt-5 max-w-3xl text-5xl leading-[1.05] sm:text-7xl">
+        Your voice is the <em class="italic">fastest</em> keyboard you own.
+      </h2>
+      <p class="mx-auto mt-5 max-w-xl text-base leading-7 text-[#ffffeb]/75">
+        Speaking runs three to four times faster than typing for most people. WhisperFlow
+        closes the gap — you talk, polished writing lands wherever your cursor is.
+      </p>
+      <div class="relative mx-auto mt-12 grid max-w-3xl gap-4 sm:grid-cols-3">
+        {[
+          ["0", "words sent to any cloud"],
+          ["3 s", "typical hotkey → text"],
+          ["∞", "words per week. forever."],
+        ].map(([big, label]) => (
+          <div class="rounded-2xl border border-[#ffffeb]/20 bg-[#02423a] px-5 py-6">
+            <p class="font-display text-4xl">{big}</p>
+            <p class="mt-1 text-xs uppercase tracking-widest text-[#ffffeb]/60">{label}</p>
+          </div>
+        ))}
+        <span class="sticker absolute -top-4 right-6 hidden bg-amber text-ink sm:block" style="transform: rotate(5deg)">no meter</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES (editorial) ============ -->
+  <section class="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+    <h2 class="font-display mx-auto max-w-2xl text-center text-4xl leading-tight sm:text-6xl">
+      Built around how you <em class="italic">actually</em> talk
+    </h2>
+    <div class="mt-14 grid gap-5 sm:grid-cols-2">
+      {features.map((f) => (
+        <div class="card flex gap-5 p-7">
+          <span class="text-3xl">{f.chip}</span>
+          <div>
+            <h3 class="font-display text-2xl">{f.title}</h3>
+            <p class="mt-2 text-sm leading-6 text-ink-soft">{f.body}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- circle trio -->
+    <div class="mt-16 flex flex-col items-center gap-6">
+      <div class="flex -space-x-3">
+        {["bg-lavender", "bg-pink", "bg-amber"].map((c) => (
+          <span class={`h-14 w-14 rounded-full border-2 border-bg ${c}`}></span>
+        ))}
+      </div>
+      <p class="font-display text-center text-3xl italic">Your voice, everywhere you write.</p>
+      <p class="max-w-md text-center text-sm leading-6 text-ink-soft">
+        Email, docs, issues, chat boxes, terminals — if there's a cursor, WhisperFlow types there.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ WHY CARDS ============ -->
+  <section class="border-y border-line bg-sage/40">
+    <div class="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+      <h2 class="font-display text-center text-4xl sm:text-5xl">Why people switch</h2>
+      <div class="mt-12 grid gap-5 md:grid-cols-3">
+        {proof.map((p) => (
+          <div class={`rounded-2xl border border-ink/10 p-7 ${p.card}`}>
+            <p class="sticker border border-ink/20 bg-cream text-ink">{p.tag}</p>
+            <p class="font-display mt-5 text-2xl leading-snug">{p.text}</p>
           </div>
         ))}
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="border-t border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div class="max-w-2xl">
-        <h2 class="text-3xl font-bold tracking-tight">Everything the closed apps charge for</h2>
-        <p class="mt-4 text-ink-dim">
-          Word caps, subscriptions, cloud processing — none of it is here. Just the features,
-          running on hardware you already own.
-        </p>
+  <!-- ============ FAQ (split panel) ============ -->
+  <section class="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+    <h2 class="font-display text-center text-4xl sm:text-6xl">Good questions.</h2>
+    <div class="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-[1fr_1.4fr]">
+      <div class="space-y-3">
+        {faqs.map(([q], i) => (
+          <div class:list={["rounded-xl px-5 py-4 text-sm font-semibold", i === 0 ? "bg-forest text-[#ffffeb]" : "bg-cream text-ink-soft border border-line"]}>
+            {q}
+          </div>
+        ))}
       </div>
-      <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => <FeatureCard icon={f.icon} title={f.title} body={f.body} />)}
-      </div>
-    </div>
-  </section>
-
-  <!-- Comparison strip -->
-  <section class="border-t border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <h2 class="text-center text-3xl font-bold tracking-tight">Why local-first wins</h2>
-      <div class="mx-auto mt-10 max-w-3xl overflow-hidden rounded-2xl border border-line">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="bg-surface-2/80 text-left text-ink-dim">
-              <th class="px-5 py-3 font-medium"></th>
-              <th class="px-5 py-3 font-medium">Cloud dictation apps</th>
-              <th class="px-5 py-3 font-medium text-accent">WhisperFlow</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-line/70">
-            <tr>
-              <td class="px-5 py-3 font-medium">Monthly words</td>
-              <td class="px-5 py-3 text-ink-dim">Capped (e.g. 2,000/week on free tiers)</td>
-              <td class="px-5 py-3 text-accent">Unlimited</td>
-            </tr>
-            <tr>
-              <td class="px-5 py-3 font-medium">Where audio is processed</td>
-              <td class="px-5 py-3 text-ink-dim">Their servers</td>
-              <td class="px-5 py-3 text-accent">Your device only</td>
-            </tr>
-            <tr>
-              <td class="px-5 py-3 font-medium">Works offline</td>
-              <td class="px-5 py-3 text-ink-dim">No</td>
-              <td class="px-5 py-3 text-accent">Yes — fully</td>
-            </tr>
-            <tr>
-              <td class="px-5 py-3 font-medium">Source code</td>
-              <td class="px-5 py-3 text-ink-dim">Closed</td>
-              <td class="px-5 py-3 text-accent">Apache-2.0, auditable</td>
-            </tr>
-            <tr>
-              <td class="px-5 py-3 font-medium">Price</td>
-              <td class="px-5 py-3 text-ink-dim">$12–15/mo for unlimited</td>
-              <td class="px-5 py-3 text-accent">$0 forever</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="space-y-4">
+        {faqs.map(([q, a]) => (
+          <details class="faq card group p-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm font-semibold">
+              {q}
+              <span class="faq-chevron text-xl leading-none transition-transform">+</span>
+            </summary>
+            <p class="mt-3 text-sm leading-6 text-ink-soft">{a}</p>
+          </details>
+        ))}
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="border-t border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
-      <h2 class="text-3xl font-bold tracking-tight">Stop renting your own voice</h2>
-      <p class="mx-auto mt-4 max-w-xl text-ink-dim">
-        Grab the app, download a model, and dictate your first sentence in under five minutes.
+  <!-- ============ DUSK CTA ============ -->
+  <section class="dusk relative overflow-hidden">
+    <div class="relative mx-auto max-w-6xl px-4 py-32 text-center text-[#ffffeb] sm:px-6">
+      <h2 class="font-display mx-auto max-w-3xl text-5xl leading-[1.05] sm:text-7xl">
+        You had the words <em class="italic">all along.</em>
+      </h2>
+      <p class="mx-auto mt-5 max-w-lg text-base text-[#ffffeb]/80">
+        Download WhisperFlow, pick a model, and dictate your first sentence in under five minutes.
       </p>
-      <div class="mt-8 flex justify-center gap-3">
-        <Button href="/download/">Get WhisperFlow</Button>
-        <Button href="/docs/getting-started/" variant="ghost">Read the docs</Button>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/download/" class="btn-primary">Get started on Windows</a>
+        <a href="https://github.com/namandhakad712/whisperflow" class="btn-ghost !text-[#ffffeb] hover:!bg-[#ffffeb]/10">Star on GitHub</a>
       </div>
     </div>
   </section>

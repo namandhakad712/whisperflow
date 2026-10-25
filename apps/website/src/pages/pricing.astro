@@ -1,68 +1,172 @@
 ---
 import Base from "../layouts/Base.astro";
-import Button from "../components/Button.astro";
+
+const plans = [
+  {
+    sticker: "free",
+    stickerClass: "bg-coral text-[#ffffeb]",
+    name: "WhisperFlow",
+    price: "$0",
+    per: "forever",
+    note: "The whole dictation app. Not a trial.",
+    cta: ["Download", "/download/", "btn-ink"],
+    items: ["Unlimited words — no caps, ever", "Local whisper.cpp transcription", "Local AI polish (or offline cleanup)", "Personal dictionary & voice commands", "Local history with search", "Local-only network lock", "Commercial use allowed"],
+  },
+  {
+    sticker: "supporter",
+    stickerClass: "bg-lavender text-ink",
+    name: "Supporter",
+    price: "$5",
+    per: "/mo",
+    note: "Fund development. Feel great.",
+    cta: ["Become a sponsor", "/sponsors/", "btn-primary"],
+    items: ["Everything in the free app", "Name on the sponsors page", "Early access to release candidates", "Discord supporter role", "Our eternal gratitude"],
+  },
+  {
+    sticker: "professional",
+    stickerClass: "bg-amber text-ink",
+    name: "Professional",
+    price: "$25",
+    per: "/mo",
+    note: "For serious daily drivers.",
+    cta: ["Talk to us", "/sponsors/", "btn-primary"],
+    items: ["Everything in Supporter", "Logo on the sponsors page", "Priority feature requests", "Direct line to the maintainer", "Roadmap votes"],
+  },
+  {
+    sticker: "business",
+    stickerClass: "bg-forest text-[#ffffeb]",
+    name: "Business",
+    price: "Custom",
+    per: "",
+    note: "Roll it out across your team.",
+    cta: ["Contact us", "/sponsors/", "btn-ghost"],
+    items: ["Everything in Professional", "Private builds & packaging", "Deployment guidance", "Security review support", "Invoicing & procurement"],
+  },
+];
+
+const compare: Array<[string, (string | boolean)[]]> = [
+  ["Dictation", []],
+  ["Unlimited words", [true, true, true, true]],
+  ["Works fully offline", [true, true, true, true]],
+  ["Personal dictionary", [true, true, true, true]],
+  ["Voice commands & tones", [true, true, true, true]],
+  ["Local history search", [true, true, true, true]],
+  ["Community", []],
+  ["Sponsors page credit", [false, true, true, true]],
+  ["Release-candidate access", [false, true, true, true]],
+  ["Roadmap votes", [false, false, true, true]],
+  ["Logo on sponsors page", [false, false, true, true]],
+  ["Business", []],
+  ["Private builds & packaging", [false, false, false, true]],
+  ["Security review support", [false, false, false, true]],
+  ["Invoicing", [false, false, false, true]],
+];
 ---
 <Base
   title="Pricing — WhisperFlow"
-  description="WhisperFlow core is free forever, unlimited, Apache-2.0. An optional hosted Cloud may arrive for weak hardware — the core stays free."
+  description="The dictation app is free forever, unlimited, Apache-2.0. Sponsor tiers fund development — they never unlock features."
 >
-  <section class="hero-backdrop border-b border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
-      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Free. Really.</h1>
-      <p class="mx-auto mt-4 max-w-2xl text-lg text-ink-dim">
-        The core app is unlimited and open-source forever. Hardware is the only meter.
-      </p>
+  <section class="mx-auto max-w-6xl px-4 pt-20 text-center sm:px-6">
+    <h1 class="font-display text-6xl sm:text-8xl">Pricing</h1>
+    <p class="mx-auto mt-4 max-w-md text-ink-soft">
+      Free on Windows today; macOS and Linux on the roadmap.
+      The app is free — sponsor tiers keep it that way.
+    </p>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {plans.map((p) => (
+        <div class="card relative flex flex-col p-6">
+          <span class:list={["sticker absolute -top-3 left-5", p.stickerClass]}>{p.sticker}</span>
+          <h2 class="font-display mt-2 text-3xl">{p.name}</h2>
+          <p class="mt-2">
+            <span class="font-display text-5xl">{p.price}</span>
+            <span class="text-sm text-ink-faint">{p.per}</span>
+          </p>
+          <p class="mt-1 text-xs text-ink-faint">{p.note}</p>
+          <a href={p.cta[1]} class={`${p.cta[2]} mt-5 w-full`}>{p.cta[0]}</a>
+          <ul class="mt-6 space-y-2.5 border-t border-line pt-5 text-sm">
+            {p.items.map((item) => (
+              <li class="flex gap-2 text-ink-soft"><span class="text-forest">✓</span>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   </section>
 
-  <section class="border-b border-line/70">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div class="grid gap-5 lg:grid-cols-2">
-        <div class="relative rounded-2xl border-2 border-accent/60 bg-surface/60 p-8">
-          <p class="absolute -top-3 left-6 rounded-full bg-accent px-3 py-0.5 text-xs font-bold text-bg">
-            CORE — SHIPS NOW
-          </p>
-          <h2 class="text-xl font-bold">WhisperFlow Core</h2>
-          <p class="mt-2 text-4xl font-bold">$0<span class="text-base font-normal text-ink-dim"> forever</span></p>
-          <ul class="mt-6 space-y-3 text-sm leading-6 text-ink-dim">
-            <li>✓ Unlimited dictation — no word caps, ever</li>
-            <li>✓ Local transcription (whisper.cpp) + local AI polish (llama.cpp)</li>
-            <li>✓ Personal dictionary, voice commands, tones</li>
-            <li>✓ Local history with search</li>
-            <li>✓ Local-only network lock</li>
-            <li>✓ Commercial use permitted (Apache-2.0)</li>
-          </ul>
-          <div class="mt-8">
-            <Button href="/download/">Download</Button>
-          </div>
-        </div>
+  <!-- compare table -->
+  <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+    <h2 class="font-display text-center text-4xl sm:text-6xl">
+      Compare pricing <em class="italic">&amp;</em> support
+    </h2>
+    <div class="card mt-10 overflow-x-auto">
+      <table class="w-full min-w-[640px] text-sm">
+        <thead>
+          <tr class="border-b border-line text-left">
+            <th class="px-5 py-4 font-medium"></th>
+            {["Free", "Supporter", "Professional", "Business"].map((h) => (
+              <th class="px-5 py-4 text-center font-semibold">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {compare.map(([label, vals]) =>
+            vals.length === 0 ? (
+              <tr class="bg-sage/40"><td class="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-ink-faint" colspan="5">{label}</td></tr>
+            ) : (
+              <tr class="border-b border-line/60 last:border-0">
+                <td class="px-5 py-3 text-ink-soft">{label}</td>
+                {vals.map((v) => (
+                  <td class="px-5 py-3 text-center">
+                    {v === true ? <span class="text-forest">✓</span> : <span class="text-ink-faint">—</span>}
+                  </td>
+                ))}
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-4 text-center text-xs text-ink-faint">
+      Every tier includes the complete, unlimited dictation app. Tiers fund the project — they never gate it.
+    </p>
+  </section>
 
-        <div class="rounded-2xl border border-line bg-surface/40 p-8">
-          <p class="text-xs font-bold tracking-widest text-ink-dim">EXPLORING — NOT SHIPPING YET</p>
-          <h2 class="mt-2 text-xl font-bold">WhisperFlow Cloud</h2>
-          <p class="mt-2 text-4xl font-bold text-ink-dim">TBD</p>
-          <p class="mt-6 text-sm leading-6 text-ink-dim">
-            Optional hosted inference for machines that can't run models locally — same app,
-            same dictionary, remote speed. The core stays free and unlimited regardless; cloud
-            would only ever be an add-on for those who choose it.
-          </p>
-          <ul class="mt-6 space-y-3 text-sm leading-6 text-ink-dim">
-            <li>· BYO-endpoint support already built in (any OpenAI-compatible API)</li>
-            <li>· Hosted tier only if the community wants it</li>
-            <li>· Local-only lock stays available in every version</li>
-          </ul>
+  <!-- forest band: value framing -->
+  <section class="bg-forest text-[#ffffeb]">
+    <div class="mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#ffffeb]/60">the math</p>
+      <h2 class="font-display mx-auto mt-4 max-w-2xl text-5xl leading-tight">
+        Cloud dictation is <em class="italic">$180</em> a year.<br />Yours is <em class="italic">your hardware.</em>
+      </h2>
+      <div class="mx-auto mt-10 grid max-w-2xl gap-4 sm:grid-cols-2">
+        <div class="rounded-2xl border border-[#ffffeb]/20 bg-[#02423a] p-6 text-left">
+          <p class="text-xs uppercase tracking-widest text-[#ffffeb]/60">Typical cloud tool</p>
+          <p class="font-display mt-2 text-4xl">$12–15/mo</p>
+          <p class="mt-2 text-sm text-[#ffffeb]/70">2,000 words/week on free tiers · audio on their servers · account required</p>
+        </div>
+        <div class="rounded-2xl border border-[#ffffeb]/20 bg-[#02423a] p-6 text-left">
+          <p class="text-xs uppercase tracking-widest text-[#ffffeb]/60">WhisperFlow</p>
+          <p class="font-display mt-2 text-4xl">$0 forever</p>
+          <p class="mt-2 text-sm text-[#ffffeb]/70">unlimited words · audio never leaves the machine · no account, ever</p>
         </div>
       </div>
+      <div class="mt-10">
+        <a href="/download/" class="btn-primary">Start free</a>
+      </div>
+    </div>
+  </section>
 
-      <div class="mt-10 rounded-2xl border border-line bg-surface/60 p-8 text-center">
-        <h2 class="text-lg font-bold">Support development</h2>
-        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-ink-dim">
-          WhisperFlow is built in the open. Sponsors fund model-hosting experiments, hardware
-          for CI, and maintainer time.
-        </p>
-        <div class="mt-6 flex justify-center gap-3">
-          <Button href="/sponsors/" variant="ghost">Become a sponsor</Button>
-        </div>
+  <!-- dusk CTA -->
+  <section class="dusk">
+    <div class="mx-auto max-w-6xl px-4 py-28 text-center text-[#ffffeb] sm:px-6">
+      <h2 class="font-display text-5xl leading-tight sm:text-6xl">
+        Speak. <em class="italic">Write faster.</em><br />Stay private.
+      </h2>
+      <div class="mt-8">
+        <a href="/download/" class="btn-primary">Download WhisperFlow</a>
       </div>
     </div>
   </section>

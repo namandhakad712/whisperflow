@@ -14,15 +14,16 @@ const sections = [
 const path = Astro.url.pathname;
 ---
 <Base title={`${title} — WhisperFlow Docs`} description={description}>
-  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[220px_1fr]">
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[230px_1fr]">
     <aside>
       <nav aria-label="Docs" class="space-y-1 lg:sticky lg:top-24">
+        <p class="mb-3 text-xs font-bold uppercase tracking-widest text-ink-faint">Documentation</p>
         {sections.map((s) => (
           <a
             href={s.href}
             class:list={[
               "block rounded-lg px-3 py-2 text-sm transition-colors",
-              path === s.href ? "bg-surface-2 font-medium text-ink" : "text-ink-dim hover:text-ink",
+              path === s.href ? "bg-forest font-medium text-[#ffffeb]" : "text-ink-soft hover:bg-ink/5 hover:text-ink",
             ]}
           >
             {s.label}
@@ -30,7 +31,7 @@ const path = Astro.url.pathname;
         ))}
       </nav>
     </aside>
-    <article class="prose prose-invert prose-headings:scroll-mt-24 max-w-3xl">
+    <article class="prose prose-headings:font-display prose-a:text-forest max-w-3xl">
       <h1>{title}</h1>
       <slot />
     </article>

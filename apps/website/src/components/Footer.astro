@@ -1,39 +1,74 @@
 ---
+import Logo from "./Logo.astro";
 const year = new Date().getFullYear();
+
+const groups = [
+  {
+    title: "Product",
+    links: [
+      ["Features", "/features/"],
+      ["Download", "/download/"],
+      ["Pricing", "/pricing/"],
+      ["Sponsors", "/sponsors/"],
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      ["Documentation", "/docs/"],
+      ["Getting started", "/docs/getting-started/"],
+      ["Models & hardware", "/docs/models/"],
+      ["Privacy", "/docs/privacy/"],
+    ],
+  },
+  {
+    title: "Project",
+    links: [
+      ["GitHub", "https://github.com/namandhakad712/whisperflow"],
+      ["Issues", "https://github.com/namandhakad712/whisperflow/issues"],
+      ["License (Apache-2.0)", "https://github.com/namandhakad712/whisperflow/blob/main/LICENSE"],
+    ],
+  },
+];
 ---
-<footer class="border-t border-line/70">
-  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
-    <div class="md:col-span-2">
-      <p class="font-semibold">WhisperFlow</p>
-      <p class="mt-3 max-w-sm text-sm leading-6 text-ink-dim">
-        Open-source, local-first AI voice dictation. Your voice, your models, your machine.
-      </p>
-      <p class="mt-4 text-xs text-ink-dim">
-        Apache-2.0 · Built with whisper.cpp, llama.cpp &amp; HuggingFace models.
-      </p>
+<footer class="border-t border-line bg-bg">
+  <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
+    <div class="grid gap-10 md:grid-cols-[1.2fr_repeat(3,1fr)]">
+      <div>
+        <Logo class="h-6" />
+        <p class="mt-4 max-w-xs text-sm leading-6 text-ink-soft">
+          Open-source, local-first AI voice dictation. Your voice, your models, your machine.
+        </p>
+      </div>
+      {groups.map((g) => (
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-ink-faint">{g.title}</p>
+          <ul class="mt-4 space-y-2.5 text-sm">
+            {g.links.map(([label, href]) => (
+              <li><a class="text-ink-soft transition-colors hover:text-ink" href={href}>{label}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
-    <div>
-      <p class="text-sm font-semibold">Product</p>
-      <ul class="mt-3 space-y-2 text-sm text-ink-dim">
-        <li><a class="hover:text-ink" href="/features/">Features</a></li>
-        <li><a class="hover:text-ink" href="/download/">Download</a></li>
-        <li><a class="hover:text-ink" href="/pricing/">Pricing</a></li>
-        <li><a class="hover:text-ink" href="/sponsors/">Sponsors</a></li>
-      </ul>
-    </div>
-    <div>
-      <p class="text-sm font-semibold">Project</p>
-      <ul class="mt-3 space-y-2 text-sm text-ink-dim">
-        <li><a class="hover:text-ink" href="/docs/">Documentation</a></li>
-        <li><a class="hover:text-ink" href="/docs/privacy/">Privacy</a></li>
-        <li><a class="hover:text-ink" href="https://github.com/namandhakad712/whisperflow">GitHub</a></li>
-      </ul>
+
+    <div class="mt-14 flex items-end justify-center gap-4 select-none" aria-hidden="true">
+      <svg viewBox="0 0 28 24" class="mb-3 h-14 w-auto text-ink sm:h-20" fill="currentColor">
+        <rect x="1" y="9" width="3.4" height="6" rx="1.7" />
+        <rect x="6.6" y="5" width="3.4" height="14" rx="1.7" />
+        <rect x="12.2" y="1" width="3.4" height="22" rx="1.7" />
+        <rect x="17.8" y="5" width="3.4" height="14" rx="1.7" />
+        <rect x="23.4" y="9" width="3.4" height="6" rx="1.7" />
+      </svg>
+      <p class="font-display text-[18vw] leading-[0.85] tracking-tight text-ink sm:text-[9rem]">
+        WhisperFlow
+      </p>
     </div>
   </div>
-  <div class="border-t border-line/70">
-    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-ink-dim sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <p>© {year} WhisperFlow contributors. Apache-2.0.</p>
-      <p>Not affiliated with Wispr Inc. Independent, clean-room project.</p>
+  <div class="mt-8 border-t border-line">
+    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <p>© {year} WhisperFlow contributors · Apache-2.0</p>
+      <p>Not affiliated with Wispr Inc. · Built with whisper.cpp &amp; llama.cpp</p>
     </div>
   </div>
 </footer>
