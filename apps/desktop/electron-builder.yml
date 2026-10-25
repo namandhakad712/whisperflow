@@ -1,0 +1,40 @@
+appId: dev.whisperflow.desktop
+productName: WhisperFlow
+copyright: Copyright © 2026 WhisperFlow contributors (Apache-2.0)
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**
+  - resources/**
+
+# Workspace deps + native modules (better-sqlite3) are resolved from node_modules
+# automatically; electron-builder rebuilds natives for Electron's ABI.
+
+asarUnpack:
+  - "**/*.node"
+
+win:
+  icon: resources/icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  deleteAppDataOnUninstall: false
+  artifactName: WhisperFlow-Setup-${version}.exe
+  shortcutName: WhisperFlow
+
+# Auto-update activates when the public GitHub repo exists. Until then
+# electron-updater no-ops safely at runtime.
+publish:
+  provider: github
+  owner: whisperflow
+  repo: whisperflow
+  releaseType: draft

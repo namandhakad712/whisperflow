@@ -15,9 +15,9 @@
     "dev": "npm run dev -w apps/desktop",
     "dev:desktop": "npm run dev -w apps/desktop",
     "dev:website": "npm run dev -w apps/website",
-    "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build -w packages/shared && npm run build -w packages/engine && npm run build -w apps/desktop && npm run build -w apps/website",
+    "typecheck": "npm run build -w packages/shared && npm run typecheck -w packages/shared && npm run typecheck -w packages/engine && npm run typecheck -w apps/desktop && npm run typecheck -w apps/website",
+    "test": "npm run build -w packages/shared && npm run test --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml,css,astro}\"",
     "clean": "npm run clean --workspaces --if-present"
   },
