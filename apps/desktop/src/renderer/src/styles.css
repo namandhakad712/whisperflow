@@ -1,31 +1,33 @@
 @import "tailwindcss";
-@import "@fontsource/eb-garamond/400.css";
-@import "@fontsource/eb-garamond/400-italic.css";
-@import "@fontsource/eb-garamond/500.css";
-@import "@fontsource/eb-garamond/500-italic.css";
-@import "@fontsource-variable/figtree";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/inter";
 
 @theme {
-  --font-sans: "Figtree Variable", "Figtree", ui-sans-serif, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", monospace;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* WhisperFlow editorial palette (matches the website) */
-  --color-bg: #ffffeb;
-  --color-surface: #fffdf9;
-  --color-surface-2: #f4f1e3;
-  --color-line: rgba(26, 26, 26, 0.15);
-  --color-accent: #f0d7ff;
-  --color-accent-strong: #e3b8ff;
-  --color-forest: #034f46;
-  --color-coral: #ff6c4c;
-  --color-ink: #1a1a1a;
-  --color-ink-dim: rgba(26, 26, 26, 0.7);
+  /* NOCTURNE */
+  --color-bg: #050505;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-2: rgba(255, 255, 255, 0.06);
+  --color-line: rgba(245, 245, 247, 0.1);
+  --color-accent: #2952e3;
+  --color-accent-strong: #4c6fff;
+  --color-ink: #f5f5f7;
+  --color-ink-dim: rgba(245, 245, 247, 0.62);
+  --color-forest: #2952e3;
+  --color-coral: #8fb0ff;
 }
 
-.font-display {
-  font-family: "EB Garamond", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+/* NOCTURNE DAWN — light variant */
+body.light {
+  --color-bg: #f7f7fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f2f6;
+  --color-line: rgba(12, 13, 18, 0.1);
+  --color-ink: #0c0d12;
+  --color-ink-dim: rgba(12, 13, 18, 0.62);
 }
 
 html,
@@ -39,18 +41,24 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* the overlay window is transparent; its root paints the pill */
 body.overlay-body {
   background: transparent;
 }
 
-::selection {
-  background: color-mix(in oklab, var(--color-accent) 30%, transparent);
+.font-display {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
-/* thin scrollbars that match the theme */
+::selection {
+  background: rgba(41, 82, 227, 0.4);
+  color: #fff;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;

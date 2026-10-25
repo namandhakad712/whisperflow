@@ -37,6 +37,11 @@ export function App() {
 
   useEffect(() => {
     void loadConfig();
+    try {
+      if (localStorage.getItem("wf-mode") === "light") document.body.classList.add("light");
+    } catch {
+      /* first run */
+    }
     const onHash = () => setRoute(currentRoute());
     window.addEventListener("hashchange", onHash);
     const unsubNavigate = window.whisperflowExtras.app.onNavigate((r) => {

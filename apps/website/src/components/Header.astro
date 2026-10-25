@@ -30,6 +30,17 @@ const path = Astro.url.pathname;
         </a>
       ))}
     </nav>
-    <a href="/download/" class="btn-primary !py-2.5 text-sm">Get started on Windows</a>
+    <div class="flex items-center gap-2">
+      <button
+        id="wf-mode-toggle"
+        type="button"
+        aria-label="Toggle light mode"
+        class="hidden h-9 w-9 items-center justify-center rounded-full border border-line text-sm transition-colors hover:bg-white/10 sm:flex"
+        onclick="(()=>{const d=document.documentElement;const next=d.dataset.mode==='light'?'dark':'light';if(next==='light')d.dataset.mode='light';else delete d.dataset.mode;try{localStorage.setItem('wf-mode',next)}catch(e){}})()"
+      >
+        ☾
+      </button>
+      <a href="/download/" class="btn-primary !py-2.5 text-sm">Get started on Windows</a>
+    </div>
   </div>
 </header>

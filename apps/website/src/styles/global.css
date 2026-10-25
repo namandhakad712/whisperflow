@@ -1,38 +1,55 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import "@fontsource/eb-garamond/400.css";
-@import "@fontsource/eb-garamond/400-italic.css";
-@import "@fontsource/eb-garamond/500.css";
-@import "@fontsource/eb-garamond/500-italic.css";
-@import "@fontsource-variable/figtree";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/inter";
 
 @theme {
-  --font-sans: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "EB Garamond", "Iowan Old Style", Georgia, serif;
-  --font-mono: ui-monospace, "Cascadia Code", monospace;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* WhisperFlow editorial palette */
-  --color-bg: #ffffeb;
-  --color-cream: #fffdf9;
-  --color-sage: #e4e4d0;
-  --color-forest: #034f46;
-  --color-forest-deep: #023a33;
-  --color-lavender: #f0d7ff;
-  --color-lavender-deep: #e3b8ff;
-  --color-pink: #ffbcf2;
-  --color-coral: #ff6c4c;
-  --color-amber: #ffa946;
-  --color-ink: #1a1a1a;
-  --color-ink-soft: rgba(26, 26, 26, 0.7);
-  --color-ink-faint: rgba(26, 26, 26, 0.5);
-  --color-line: rgba(26, 26, 26, 0.15);
+  /* NOCTURNE — dark is the default voice */
+  --color-bg: #050505;
+  --color-cream: #0b0c10;
+  --color-sage: #0e1220;
+  --color-forest: #0b1b4d;
+  --color-forest-deep: #07123a;
+  --color-lavender: #1d47ee;
+  --color-lavender-deep: #4c6fff;
+  --color-pink: #8fb0ff;
+  --color-coral: #4c6fff;
+  --color-amber: #8fb0ff;
+  --color-ink: #f5f5f7;
+  --color-ink-soft: rgba(245, 245, 247, 0.62);
+  --color-ink-faint: rgba(245, 245, 247, 0.38);
+  --color-line: rgba(245, 245, 247, 0.1);
 
-  /* legacy aliases keep old classes working */
-  --color-surface: #fffdf9;
-  --color-surface-2: #f4f1e3;
-  --color-accent: #f0d7ff;
-  --color-accent-strong: #e3b8ff;
-  --color-ink-dim: rgba(26, 26, 26, 0.7);
+  /* legacy aliases keep existing classes working */
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-2: rgba(255, 255, 255, 0.06);
+  --color-accent: #2952e3;
+  --color-accent-strong: #4c6fff;
+  --color-ink-dim: rgba(245, 245, 247, 0.62);
+}
+
+/* NOCTURNE DAWN — the same design, at sunrise */
+:root[data-mode="light"] {
+  --color-bg: #f7f7fa;
+  --color-cream: #ffffff;
+  --color-sage: #eef0f6;
+  --color-ink: #0c0d12;
+  --color-ink-soft: rgba(12, 13, 18, 0.62);
+  --color-ink-faint: rgba(12, 13, 18, 0.4);
+  --color-line: rgba(12, 13, 18, 0.1);
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f2f6;
+  --color-ink-dim: rgba(12, 13, 18, 0.62);
+  /* the blue band stays dark — dawn keeps one piece of night */
+  --color-forest: #0b1b4d;
+  --color-lavender: #2952e3;
+  --color-accent: #2952e3;
+  --color-accent-strong: #1d47ee;
 }
 
 html {
@@ -44,39 +61,151 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  font-size: 16px;
 }
 
 .font-display {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 ::selection {
-  background: var(--color-lavender);
+  background: rgba(41, 82, 227, 0.4);
+  color: #fff;
 }
 
-/* ---- flowing squiggle line motif (original path) ---- */
-.squiggle {
-  stroke-dasharray: 6 7;
-  animation: squiggle-dash 30s linear infinite;
-}
-@keyframes squiggle-dash {
-  to {
-    stroke-dashoffset: -260;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .squiggle {
-    animation: none;
-  }
-  html {
-    scroll-behavior: auto;
-  }
+/* thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
 }
 
-/* ---- sticker labels (rotated pill tags) ---- */
+/* ---------- nocturne ornaments ---------- */
+.void-glow {
+  background:
+    radial-gradient(1100px 500px at 70% -8%, rgba(41, 82, 227, 0.2), transparent 60%),
+    radial-gradient(800px 500px at 0% 110%, rgba(41, 82, 227, 0.08), transparent 55%),
+    var(--color-bg);
+}
+
+.serif-em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  background: linear-gradient(100deg, #8fb0ff, #2952e3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glass-panel {
+  background: color-mix(in oklab, var(--color-cream) 86%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  box-shadow: 0 0 60px rgba(41, 82, 227, 0.09);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(100deg, #2952e3, #4c6fff);
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: 0 0 34px rgba(41, 82, 227, 0.45);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 54px rgba(41, 82, 227, 0.65);
+  transform: translateY(-1px);
+}
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  padding: 0.8rem 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.btn-ink:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+:root[data-mode="light"] .btn-ink {
+  background: rgba(12, 13, 18, 0.05);
+}
+:root[data-mode="light"] .btn-ink:hover {
+  background: rgba(12, 13, 18, 0.1);
+}
+.btn-forest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(100deg, #1d47ee, #2952e3);
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: filter 0.15s ease;
+}
+.btn-forest:hover {
+  filter: brightness(1.15);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.8rem 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.btn-ghost:hover {
+  background: rgba(245, 245, 247, 0.07);
+}
+:root[data-mode="light"] .btn-ghost:hover {
+  background: rgba(12, 13, 18, 0.05);
+}
+
+.card {
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--color-cream) 86%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+/* dusk → nocturne horizon */
+.dusk {
+  background:
+    radial-gradient(120% 100% at 50% 130%, rgba(41, 82, 227, 0.5), transparent 60%),
+    linear-gradient(180deg, var(--color-bg) 0%, #07123a 100%);
+}
+
+/* keep old helpers harmless */
+.hero-backdrop {
+  background: var(--color-bg);
+}
+.glass {
+  background: color-mix(in oklab, var(--color-cream) 86%, transparent);
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(12px);
+}
 .sticker {
   display: inline-block;
   transform: rotate(-4deg);
@@ -87,8 +216,6 @@ body {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
-
-/* ---- marquee logo strip ---- */
 .marquee {
   display: flex;
   gap: 3.5rem;
@@ -100,110 +227,24 @@ body {
     transform: translateX(-50%);
   }
 }
-
-/* ---- buttons ---- */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 8px;
-  background: var(--color-lavender);
-  color: var(--color-ink);
-  padding: 0.8rem 1.4rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+.squiggle {
+  stroke-dasharray: 6 7;
+  animation: squiggle-dash 30s linear infinite;
 }
-.btn-primary:hover {
-  background: var(--color-lavender-deep);
-  transform: translateY(-1px);
+@keyframes squiggle-dash {
+  to {
+    stroke-dashoffset: -260;
+  }
 }
-.btn-ink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 8px;
-  background: var(--color-ink);
-  color: var(--color-bg);
-  padding: 0.8rem 1.4rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+@media (prefers-reduced-motion: reduce) {
+  .squiggle,
+  .marquee {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
-.btn-ink:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
-}
-.btn-forest {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 8px;
-  background: var(--color-forest);
-  color: var(--color-bg);
-  padding: 0.8rem 1.4rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-.btn-forest:hover {
-  background: var(--color-forest-deep);
-  transform: translateY(-1px);
-}
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-ink);
-  background: transparent;
-  color: var(--color-ink);
-  padding: 0.8rem 1.4rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition: background 0.15s ease;
-}
-.btn-ghost:hover {
-  background: rgba(26, 26, 26, 0.06);
-}
-
-/* ---- cards ---- */
-.card {
-  border: 1px solid var(--color-line);
-  border-radius: 16px;
-  background: var(--color-cream);
-}
-
-/* ---- dusk CTA band (original gradient scene, no photo assets) ---- */
-.dusk {
-  background:
-    radial-gradient(120% 90% at 20% 100%, rgba(255, 169, 70, 0.5), transparent 55%),
-    radial-gradient(90% 80% at 85% 20%, rgba(3, 79, 70, 0.75), transparent 60%),
-    radial-gradient(140% 120% at 50% 120%, rgba(255, 108, 76, 0.45), transparent 55%),
-    linear-gradient(180deg, #10231f 0%, #1c3a33 45%, #6b4423 100%);
-}
-
-/* ---- legacy helpers kept for older pages ---- */
-.hero-backdrop {
-  background: linear-gradient(180deg, var(--color-sage) 0%, var(--color-bg) 100%);
-}
-.glass {
-  background: var(--color-cream);
-  border: 1px solid var(--color-line);
-  backdrop-filter: none;
-}
-
-/* FAQ answer fade */
 details.faq summary::-webkit-details-marker {
   display: none;
 }
