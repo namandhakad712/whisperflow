@@ -57,11 +57,11 @@ const project = [
         </div>
         <style>{`@keyframes wv{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}`}</style>
       </div>
-      {[
+      {([
         ["Product", product],
         ["Resources", resources],
         ["Project", project],
-      ].map(([title, links]) => (
+      ] as Array<[string, string[][]]>).map(([title, links]) => (
         <div>
           <p class="text-xs font-bold uppercase tracking-widest text-ink-faint">{title}</p>
           <ul class="mt-4 space-y-2.5 text-sm">
