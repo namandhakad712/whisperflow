@@ -1,16 +1,76 @@
+import { useEffect, useState } from "react";
+import type { ModelStatus } from "@whisperflow/shared";
 import { useSettings } from "../store";
 import { Card, PageHeader } from "../../shared/ui";
 
+/** Reference-pattern setup card: progress bar + checklist, wired to REAL app state. */
+function SetupChecklist() {
+  const statuses = useSettings((s) => s.statuses);
+  const config = useSettings((s) => s.config);
+  const loadModels = useSettings((s) => s.loadModels);
+  const [done, setDone] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    void loadModels();
+  }, [loadModels]);
+
+  useEffect(() => {
+    const engineReady = statuses.some((s) => s.entryId === "whisper-bin-x64" && s.state === "downloaded");
+    const modelReady = statuses.some((s) => s.entryId === config?.stt.modelId && s.state === "downloaded");
+    setDone({
+      hotkey: true,
+      models: engineReady && modelReady,
+      dictionary: (config?.dictionary.length ?? 0) > 0,
+      snippet: (config?.commands.length ?? 0) > 0,
+    });
+  }, [statuses, config]);
+
+  const steps: Array<{ id: string; label: string; hint: string; action: () => void; actionLabel: string }> = [
+    { id: "hotkey", label: "Test your hotkey", hint: "Press it anywhere — the overlay appears", action: () => (window.location.hash = "#/shortcuts"), actionLabel: "Open" },
+    { id: "models", label: "Download the engine", hint: "whisper.cpp binary + your transcription model", action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
+    { id: "dictionary", label: "Add dictionary words", hint: "Names and jargon it should never misspell", action: () => (window.location.hash = "#/dictionary"), actionLabel: "Open" },
+    { id: "snippet", label: "Create a snippet", hint: "Text you re-type — email, intro, prompt", action: () => (window.location.hash = "#/commands"), actionLabel: "Open" },
+  ];
+  const completed = steps.filter((s) => done[s.id]).length;
+  const pct = Math.round((completed / steps.length) * 100);
+
+  return (
+    <div className="card mb-6 p-5">
+      <div className="flex items-baseline justify-between">
+        <p className="text-[15px] font-semibold">Set up WhisperFlow</p>
+        <span className="text-xs text-ink-dim">{completed}/{steps.length}</span>
+      </div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
+        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-4 space-y-1">
+        {steps.map((s) => (
+          <div key={s.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2">
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${
+                done[s.id] ? "border-accent bg-accent text-accent-ink" : "border-line text-transparent"
+              }`}
+            >
+              ✓
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className={`text-sm ${done[s.id] ? "text-ink-dim line-through" : "font-medium"}`}>{s.label}</p>
+              <p className="text-xs text-ink-dim">{s.hint}</p>
+            </div>
+            {!done[s.id] && (
+              <button type="button" onClick={s.action} className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-ink">
+                {s.actionLabel}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Reference-measured settings anatomy: rows of [label + value] with a Change button. */
-function ChangeRow({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: React.ReactNode;
-  onChange: () => void;
-}) {
+function ChangeRow({ label, value, onChange }: { label: string; value: React.ReactNode; onChange: () => void }) {
   return (
     <div className="flex items-center justify-between gap-6 px-5 py-5">
       <div className="min-w-0">
@@ -39,7 +99,8 @@ export function GeneralTab() {
 
   return (
     <section>
-      <PageHeader title="General" tagline="The essentials, in one place." />
+      <PageHeader title="Dictation" tagline="The essentials, in one place." />
+      <SetupChecklist />
       <Card className="divide-y divide-line/70 p-0">
         <ChangeRow
           label="Shortcuts"
@@ -124,8 +185,8 @@ export function GeneralTab() {
             aria-checked={config.general.historyEnabled}
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full shadow transition-transform ${
-                config.general.historyEnabled ? "translate-x-[22px] bg-bg" : "translate-x-0.5 bg-bg"
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-bg shadow transition-transform ${
+                config.general.historyEnabled ? "translate-x-[22px]" : "translate-x-0.5"
               }`}
             />
           </button>
