@@ -194,6 +194,21 @@ Astro static output. Original design system (dark, minimal, one accent), pages:
 (index + getting-started + hotkeys + models + privacy), `/pricing` (Free forever core;
 "WhisperFlow Cloud — coming soon"), `/sponsors`. No copied copy, no copied assets.
 
+## Deviations from the original plan (v1 reality)
+
+1. **History = JSON store, not SQLite.** `history.json` with atomic writes (interface is
+   repository-shaped; SQLite is a drop-in later). Rationale: zero hard native deps — npm
+   install works everywhere, including fresh Node releases. (`history/historyStore.ts`)
+2. **Hotkey = press-to-toggle, not hold-to-talk.** Electron's `globalShortcut` exposes no
+   key-up events; true hold-to-talk needs native hooks (roadmap: v0.2 via optional native
+   module). Silence auto-finishes segments, and Esc (registered only during dictation) cancels.
+3. **Mic capture lives in the overlay window** (visible while listening), not a hidden
+   capture window. One fewer window; identical behavior via AudioWorklet at 16 kHz.
+4. `models/recommend()` exists on the engine but is not part of the preload API surface;
+   tiering shows in the catalog UI via tier badges. `node-llama-cpp` and
+   `onnxruntime-node` are **optionalDependencies**, lazy-imported, with graceful fallbacks
+   (offline cleanup / energy VAD).
+
 ## Testing & quality gates
 
 - vitest everywhere. Engine units required: VAD segmentation, resampler, dictionary
