@@ -18,6 +18,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 <html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
+    <base href={import.meta.env.BASE_URL} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
       try {

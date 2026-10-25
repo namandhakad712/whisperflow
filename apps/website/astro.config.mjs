@@ -3,9 +3,10 @@ import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 
-// TODO: point `site` at the real domain before first public deploy.
+// Deployed to GitHub Pages: https://namandhakad712.github.io/whisperflow/
 export default defineConfig({
-  site: "https://whisperflow.dev",
+  site: "https://namandhakad712.github.io",
+  base: "/whisperflow",
   trailingSlash: "ignore",
   integrations: [sitemap()],
   vite: {

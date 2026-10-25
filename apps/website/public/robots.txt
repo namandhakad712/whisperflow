@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://whisperflow.dev/sitemap-index.xml
+Sitemap: https://namandhakad712.github.io/whisperflow/sitemap-index.xml
