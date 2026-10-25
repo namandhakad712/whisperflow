@@ -41,3 +41,4 @@ desktop.ini
 
 # Electron packaging
 apps/desktop/release/
+.playwright-cli/
