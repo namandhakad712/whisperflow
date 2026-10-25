@@ -1,0 +1,65 @@
+---
+import Base from "../layouts/Base.astro";
+import Button from "../components/Button.astro";
+---
+<Base
+  title="Download — WhisperFlow"
+  description="Download WhisperFlow for Windows, or build from source. Free, open-source, Apache-2.0."
+>
+  <section class="hero-backdrop border-b border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Download</h1>
+      <p class="mt-4 max-w-2xl text-lg text-ink-dim">
+        WhisperFlow is in active development toward v0.1. Until the first tagged release,
+        run it from source — it takes about two minutes.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-b border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="rounded-2xl border border-line bg-surface/60 p-8">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🪟</span>
+            <h2 class="text-xl font-bold">Windows</h2>
+          </div>
+          <p class="mt-3 text-sm leading-6 text-ink-dim">
+            Windows 10/11 (x64). The installer with auto-updates ships with the first stable
+            release — grab the GitHub release when it lands, or build from source now.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <Button href="https://github.com/whisperflow/whisperflow/releases">Releases (soon)</Button>
+            <Button href="/docs/getting-started/" variant="ghost">Build from source</Button>
+          </div>
+        </div>
+        <div class="rounded-2xl border border-line bg-surface/60 p-8">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🍎</span>
+            <h2 class="text-xl font-bold">macOS &amp; Linux</h2>
+          </div>
+          <p class="mt-3 text-sm leading-6 text-ink-dim">
+            The engine and UI are cross-platform; packaging for macOS and Linux is on the v0.2
+            roadmap. Contributions welcome — global shortcuts and paste injection are the only
+            platform-specific pieces.
+          </p>
+          <div class="mt-6">
+            <Button href="https://github.com/whisperflow/whisperflow" variant="ghost">Track progress on GitHub</Button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 rounded-2xl border border-line bg-surface/60 p-8">
+        <h2 class="text-lg font-bold">First launch checklist</h2>
+        <ol class="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-ink-dim">
+          <li>Allow microphone access when Windows asks.</li>
+          <li>Pick a model in the built-in manager — it downloads straight from HuggingFace (whisper.cpp binaries included, no compiler needed).</li>
+          <li>Test your hotkey in the onboarding wizard, then dictate anywhere.</li>
+        </ol>
+        <p class="mt-4 text-xs text-ink-dim">
+          Everything is Apache-2.0. No account, no telemetry, no word caps.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>

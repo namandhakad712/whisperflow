@@ -1,0 +1,57 @@
+---
+import Base from "../layouts/Base.astro";
+import Button from "../components/Button.astro";
+---
+<Base
+  title="Sponsors — WhisperFlow"
+  description="Fund free, private voice dictation for everyone. Sponsor WhisperFlow development."
+>
+  <section class="hero-backdrop border-b border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Sponsors</h1>
+      <p class="mt-4 max-w-2xl text-lg text-ink-dim">
+        Your sponsorship keeps WhisperFlow free, private, and actively developed.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-b border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <div class="grid gap-5 md:grid-cols-3">
+        <div class="rounded-2xl border border-line bg-surface/60 p-8">
+          <h2 class="text-lg font-bold">🤝 Individual</h2>
+          <p class="mt-3 text-3xl font-bold">$5<span class="text-base font-normal text-ink-dim">/mo</span></p>
+          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
+            <li>· Name in the sponsors list</li>
+            <li>· Early access to release candidates</li>
+            <li>· Our genuine gratitude</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-line bg-surface/60 p-8">
+          <h2 class="text-lg font-bold">💼 Professional</h2>
+          <p class="mt-3 text-3xl font-bold">$25<span class="text-base font-normal text-ink-dim">/mo</span></p>
+          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
+            <li>· Everything in Individual</li>
+            <li>· Logo on this page</li>
+            <li>· Priority feature requests</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-line bg-surface/60 p-8">
+          <h2 class="text-lg font-bold">🏢 Enterprise</h2>
+          <p class="mt-3 text-3xl font-bold text-ink-dim">Custom</p>
+          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
+            <li>· Private builds &amp; packaging</li>
+            <li>· Integration support</li>
+            <li>· On-site deployment guidance</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-10 text-center">
+        <p class="text-sm text-ink-dim">Sponsorship activates with the first public release — star the repo to be notified.</p>
+        <div class="mt-6 flex justify-center gap-3">
+          <Button href="https://github.com/whisperflow/whisperflow">Star on GitHub</Button>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

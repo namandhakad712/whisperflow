@@ -1,0 +1,34 @@
+---
+import Waveform from "./Waveform.astro";
+---
+{/*
+  Original illustration of the dictation overlay UI — a mock of WhisperFlow's
+  floating pill: waveform while listening, transcript preview, engine status.
+*/}
+<div class="glass mx-auto w-full max-w-xl rounded-2xl p-1 shadow-2xl shadow-black/50">
+  <div class="rounded-xl border border-line/60 bg-surface/90 p-4">
+    <div class="flex items-center gap-3">
+      <span class="relative flex h-2.5 w-2.5">
+        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60"></span>
+        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent"></span>
+      </span>
+      <p class="text-xs font-medium uppercase tracking-widest text-ink-dim">Listening</p>
+      <span class="ml-auto rounded-md border border-line bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-ink-dim">
+        Ctrl+Shift+Space
+      </span>
+    </div>
+    <Waveform class="mt-4" bars={28} />
+    <div class="mt-4 font-mono text-sm">
+      <p class="text-ink-dim">
+        so basically yeah um the overlay shows
+        <span class="ml-1 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-accent/80"></span>
+      </p>
+    </div>
+    <div class="mt-4 flex items-center justify-between rounded-lg border border-line/70 bg-surface-2/60 px-3 py-2">
+      <p class="text-xs text-ink-dim">
+        <span class="text-accent">●</span> whisper.cpp · Qwen 2.5 · <span class="text-ink">local</span>
+      </p>
+      <p class="text-[11px] text-ink-dim">0.42 s</p>
+    </div>
+  </div>
+</div>

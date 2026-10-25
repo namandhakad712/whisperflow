@@ -1,0 +1,38 @@
+---
+import Base from "./Base.astro";
+
+interface Props { title: string; description?: string }
+const { title, description } = Astro.props;
+
+const sections = [
+  { href: "/docs/", label: "Overview" },
+  { href: "/docs/getting-started/", label: "Getting started" },
+  { href: "/docs/hotkeys/", label: "Hotkeys & overlay" },
+  { href: "/docs/models/", label: "Models & hardware" },
+  { href: "/docs/privacy/", label: "Privacy & data" },
+];
+const path = Astro.url.pathname;
+---
+<Base title={`${title} — WhisperFlow Docs`} description={description}>
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[220px_1fr]">
+    <aside>
+      <nav aria-label="Docs" class="space-y-1 lg:sticky lg:top-24">
+        {sections.map((s) => (
+          <a
+            href={s.href}
+            class:list={[
+              "block rounded-lg px-3 py-2 text-sm transition-colors",
+              path === s.href ? "bg-surface-2 font-medium text-ink" : "text-ink-dim hover:text-ink",
+            ]}
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+    </aside>
+    <article class="prose prose-invert prose-headings:scroll-mt-24 max-w-3xl">
+      <h1>{title}</h1>
+      <slot />
+    </article>
+  </div>
+</Base>

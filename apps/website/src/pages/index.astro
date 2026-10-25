@@ -1,0 +1,168 @@
+---
+import Base from "../layouts/Base.astro";
+import Button from "../components/Button.astro";
+import OverlayDemo from "../components/OverlayDemo.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+
+const features = [
+  {
+    icon: "mic",
+    title: "Push-to-talk everywhere",
+    body: "One global hotkey — default Ctrl+Shift+Space — works in any app with a text field. Speak, release, done.",
+  },
+  {
+    icon: "cpu",
+    title: "Runs on your machine",
+    body: "whisper.cpp transcription and an on-device LLM polish your words locally. No audio ever leaves your computer.",
+  },
+  {
+    icon: "wand",
+    title: "AI polish & tones",
+    body: "Filler words removed, punctuation fixed, structure cleaned. Pick a tone — neutral, casual, professional — or write your own instructions.",
+  },
+  {
+    icon: "book",
+    title: "Personal dictionary",
+    body: "Names, jargon, acronyms. Fuzzy correction catches what the model mishears, and the polisher learns your vocabulary.",
+  },
+  {
+    icon: "history",
+    title: "Searchable history",
+    body: "Every dictation stored locally in SQLite. Search it, delete it, or clear it all — it never syncs anywhere.",
+  },
+  {
+    icon: "shield",
+    title: "Local-only lock",
+    body: "Flip one switch and WhisperFlow is physically incapable of making a network request. Auditable, open, Apache-2.0.",
+  },
+];
+
+const steps = [
+  { n: "01", title: "Hold the key", body: "The overlay appears with a live waveform. Start talking — naturally, with all your ums and yeahs." },
+  { n: "02", title: "Speak your mind", body: "Streaming transcription shows words as you say them. Silence detection knows when you're finished." },
+  { n: "03", title: "Get polished text", body: "The local LLM cleans it up, your dictionary fixes names, and the text lands right where your cursor is." },
+];
+---
+<Base>
+  <!-- Hero -->
+  <section class="hero-backdrop relative overflow-hidden">
+    <div class="grid-lines absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl px-4 pb-20 pt-20 sm:px-6 sm:pt-28">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1 text-xs text-ink-dim">
+          <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+          Apache-2.0 · local-first · no telemetry
+        </p>
+        <h1 class="mt-6 text-4xl font-bold tracking-tight sm:text-6xl">
+          Your voice, your models,<br class="hidden sm:block" />
+          <span class="text-accent">your machine.</span>
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-ink-dim">
+          WhisperFlow is open-source AI voice dictation. Hold a key, speak naturally, and get
+          polished text in any app — transcribed and refined entirely on your own hardware by
+          open HuggingFace models. Unlimited words. Zero cloud required.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button href="/download/">Download WhisperFlow</Button>
+          <Button href="/features/" variant="ghost">Explore features</Button>
+        </div>
+        <p class="mt-4 text-xs text-ink-dim">Windows first · macOS &amp; Linux on the roadmap · free forever</p>
+      </div>
+      <div class="relative mx-auto mt-16 max-w-2xl">
+        <div class="absolute -inset-x-8 -top-8 h-40 bg-accent/10 blur-3xl" aria-hidden="true"></div>
+        <OverlayDemo />
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="border-t border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <h2 class="text-center text-3xl font-bold tracking-tight">Three steps, one breath</h2>
+      <div class="mt-12 grid gap-6 md:grid-cols-3">
+        {steps.map((s) => (
+          <div class="rounded-2xl border border-line bg-surface/60 p-6">
+            <p class="font-mono text-sm text-accent">{s.n}</p>
+            <h3 class="mt-3 font-semibold">{s.title}</h3>
+            <p class="mt-2 text-sm leading-6 text-ink-dim">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="border-t border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl font-bold tracking-tight">Everything the closed apps charge for</h2>
+        <p class="mt-4 text-ink-dim">
+          Word caps, subscriptions, cloud processing — none of it is here. Just the features,
+          running on hardware you already own.
+        </p>
+      </div>
+      <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((f) => <FeatureCard icon={f.icon} title={f.title} body={f.body} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison strip -->
+  <section class="border-t border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <h2 class="text-center text-3xl font-bold tracking-tight">Why local-first wins</h2>
+      <div class="mx-auto mt-10 max-w-3xl overflow-hidden rounded-2xl border border-line">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-surface-2/80 text-left text-ink-dim">
+              <th class="px-5 py-3 font-medium"></th>
+              <th class="px-5 py-3 font-medium">Cloud dictation apps</th>
+              <th class="px-5 py-3 font-medium text-accent">WhisperFlow</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line/70">
+            <tr>
+              <td class="px-5 py-3 font-medium">Monthly words</td>
+              <td class="px-5 py-3 text-ink-dim">Capped (e.g. 2,000/week on free tiers)</td>
+              <td class="px-5 py-3 text-accent">Unlimited</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 font-medium">Where audio is processed</td>
+              <td class="px-5 py-3 text-ink-dim">Their servers</td>
+              <td class="px-5 py-3 text-accent">Your device only</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 font-medium">Works offline</td>
+              <td class="px-5 py-3 text-ink-dim">No</td>
+              <td class="px-5 py-3 text-accent">Yes — fully</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 font-medium">Source code</td>
+              <td class="px-5 py-3 text-ink-dim">Closed</td>
+              <td class="px-5 py-3 text-accent">Apache-2.0, auditable</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 font-medium">Price</td>
+              <td class="px-5 py-3 text-ink-dim">$12–15/mo for unlimited</td>
+              <td class="px-5 py-3 text-accent">$0 forever</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="border-t border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
+      <h2 class="text-3xl font-bold tracking-tight">Stop renting your own voice</h2>
+      <p class="mx-auto mt-4 max-w-xl text-ink-dim">
+        Grab the app, download a model, and dictate your first sentence in under five minutes.
+      </p>
+      <div class="mt-8 flex justify-center gap-3">
+        <Button href="/download/">Get WhisperFlow</Button>
+        <Button href="/docs/getting-started/" variant="ghost">Read the docs</Button>
+      </div>
+    </div>
+  </section>
+</Base>

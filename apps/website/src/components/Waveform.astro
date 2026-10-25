@@ -1,0 +1,18 @@
+---
+/** Decorative animated waveform. Pure CSS, respects reduced motion. */
+interface Props { class?: string; bars?: number }
+const { class: className = "", bars = 24 } = Astro.props;
+const heights = Array.from({ length: bars }, (_, i) => {
+  const t = i / (bars - 1);
+  const envelope = Math.sin(t * Math.PI) ** 0.8; // fade at edges
+  return 20 + Math.round(envelope * 80);
+});
+---
+<div class:list={["flex h-14 items-center gap-1.5", className]} aria-hidden="true">
+  {heights.map((h, i) => (
+    <span
+      class="wave-bar w-1.5 rounded-full bg-accent/90"
+      style={`height:${h}%;animation-delay:${(i % 7) * 0.12}s;animation-duration:${0.9 + (i % 5) * 0.13}s`}
+    />
+  ))}
+</div>

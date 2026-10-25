@@ -1,0 +1,62 @@
+---
+import Base from "../layouts/Base.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+import Button from "../components/Button.astro";
+
+const groups = [
+  {
+    heading: "Dictation",
+    items: [
+      { icon: "mic", title: "Global push-to-talk", body: "Ctrl+Shift+Space by default, fully rebindable. Optional toggle mode for hands-free continuous dictation." },
+      { icon: "sliders", title: "Live overlay", body: "A floating pill appears near your cursor: waveform, streaming transcript, polish status. Esc cancels instantly — nothing is injected." },
+      { icon: "wand", title: "Smart polish", body: "The local LLM removes filler, fixes punctuation and capitalization, and structures rambling speech into clean prose." },
+      { icon: "cpu", title: "Tone presets", body: "Neutral, casual, or professional output — plus custom instructions for total control over how your voice gets written down." },
+    ],
+  },
+  {
+    heading: "Accuracy that learns you",
+    items: [
+      { icon: "book", title: "Personal dictionary", body: "Add names, product terms, and acronyms. Fuzzy matching corrects near-misses after transcription, and every entry is injected into the polisher's context." },
+      { icon: "slash", title: "Voice commands", body: "\"Scratch that\" undoes the last dictation out of the box. Define any phrase to insert snippets or replace text." },
+      { icon: "history", title: "Dictation history", body: "Everything you've dictated, stored in a local SQLite database. Search by keyword, replay what you said, delete anything, clear all." },
+    ],
+  },
+  {
+    heading: "Yours, technically",
+    items: [
+      { icon: "shield", title: "Local-only mode", body: "A hard network block enforced at the provider layer. When it's on, WhisperFlow cannot call out — provably." },
+      { icon: "cpu", title: "Model manager", body: "Curated HuggingFace catalog with hardware-tiered recommendations. Download GGUF models with progress and resume, switch them per task, delete anytime." },
+      { icon: "sliders", title: "Open providers", body: "The engine defines clean STT and polish provider interfaces. Local whisper.cpp and llama.cpp ship by default; BYO OpenAI-compatible endpoints if you insist on cloud." },
+    ],
+  },
+];
+---
+<Base
+  title="Features — WhisperFlow"
+  description="Push-to-talk dictation, AI polish, personal dictionary, voice commands, local history and a model manager — all running locally."
+>
+  <section class="hero-backdrop border-b border-line/70">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Features</h1>
+      <p class="mt-4 max-w-2xl text-lg text-ink-dim">
+        The complete dictation loop — capture, transcribe, polish, inject — on your machine,
+        with open models you choose.
+      </p>
+    </div>
+  </section>
+  {groups.map((g) => (
+    <section class="border-b border-line/70">
+      <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <h2 class="text-2xl font-bold tracking-tight">{g.heading}</h2>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {g.items.map((f) => <FeatureCard icon={f.icon} title={f.title} body={f.body} />)}
+        </div>
+      </div>
+    </section>
+  ))}
+  <section>
+    <div class="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
+      <Button href="/download/">Download WhisperFlow</Button>
+    </div>
+  </section>
+</Base>
