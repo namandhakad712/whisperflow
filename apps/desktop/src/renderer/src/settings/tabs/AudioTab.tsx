@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSettings } from "../store";
-import { Card, Row, SectionTitle, Select } from "../../shared/ui";
+import { Card, Row, PageHeader, Select } from "../../shared/ui";
 
 export function AudioTab() {
   const config = useSettings((s) => s.config);
@@ -15,7 +15,7 @@ export function AudioTab() {
 
   return (
     <section>
-      <SectionTitle title="Audio" hint="Microphone and voice-activity detection." />
+      <PageHeader title="Audio" tagline="Hear everything. Miss nothing." explainer="Microphone and voice-activity detection." />
       <Card>
         <Row label="Input device">
           <Select

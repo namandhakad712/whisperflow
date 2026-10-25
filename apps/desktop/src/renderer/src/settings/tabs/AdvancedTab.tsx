@@ -1,22 +1,78 @@
-import { useSettings } from "../store";
-import { Card, Row, SectionTitle, Select, TextInput } from "../../shared/ui";
+import { useState } from "react";
 import type { WhisperFlowConfig } from "@whisperflow/shared";
+import { useSettings } from "../store";
+import { Button, Card, PageHeader, Row, Select, TextInput, Toggle } from "../../shared/ui";
+
+/** Style contexts — reference app's "Make it sound like you" board, mapped to our config:
+ *  each context picks the polish tone; custom instructions override per context. */
+const CONTEXTS = ["Personal messages", "Work messages", "Email", "Other"] as const;
+type Context = (typeof CONTEXTS)[number];
+
+const CONTEXT_TONE: Record<Context, WhisperFlowConfig["polish"]["tone"]> = {
+  "Personal messages": "casual",
+  "Work messages": "professional",
+  Email: "neutral",
+  Other: "custom",
+};
 
 export function AdvancedTab() {
   const config = useSettings((s) => s.config);
   const patch = useSettings((s) => s.patchConfig);
+  const [context, setContext] = useState<Context>("Personal messages");
   if (!config) return null;
 
   const provider = config.polish.provider;
+  const autoCleanup = provider !== "none";
 
   return (
     <section>
-      <SectionTitle
-        title="Advanced"
-        hint="Polish engine and bring-your-own endpoint. The local-only lock (Privacy tab) overrides everything here."
+      <PageHeader
+        title="Style"
+        segmented={[...CONTEXTS]}
+        activeSeg={context}
+        onSegChange={(c) => setContext(c as Context)}
+        tagline="Make WhisperFlow sound like you."
+        explainer="Pick a writing style per context. Say it once — every dictation follows the tone you chose."
       />
+
+      <Card className="mb-5">
+        <Row
+          label="Auto cleanup"
+          hint="Remove filler words and fix punctuation on every dictation."
+        >
+          <Toggle
+            checked={autoCleanup}
+            onChange={(v) => void patch({ polish: { provider: v ? "llama-local" : "none" } })}
+          />
+        </Row>
+        <Row
+          label={`Tone for ${context.toLowerCase()}`}
+          hint={context === "Other" ? "Custom instructions steer the polish model." : undefined}
+        >
+          <span className="rounded-lg bg-surface-2 px-3 py-1.5 text-[13px] font-medium capitalize">
+            {CONTEXT_TONE[context]}
+          </span>
+          <Button
+            variant="ghost"
+            className="ml-2"
+            onClick={() => void patch({ polish: { tone: CONTEXT_TONE[context] } })}
+          >
+            Start now
+          </Button>
+        </Row>
+        {context === "Other" && (
+          <div className="border-t border-line/60 pt-4">
+            <TextInput
+              value={config.polish.customInstructions}
+              onChange={(v) => void patch({ polish: { customInstructions: v } })}
+              placeholder="e.g. Keep it terse, bullet points, no greetings"
+            />
+          </div>
+        )}
+      </Card>
+
       <Card>
-        <Row label="Polish provider" hint="Local llama.cpp (default) or any OpenAI-compatible endpoint.">
+        <Row label="Polish engine" hint="Local llama.cpp (default) or any OpenAI-compatible endpoint.">
           <Select
             value={provider}
             onChange={(v) =>
@@ -29,7 +85,6 @@ export function AdvancedTab() {
             ]}
           />
         </Row>
-
         {provider === "llama-local" && (
           <Row label="Temperature" hint="Lower is more faithful to what you said.">
             <input
@@ -39,16 +94,15 @@ export function AdvancedTab() {
               step={0.05}
               value={config.polish.temperature}
               onChange={(e) => void patch({ polish: { temperature: Number(e.target.value) } })}
-              className="w-48 accent-[var(--color-accent)]"
+              className="w-48"
             />
           </Row>
         )}
-
         {provider === "openai-compat" && (
           <div className="space-y-3 border-t border-line/60 pt-4">
             <p className="text-xs text-ink-dim">
-              Point at Groq, OpenRouter, Ollama, vLLM — anything speaking the OpenAI chat format.
-              Requires the local-only lock to be OFF.
+              Groq, OpenRouter, Ollama, vLLM — anything speaking the OpenAI chat format.
+              Requires the local-only lock (Privacy) to be OFF.
             </p>
             <TextInput
               value={config.polish.remote.baseUrl}
@@ -58,7 +112,7 @@ export function AdvancedTab() {
             <TextInput
               value={config.polish.remote.model}
               onChange={(v) => void patch({ polish: { remote: { model: v } } })}
-              placeholder="model id, e.g. llama-3.3-70b-versatile"
+              placeholder="model id"
             />
             <TextInput
               type="password"

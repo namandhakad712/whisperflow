@@ -1,5 +1,5 @@
 import { useSettings } from "../store";
-import { Card, Row, SectionTitle, Select, TextInput, Toggle } from "../../shared/ui";
+import { Card, Row, PageHeader, Select, TextInput, Toggle } from "../../shared/ui";
 import type { ToneId } from "@whisperflow/shared";
 
 const LANGUAGES = [
@@ -31,7 +31,11 @@ export function GeneralTab() {
 
   return (
     <section>
-      <SectionTitle title="General" hint="Everyday behavior of the app." />
+      <PageHeader
+        title="Dictation"
+        tagline="Talk like you. Type like a pro."
+        explainer="Everyday behavior of the dictation engine — startup, overlay, language, and history."
+      />
       <Card>
         <Row label="Start with Windows" hint="Runs hidden in the tray.">
           <Toggle
@@ -62,31 +66,6 @@ export function GeneralTab() {
           />
         </Row>
       </Card>
-
-      <div className="mt-6">
-        <SectionTitle title="Polish tone" hint="How the AI rewrites your speech." />
-        <Card>
-          <Row label="Tone preset">
-            <Select
-              value={config.polish.tone}
-              onChange={(v) => void patch({ polish: { tone: v as ToneId } })}
-              options={TONES}
-            />
-          </Row>
-          {config.polish.tone === "custom" && (
-            <div className="pt-4">
-              <TextInput
-                value={config.polish.customInstructions}
-                onChange={(v) => void patch({ polish: { customInstructions: v } })}
-                placeholder="e.g. Keep it terse, bullet points, no greetings"
-              />
-              <p className="mt-2 text-xs text-ink-dim">
-                These instructions replace the tone preset. Meaning is always preserved.
-              </p>
-            </div>
-          )}
-        </Card>
-      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
-import { Button, Card, EmptyState, SectionTitle, TextInput } from "../../shared/ui";
+import { Button, Card, EmptyState, PageHeader, TextInput } from "../../shared/ui";
 import { formatDuration, formatRelative } from "../../shared/format";
 
 export function HistoryTab() {
@@ -16,7 +16,7 @@ export function HistoryTab() {
 
   return (
     <section>
-      <SectionTitle title="History" hint="Every dictation, stored locally in your user profile. Never synced anywhere." />
+      <PageHeader title="History" tagline="Everything you said, only on your machine." explainer="Every dictation, stored locally. Never synced anywhere." />
       <div className="mb-4 flex gap-2">
         <TextInput
           value={query}

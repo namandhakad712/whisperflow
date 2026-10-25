@@ -164,3 +164,49 @@ export function Kbd({ children }: { children: ReactNode }) {
     </kbd>
   );
 }
+
+/** Reference hub page header: H1 + action buttons, optional segmented filter + tagline. */
+export function PageHeader({
+  title,
+  actions,
+  segmented,
+  tagline,
+  explainer,
+  activeSeg,
+  onSegChange,
+}: {
+  title: string;
+  actions?: ReactNode;
+  segmented?: string[];
+  tagline?: string;
+  explainer?: string;
+  activeSeg?: string;
+  onSegChange?: (v: string) => void;
+}) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-display text-2xl leading-tight">{title}</h1>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </div>
+      {segmented && (
+        <div className="mt-4 inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
+          {segmented.map((seg) => (
+            <button
+              key={seg}
+              type="button"
+              onClick={() => onSegChange?.(seg)}
+              className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                seg === activeSeg ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
+              }`}
+            >
+              {seg}
+            </button>
+          ))}
+        </div>
+      )}
+      {tagline && <p className="font-display mt-4 text-xl">{tagline}</p>}
+      {explainer && <p className="mt-1.5 max-w-lg text-[13px] leading-6 text-ink-dim">{explainer}</p>}
+    </div>
+  );
+}

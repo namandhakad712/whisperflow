@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useSettings, addDictionaryEntry, removeDictionaryEntry } from "../store";
-import { Button, Card, EmptyState, SectionTitle, TextInput } from "../../shared/ui";
+import { Button, EmptyState, PageHeader, TextInput } from "../../shared/ui";
 
 export function DictionaryTab() {
   const config = useSettings((s) => s.config);
   const loadConfig = useSettings((s) => s.loadConfig);
   const [term, setTerm] = useState("");
+  const [filter, setFilter] = useState("All");
   if (!config) return null;
 
   const add = () => {
@@ -15,48 +16,69 @@ export function DictionaryTab() {
     void addDictionaryEntry(clean).then(loadConfig);
   };
 
+  const entries = config.dictionary.filter((e) =>
+    filter === "All" ? true : filter === "Personal" ? !e.hint?.includes("team") : true,
+  );
+
   return (
     <section>
-      <SectionTitle
-        title="Personal dictionary"
-        hint="Names, jargon, brand spellings. WhisperFlow fuzzy-corrects near-misses after transcription and tells the polish model your exact spellings."
+      <PageHeader
+        title="Dictionary"
+        actions={<Button onClick={add} disabled={!term.trim()}>Add new</Button>}
+        segmented={["All", "Personal"]}
+        activeSeg={filter}
+        onSegChange={setFilter}
+        tagline="WhisperFlow spells the way you do."
+        explainer="Correct a spelling once or add it here manually, so your personal terms, project jargon, or uncommon names come out right in every dictation."
       />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-5 flex gap-2">
         <TextInput
           value={term}
           onChange={setTerm}
-          placeholder='Add a term, e.g. "WhisperFlow" or "Azure Kubernetes"'
+          placeholder="Add new word — a name, acronym, or correction (word → replacement)"
           onKeyDown={(e) => e.key === "Enter" && add()}
         />
-        <Button onClick={add} disabled={!term.trim()}>
-          Add
-        </Button>
       </div>
-      {config.dictionary.length === 0 ? (
+      {entries.length === 0 ? (
         <EmptyState
           icon="📖"
-          title="No terms yet"
+          title="No words yet"
           body="Add the words you say often that models keep misspelling — people's names are the classic case."
         />
       ) : (
-        <Card className="divide-y divide-line/60 p-0">
-          {config.dictionary.map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between px-5 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{entry.term}</p>
-                {entry.hint && <p className="truncate text-xs text-ink-dim">{entry.hint}</p>}
-              </div>
-              <button
-                type="button"
-                onClick={() => void removeDictionaryEntry(entry).then(loadConfig)}
-                className="rounded-md px-2 py-1 text-xs text-ink-dim transition-colors hover:bg-surface-2 hover:text-red-400"
-                aria-label={`Delete ${entry.term}`}
+        <div className="flex flex-wrap gap-2">
+          {entries.map((entry) => {
+            const [from, to] = entry.term.split("→").map((p) => p.trim());
+            return (
+              <span
+                key={entry.id}
+                className="group flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm"
               >
-                Delete
-              </button>
-            </div>
-          ))}
-        </Card>
+                <span className="font-medium">{from}</span>
+                {to && (
+                  <>
+                    <span className="text-ink-dim">→</span>
+                    <span className="text-ink-dim">{to}</span>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void removeDictionaryEntry(entry).then(loadConfig)}
+                  className="rounded p-0.5 text-ink-dim opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+                  aria-label={`Remove ${entry.term}`}
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+      {entries.length > 0 && (
+        <p className="mt-5 text-xs leading-5 text-ink-dim">
+          Fuzzy correction catches near-misses automatically after transcription, and every term
+          is passed to the polish model as context.
+        </p>
       )}
     </section>
   );

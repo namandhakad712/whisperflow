@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { ModelCatalogEntry, ModelRole } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Button, Card, SectionTitle, Spinner } from "../../shared/ui";
+import { Button, Card, PageHeader, Spinner } from "../../shared/ui";
 import { formatBytes } from "../../shared/format";
 
 const GROUPS: Array<{ role: ModelRole | "binary"; title: string; hint: string }> = [
@@ -50,9 +50,10 @@ export function ModelsTab() {
 
   return (
     <section>
-      <SectionTitle
+      <PageHeader
         title="Models"
-        hint="Everything downloads straight from HuggingFace / whisper.cpp releases to your machine. No accounts, no clouds."
+        tagline="Open weights, straight to your machine."
+        explainer="Everything downloads from HuggingFace / whisper.cpp releases. No accounts, no clouds."
       />
       {groups.map((group) =>
         group.entries.length === 0 ? null : (
