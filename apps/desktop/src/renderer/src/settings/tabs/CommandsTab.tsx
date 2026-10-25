@@ -38,7 +38,7 @@ export function CommandsTab() {
     <section>
       <PageHeader
         title="Snippets"
-        actions={<Button onClick={add} disabled={!phrase.trim()}>Add new</Button>}
+        actions={<><Button variant="ghost" onClick={() => void loadConfig()}>Import</Button><Button onClick={add} disabled={!phrase.trim()}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}

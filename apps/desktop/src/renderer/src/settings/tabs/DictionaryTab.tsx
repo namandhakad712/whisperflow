@@ -24,7 +24,7 @@ export function DictionaryTab() {
     <section>
       <PageHeader
         title="Dictionary"
-        actions={<Button onClick={add} disabled={!term.trim()}>Add new</Button>}
+        actions={<><Button variant="ghost" onClick={() => void loadConfig()}>Import</Button><Button onClick={add} disabled={!term.trim()}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}
