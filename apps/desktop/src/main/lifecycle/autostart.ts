@@ -8,7 +8,6 @@ export function applyLaunchAtLogin(enabled: boolean): void {
   if (!app.isPackaged) return;
   app.setLoginItemSettings({
     openAtLogin: enabled,
-    openAsHidden: true,
     path: process.execPath,
     args: ["--hidden"],
   });

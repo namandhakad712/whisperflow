@@ -1,4 +1,5 @@
-import { BrowserWindow, screen, shell, WebContents } from "electron";
+import { BrowserWindow, screen, shell } from "electron";
+import type { WebContents } from "electron";
 import { join } from "node:path";
 
 /**
@@ -59,7 +60,7 @@ export class WindowManager {
   /** Shows the frameless overlay pill near a point (defaults to cursor), without stealing focus. */
   showOverlay(near?: { x: number; y: number }): void {
     const win = this.ensureOverlay();
-    const [w, h] = win.getSize();
+    const [w = 520, h = 148] = win.getSize();
     const point = near ?? screen.getCursorScreenPoint();
     const display = screen.getDisplayNearestPoint(point);
     const bx = Math.min(

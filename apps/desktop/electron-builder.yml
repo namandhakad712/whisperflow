@@ -7,7 +7,7 @@ directories:
   buildResources: resources
 
 files:
-  - dist/**
+  - out/**
   - resources/**
 
 # Workspace deps + native modules (better-sqlite3) are resolved from node_modules

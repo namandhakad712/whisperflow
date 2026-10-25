@@ -3,55 +3,36 @@ import { spawn } from "node:child_process";
 
 /**
  * Pastes text into the focused window on Windows:
- * snapshot clipboard (all formats we can preserve) → write our text → send
- * Ctrl+V via PowerShell SendKeys → restore the snapshot.
+ * snapshot the clipboard (as items) → write our text → send Ctrl+V via
+ * PowerShell SendKeys → restore the snapshot.
+ *
+ * Electron 45's clipboard API is async and item-based; snapshotting whole
+ * ClipboardItems preserves whatever formats were there (text, images, files).
  */
 export async function injectText(text: string): Promise<boolean> {
   if (!text) return false;
 
-  const snapshot = snapshotClipboard();
-  clipboard.writeText(text);
+  let snapshot: Electron.ClipboardItem[] = [];
+  try {
+    snapshot = await clipboard.read();
+  } catch {
+    snapshot = [];
+  }
+
+  await clipboard.writeText(text);
   try {
     await sendPaste();
     // Give the target app a beat to read the clipboard before we restore it.
     await delay(160);
     return true;
   } finally {
-    restoreClipboard(snapshot);
+    try {
+      if (snapshot.length > 0) await clipboard.write(snapshot);
+      else clipboard.clear();
+    } catch {
+      /* restoring is best-effort */
+    }
   }
-}
-
-interface ClipboardSnapshot {
-  text: string | null;
-  html: string | null;
-  rtf: string | null;
-  image: Electron.NativeImage | null;
-}
-
-function snapshotClipboard(): ClipboardSnapshot {
-  const image = clipboard.readImage();
-  return {
-    text: clipboard.readText() || null,
-    html: clipboard.readHTML() || null,
-    rtf: clipboard.readRTF() || null,
-    image: image.isEmpty() ? null : image,
-  };
-}
-
-function restoreClipboard(s: ClipboardSnapshot): void {
-  if (s.image) {
-    clipboard.writeImage(s.image);
-    return;
-  }
-  if (!s.text && !s.html && !s.rtf) {
-    clipboard.clear();
-    return;
-  }
-  clipboard.write({
-    text: s.text ?? "",
-    html: s.html ?? "",
-    rtf: s.rtf ?? "",
-  });
 }
 
 function sendPaste(): Promise<void> {

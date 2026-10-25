@@ -1,18 +1,18 @@
-import { app, ipcMain } from "electron";
+import { app, ipcMain, type Tray } from "electron";
+import { randomUUID } from "node:crypto";
+import { IPC, type DictionaryEntry, type VoiceCommand } from "@whisperflow/shared";
 import type { EnginePort } from "../engine/enginePort";
 import type { DictationController } from "../audio/dictationController";
 import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
-import type { Tray } from "electron";
 import { applyLaunchAtLogin } from "../lifecycle/autostart";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
 
 /**
- * Registers every IPC channel from docs/ARCHITECTURE.md. Channel names are
- * literals by design: shared/src/ipc.ts is the canonical list; keeping them
- * literal here would surface drift loudly in review.
+ * Registers every IPC channel from the contract (packages/shared ipc.ts).
+ * Handlers speak the shared request/response shapes verbatim.
  */
 export function registerIpc(deps: {
   engine: EnginePort;
@@ -25,86 +25,117 @@ export function registerIpc(deps: {
   const { engine, controller, windows, hotkeys } = deps;
 
   // ---- dictation -----------------------------------------------------------
-  ipcMain.handle("dictation/toggle", () => {
+  ipcMain.handle(IPC.DictationToggle, () => {
+    const started = !controller.active;
     void controller.toggle();
-    return { ok: true };
+    return { started };
   });
-  ipcMain.handle("dictation/start", () => {
+  ipcMain.handle(IPC.DictationStart, () => {
     void controller.start();
-    return { ok: true };
   });
-  ipcMain.handle("dictation/stop", () => {
+  ipcMain.handle(IPC.DictationStop, () => {
     void controller.finish();
-    return { ok: true };
   });
   ipcMain.handle("dictation/cancel", () => {
     controller.cancel();
     return { ok: true };
   });
-  ipcMain.on("capture/pcm", (event, chunk: Float32Array) => {
-    if (!(event.sender === windows.overlayWeb()) || !(chunk instanceof Float32Array)) return;
+  ipcMain.on(IPC.CapturePcm, (event, chunk: Float32Array) => {
+    if (event.sender !== windows.overlayWeb() || !(chunk instanceof Float32Array)) return;
     controller.feed(chunk);
   });
 
-  // ---- settings & config-backed collections --------------------------------
-  ipcMain.handle("settings/get", () => engine.getConfig());
-  ipcMain.handle("settings/set", (_e, patch: Record<string, unknown>) => engine.setConfig(patch ?? {}));
+  // ---- settings --------------------------------------------------------------
+  ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
+  ipcMain.handle(IPC.SettingsSet, (_e, patch) => engine.setConfig(patch ?? {}));
 
-  const collection = <T extends { id: string }>(key: "dictionary" | "commands") => ({
-    list: () => engine.getConfig().then((c) => (c[key] ?? []) as T[]),
-    add: async (item: T) => {
-      const c = await engine.getConfig();
-      const next = [...((c[key] ?? []) as T[]), item];
-      return engine.setConfig({ [key]: next }) as Promise<{ dictionary?: T[]; commands?: T[] }>;
-    },
-    update: async (item: T) => {
-      const c = await engine.getConfig();
-      const next = ((c[key] ?? []) as T[]).map((x) => (x.id === item.id ? item : x));
-      return engine.setConfig({ [key]: next }) as Promise<{ dictionary?: T[]; commands?: T[] }>;
-    },
-    delete: async (id: string) => {
-      const c = await engine.getConfig();
-      const next = ((c[key] ?? []) as T[]).filter((x) => x.id !== id);
-      return engine.setConfig({ [key]: next }) as Promise<{ dictionary?: T[]; commands?: T[] }>;
-    },
-  });
-  const dictionary = collection<{ id: string; term: string; pronunciation?: string; hint?: string }>("dictionary");
-  const commands = collection<{ id: string; phrase: string; action: "undo" | "insert" | "replace"; payload?: string }>("commands");
-
-  ipcMain.handle("dictionary/list", () => dictionary.list());
-  ipcMain.handle("dictionary/add", (_e, item) => dictionary.add(item));
-  ipcMain.handle("dictionary/update", (_e, item) => dictionary.update(item));
-  ipcMain.handle("dictionary/delete", (_e, id: string) => dictionary.delete(id));
-
-  ipcMain.handle("commands/list", () => commands.list());
-  ipcMain.handle("commands/add", (_e, item) => commands.add(item));
-  ipcMain.handle("commands/update", (_e, item) => commands.update(item));
-  ipcMain.handle("commands/delete", (_e, id: string) => commands.delete(id));
-
-  // ---- history --------------------------------------------------------------
-  ipcMain.handle("history/list", (_e, opts?: { query?: string; limit?: number }) =>
-    engine.listHistory(opts?.query, opts?.limit ?? 200),
+  // ---- dictionary (id generation lives here; engine just persists config) ----
+  ipcMain.handle(IPC.DictionaryList, () =>
+    engine.getConfig().then((c) => c.dictionary as DictionaryEntry[]),
   );
-  ipcMain.handle("history/delete", (_e, id: string) => engine.deleteHistory(id));
-  ipcMain.handle("history/clear", () => engine.clearHistory());
-
-  // ---- models ----------------------------------------------------------------
-  ipcMain.handle("models/catalog", () => engine.modelCatalog());
-  ipcMain.handle("models/download", (_e, id: string) =>
-    engine.downloadModel(id, (p) => windows.sendToSettings("models/progress", p)),
-  );
-  ipcMain.handle("models/delete", (_e, id: string) => engine.deleteModel(id));
-  ipcMain.handle("models/setActive", (_e, role: "stt" | "polish", id: string) => engine.setActiveModel(role, id));
-
-  // ---- app lifecycle ----------------------------------------------------------
-  ipcMain.handle("app/version", () => app.getVersion());
-  ipcMain.handle("app/openSettings", (_e, route?: string) => {
-    windows.createSettingsWindow(route ?? "");
-    return { ok: true };
+  ipcMain.handle(IPC.DictionaryAdd, async (_e, req: { term: string; pronunciation?: string; hint?: string }) => {
+    const entry: DictionaryEntry = {
+      id: randomUUID(),
+      term: req.term,
+      ...(req.pronunciation ? { pronunciation: req.pronunciation } : {}),
+      ...(req.hint ? { hint: req.hint } : {}),
+    };
+    const config = await engine.getConfig();
+    await engine.setConfig({ dictionary: [...config.dictionary, entry] });
+    return entry;
   });
-  ipcMain.handle("app/quit", () => {
+  ipcMain.handle(IPC.DictionaryUpdate, async (_e, req: { id: string; term?: string; pronunciation?: string; hint?: string }) => {
+    const config = await engine.getConfig();
+    const next = config.dictionary.map((d): DictionaryEntry =>
+      d.id === req.id
+        ? {
+            ...d,
+            ...(req.term !== undefined ? { term: req.term } : {}),
+            ...(req.pronunciation !== undefined ? { pronunciation: req.pronunciation } : {}),
+            ...(req.hint !== undefined ? { hint: req.hint } : {}),
+          }
+        : d,
+    );
+    await engine.setConfig({ dictionary: next });
+    return next.find((d) => d.id === req.id)!;
+  });
+  ipcMain.handle(IPC.DictionaryDelete, async (_e, req: { id: string }) => {
+    const config = await engine.getConfig();
+    await engine.setConfig({ dictionary: config.dictionary.filter((d) => d.id !== req.id) });
+    return { deleted: true };
+  });
+
+  // ---- commands ----------------------------------------------------------------
+  ipcMain.handle(IPC.CommandsList, () => engine.getConfig().then((c) => c.commands as VoiceCommand[]));
+  ipcMain.handle(IPC.CommandsAdd, async (_e, req: { phrase: string; action: VoiceCommand["action"]; payload?: string }) => {
+    const command: VoiceCommand = { id: randomUUID(), phrase: req.phrase, action: req.action, ...(req.payload ? { payload: req.payload } : {}) };
+    const config = await engine.getConfig();
+    await engine.setConfig({ commands: [...config.commands, command] });
+    return command;
+  });
+  ipcMain.handle(IPC.CommandsUpdate, async (_e, req: { id: string; phrase?: string; action?: VoiceCommand["action"]; payload?: string }) => {
+    const config = await engine.getConfig();
+    const next = config.commands.map((c): VoiceCommand =>
+      c.id === req.id
+        ? {
+            ...c,
+            ...(req.phrase !== undefined ? { phrase: req.phrase } : {}),
+            ...(req.action !== undefined ? { action: req.action } : {}),
+            ...(req.payload !== undefined ? { payload: req.payload } : {}),
+          }
+        : c,
+    );
+    await engine.setConfig({ commands: next });
+    return next.find((c) => c.id === req.id)!;
+  });
+  ipcMain.handle(IPC.CommandsDelete, async (_e, req: { id: string }) => {
+    const config = await engine.getConfig();
+    await engine.setConfig({ commands: config.commands.filter((c) => c.id !== req.id) });
+    return { deleted: true };
+  });
+
+  // ---- history -------------------------------------------------------------------
+  ipcMain.handle(IPC.HistoryList, (_e, req?: { query?: string; limit?: number }) => engine.listHistory(req));
+  ipcMain.handle(IPC.HistoryDelete, async (_e, req: { id: string }) => ({ deleted: await engine.deleteHistory(req.id) }));
+  ipcMain.handle(IPC.HistoryClear, async () => ({ cleared: await engine.clearHistory() }));
+
+  // ---- models ---------------------------------------------------------------------
+  ipcMain.handle(IPC.ModelsCatalog, () => engine.modelCatalog());
+  ipcMain.handle(IPC.ModelsStatus, () => engine.modelStatus());
+  ipcMain.handle(IPC.ModelsDownload, (_e, req: { id: string }) =>
+    engine.downloadModel(req.id, (p) => windows.sendToSettings(IPC.ModelsProgress, p)),
+  );
+  ipcMain.handle(IPC.ModelsDelete, (_e, req: { id: string }) => engine.deleteModel(req.id));
+  ipcMain.handle(IPC.ModelsSetActive, (_e, req: { role: "stt" | "polish"; id: string }) => engine.setActiveModel(req.role, req.id));
+
+  // ---- app lifecycle ----------------------------------------------------------------
+  ipcMain.handle(IPC.AppVersion, () => app.getVersion());
+  ipcMain.handle(IPC.AppOpenSettings, (_e, req?: { tab?: string }) => {
+    windows.createSettingsWindow(req?.tab ? `/${req.tab}` : "");
+  });
+  ipcMain.handle(IPC.AppQuit, () => {
     deps.onQuit();
-    return { ok: true };
+    return undefined;
   });
   ipcMain.handle("app/setLaunchAtLogin", (_e, enabled: boolean) => {
     applyLaunchAtLogin(enabled);

@@ -1,92 +1,84 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { IPC, type Unsubscribe, type WhisperflowApi } from "@whisperflow/shared";
 
 /**
- * The single typed bridge into main. Renderers never touch ipcRenderer directly.
- * Channel names mirror docs/ARCHITECTURE.md (canonical: packages/shared ipc.ts).
+ * The single typed bridge into main — implements @whisperflow/shared's
+ * WhisperflowApi verbatim. Renderers never touch ipcRenderer directly.
  */
-function subscribe<T>(channel: string, cb: (payload: T) => void): () => void {
+function subscribe<T>(channel: string, cb: (payload: T) => void): Unsubscribe {
   const listener = (_e: Electron.IpcRendererEvent, payload: T) => cb(payload);
   ipcRenderer.on(channel, listener);
   return () => ipcRenderer.removeListener(channel, listener);
 }
 
-const api = {
-  app: {
-    version: () => ipcRenderer.invoke("app/version") as Promise<string>,
-    openSettings: (route?: string) => ipcRenderer.invoke("app/openSettings", route) as Promise<{ ok: boolean }>,
-    quit: () => ipcRenderer.invoke("app/quit") as Promise<{ ok: boolean }>,
-    setLaunchAtLogin: (enabled: boolean) => ipcRenderer.invoke("app/setLaunchAtLogin", enabled) as Promise<void>,
-    rebindHotkey: (accelerator: string) => ipcRenderer.invoke("app/rebindHotkey", accelerator) as Promise<{ ok: boolean }>,
-    onNavigate: (cb: (route: string) => void) => subscribe<string>("app/navigate", cb),
-  },
+const api: WhisperflowApi = {
   dictation: {
-    toggle: () => ipcRenderer.invoke("dictation/toggle") as Promise<{ ok: boolean }>,
-    start: () => ipcRenderer.invoke("dictation/start") as Promise<{ ok: boolean }>,
-    stop: () => ipcRenderer.invoke("dictation/stop") as Promise<{ ok: boolean }>,
-    cancel: () => ipcRenderer.invoke("dictation/cancel") as Promise<{ ok: boolean }>,
-    onState: (cb: (ev: DictationStateEvent) => void) => subscribe<DictationStateEvent>("dictation/state", cb),
+    toggle: () => ipcRenderer.invoke(IPC.DictationToggle),
+    start: () => ipcRenderer.invoke(IPC.DictationStart),
+    stop: () => ipcRenderer.invoke(IPC.DictationStop),
+    onState: (listener) => subscribe(IPC.DictationState, listener),
   },
   settings: {
-    get: () => ipcRenderer.invoke("settings/get") as Promise<Record<string, unknown>>,
-    set: (patch: Record<string, unknown>) => ipcRenderer.invoke("settings/set", patch) as Promise<Record<string, unknown>>,
+    get: () => ipcRenderer.invoke(IPC.SettingsGet),
+    set: (patch) => ipcRenderer.invoke(IPC.SettingsSet, patch),
   },
   history: {
-    list: (opts?: { query?: string; limit?: number }) =>
-      ipcRenderer.invoke("history/list", opts) as Promise<unknown[]>,
-    delete: (id: string) => ipcRenderer.invoke("history/delete", id) as Promise<void>,
-    clear: () => ipcRenderer.invoke("history/clear") as Promise<void>,
+    list: (query) => ipcRenderer.invoke(IPC.HistoryList, query),
+    delete: (request) => ipcRenderer.invoke(IPC.HistoryDelete, request),
+    clear: () => ipcRenderer.invoke(IPC.HistoryClear),
   },
   dictionary: {
-    list: () => ipcRenderer.invoke("dictionary/list") as Promise<DictionaryEntry[]>,
-    add: (item: DictionaryEntry) => ipcRenderer.invoke("dictionary/add", item) as Promise<unknown>,
-    update: (item: DictionaryEntry) => ipcRenderer.invoke("dictionary/update", item) as Promise<unknown>,
-    delete: (id: string) => ipcRenderer.invoke("dictionary/delete", id) as Promise<unknown>,
+    list: () => ipcRenderer.invoke(IPC.DictionaryList),
+    add: (request) => ipcRenderer.invoke(IPC.DictionaryAdd, request),
+    update: (request) => ipcRenderer.invoke(IPC.DictionaryUpdate, request),
+    delete: (request) => ipcRenderer.invoke(IPC.DictionaryDelete, request),
   },
   commands: {
-    list: () => ipcRenderer.invoke("commands/list") as Promise<VoiceCommand[]>,
-    add: (item: VoiceCommand) => ipcRenderer.invoke("commands/add", item) as Promise<unknown>,
-    update: (item: VoiceCommand) => ipcRenderer.invoke("commands/update", item) as Promise<unknown>,
-    delete: (id: string) => ipcRenderer.invoke("commands/delete", id) as Promise<unknown>,
+    list: () => ipcRenderer.invoke(IPC.CommandsList),
+    add: (request) => ipcRenderer.invoke(IPC.CommandsAdd, request),
+    update: (request) => ipcRenderer.invoke(IPC.CommandsUpdate, request),
+    delete: (request) => ipcRenderer.invoke(IPC.CommandsDelete, request),
   },
   models: {
-    catalog: () => ipcRenderer.invoke("models/catalog") as Promise<unknown[]>,
-    download: (id: string) => ipcRenderer.invoke("models/download", id) as Promise<void>,
-    delete: (id: string) => ipcRenderer.invoke("models/delete", id) as Promise<void>,
-    setActive: (role: "stt" | "polish", id: string) => ipcRenderer.invoke("models/setActive", role, id) as Promise<unknown>,
-    onProgress: (cb: (p: ModelDownloadProgress) => void) => subscribe<ModelDownloadProgress>("models/progress", cb),
+    catalog: () => ipcRenderer.invoke(IPC.ModelsCatalog),
+    status: () => ipcRenderer.invoke(IPC.ModelsStatus),
+    download: (request) => ipcRenderer.invoke(IPC.ModelsDownload, request),
+    delete: (request) => ipcRenderer.invoke(IPC.ModelsDelete, request),
+    setActive: (request) => ipcRenderer.invoke(IPC.ModelsSetActive, request),
+    onProgress: (listener) => subscribe(IPC.ModelsProgress, listener),
+  },
+  audio: {
+    // Runs in the renderer world where mediaDevices lives — no IPC needed.
+    devices: async () => {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      return devices
+        .filter((d) => d.kind === "audioinput")
+        .map((d) => ({ deviceId: d.deviceId, label: d.label || d.deviceId }));
+    },
+  },
+  app: {
+    openSettings: (request) => ipcRenderer.invoke(IPC.AppOpenSettings, request),
+    quit: () => ipcRenderer.invoke(IPC.AppQuit),
+    version: () => ipcRenderer.invoke(IPC.AppVersion),
   },
   capture: {
     /** 16 kHz mono Float32 PCM chunk from the overlay's AudioWorklet. */
-    sendPcm: (chunk: Float32Array) => ipcRenderer.send("capture/pcm", chunk),
+    sendPcm: (chunk) => ipcRenderer.send(IPC.CapturePcm, chunk),
   },
 };
 
-export type PreloadApi = typeof api;
-
 contextBridge.exposeInMainWorld("whisperflow", api);
 
-// ---- shapes (kept local + structural; canonical types live in @whisperflow/shared)
-export interface DictationStateEvent {
-  state: "idle" | "listening" | "transcribing" | "polishing" | "injecting" | "done" | "cancelled" | "error";
-  partial?: string;
-  error?: string;
-}
-export interface DictionaryEntry {
-  id: string;
-  term: string;
-  pronunciation?: string;
-  hint?: string;
-}
-export interface VoiceCommand {
-  id: string;
-  phrase: string;
-  action: "undo" | "insert" | "replace";
-  payload?: string;
-}
-export interface ModelDownloadProgress {
-  id: string;
-  receivedBytes: number;
-  totalBytes: number;
-  done: boolean;
-  error?: string;
-}
+// Non-contract extras (cancel button on the overlay, tray-driven actions).
+const extras = {
+  dictation: {
+    cancel: () => ipcRenderer.invoke("dictation/cancel"),
+  },
+  app: {
+    setLaunchAtLogin: (enabled: boolean) => ipcRenderer.invoke("app/setLaunchAtLogin", enabled),
+    rebindHotkey: (accelerator: string) => ipcRenderer.invoke("app/rebindHotkey", accelerator),
+    onNavigate: (cb: (route: string) => void) => subscribe<string>("app/navigate", cb),
+  },
+};
+contextBridge.exposeInMainWorld("whisperflowExtras", extras);
+export type Extras = typeof extras;

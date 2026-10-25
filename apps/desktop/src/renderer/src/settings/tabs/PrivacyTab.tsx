@@ -1,0 +1,56 @@
+import { useSettings } from "../store";
+import { Button, Card, Row, SectionTitle, Toggle } from "../../shared/ui";
+
+export function PrivacyTab() {
+  const config = useSettings((s) => s.config);
+  const patch = useSettings((s) => s.patchConfig);
+  if (!config) return null;
+
+  return (
+    <section>
+      <SectionTitle title="Privacy" hint="WhisperFlow ships with zero telemetry. These switches make the guarantees visible." />
+      <Card>
+        <Row
+          label="Local-only lock"
+          hint="When on, remote providers are impossible — the app cannot send transcript text anywhere, even if an endpoint is configured."
+        >
+          <Toggle
+            checked={config.privacy.localOnly}
+            onChange={(v) => void patch({ privacy: { localOnly: v } })}
+          />
+        </Row>
+        <Row label="Save history" hint="Off = dictations are processed in memory and forgotten.">
+          <Toggle
+            checked={config.general.historyEnabled}
+            onChange={(v) => void patch({ general: { historyEnabled: v } })}
+          />
+        </Row>
+      </Card>
+
+      <div className="mt-6">
+        <SectionTitle title="Your data" hint="Everything lives under %APPDATA%/WhisperFlow. Delete it whenever." />
+        <Card>
+          <Row label="Dictation history" hint="history.json — every transcript with timestamps.">
+            <Button
+              variant="danger"
+              onClick={() => void window.whisperflow.history.clear()}
+            >
+              Clear history
+            </Button>
+          </Row>
+          <Row label="Downloaded models" hint="models/ + bin/ — reclaim gigabytes via the Models tab.">
+            <Button variant="ghost" onClick={() => (window.location.hash = "/models")}>
+              Manage models
+            </Button>
+          </Row>
+        </Card>
+      </div>
+
+      <p className="mt-6 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-xs leading-5 text-ink-dim">
+        Audio is always transcribed locally by whisper.cpp. Transcript text only leaves the machine if
+        you disable the lock AND configure a remote polish endpoint. The source code (Apache-2.0) is
+        the proof — audit it, or watch the app work behind a firewall.
+      </p>
+    </section>
+  );
+}
