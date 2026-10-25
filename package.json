@@ -1,0 +1,29 @@
+{
+  "name": "whisperflow-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WhisperFlow — open-source, local-first AI voice dictation. Monorepo root.",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev -w apps/desktop",
+    "dev:desktop": "npm run dev -w apps/desktop",
+    "dev:website": "npm run dev -w apps/website",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml,css,astro}\"",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

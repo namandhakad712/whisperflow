@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+out/
+build/
+release/
+.vite/
+astro/
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Models & binaries (downloaded at runtime, never committed)
+*.gguf
+*.bin
+models/
+bin-cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & OS cruft
+*.log
+logs/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Electron packaging
+apps/desktop/release/
