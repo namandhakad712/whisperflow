@@ -18,6 +18,14 @@
   --color-ink-dim: rgba(245, 245, 247, 0.62);
   --color-forest: #2952e3;
   --color-coral: #8fb0ff;
+
+  /* rail + pill (nocturne defaults; classic overrides below) */
+  --color-rail: rgba(255, 255, 255, 0.02);
+  --color-rail-item: rgba(255, 255, 255, 0.05);
+  --color-rail-active: rgba(41, 82, 227, 0.2);
+  --color-rail-text: #f5f5f7;
+  --color-rail-text-dim: rgba(245, 245, 247, 0.55);
+  --color-pill: rgba(255, 255, 255, 0.06);
 }
 
 /* NOCTURNE DAWN — light variant */
@@ -28,6 +36,35 @@ body.light {
   --color-line: rgba(12, 13, 18, 0.1);
   --color-ink: #0c0d12;
   --color-ink-dim: rgba(12, 13, 18, 0.62);
+}
+
+/* ================= CLASSIC — measured 1:1 from the reference app =================
+   White content · #202020 rail · #30302F ink buttons · Figtree · 6-8px radii */
+html[data-theme="classic"] {
+  --color-bg: #ffffff;
+  --color-surface: #fcfcfb;
+  --color-surface-2: #f4f3ef;
+  --color-line: rgba(26, 26, 26, 0.12);
+  --color-ink: #1a1a1a;
+  --color-ink-dim: rgba(26, 26, 26, 0.66);
+  --color-accent: #30302f;
+  --color-accent-strong: #1a1a1a;
+  --color-forest: #30302f;
+  --color-coral: #b5542e;
+  --color-rail: #1c1c1c;
+  --color-rail-item: #202020;
+  --color-rail-active: #30302f;
+  --color-rail-text: #e9e8e1;
+  --color-rail-text-dim: rgba(233, 232, 225, 0.55);
+  --color-pill: #e9e8e1;
+}
+html[data-theme="classic"] body.light {
+  /* Classic is already light; dawn vars stay consistent */
+  --color-bg: #ffffff;
+}
+html[data-theme="classic"] ::selection {
+  background: rgba(48, 48, 47, 0.18);
+  color: #1a1a1a;
 }
 
 html,

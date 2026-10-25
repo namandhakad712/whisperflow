@@ -35,6 +35,39 @@ function deviceRamGb(): number {
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
+  const [skipped, setSkipped] = useState(false);
+  // Reference-style skip-ahead card: quick version vs full tour.
+  if (!skipped) {
+    return (
+      <div className="mx-auto flex h-screen max-w-md flex-col justify-center px-6">
+        <div className="card p-8">
+          <h1 className="font-display text-3xl">New here?</h1>
+          <p className="mt-3 text-sm leading-6 text-ink-dim">
+            Want the quick version? We'll set up the essentials and let you explore the rest
+            later — or take the full tour with every option explained.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Button
+              onClick={() => {
+                setSkipped(true);
+              }}
+            >
+              Show me everything
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                localStorage.setItem("wf-onboarded", "1");
+                window.location.hash = "/general";
+              }}
+            >
+              Skip onboarding
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="mx-auto flex h-screen max-w-xl flex-col justify-center px-6">
       <div className="mb-6 flex items-center gap-2">
@@ -52,12 +85,12 @@ export function Onboarding() {
           </div>
         ))}
       </div>
-      <Card className="p-8">
+      <div className="card p-8">
         {step === 0 && <MicStep onDone={() => setStep(1)} />}
         {step === 1 && <ConfigureStep onDone={() => setStep(2)} />}
         {step === 2 && <ModelsStep onDone={() => setStep(3)} />}
         {step === 3 && <FinishStep />}
-      </Card>
+      </div>
     </div>
   );
 }

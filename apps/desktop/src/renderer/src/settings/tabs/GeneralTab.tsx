@@ -54,22 +54,6 @@ export function GeneralTab() {
             onChange={(v) => void patch({ general: { historyEnabled: v } })}
           />
         </Row>
-        <Row
-          label="Nocturne Dawn — light mode"
-          hint="The same design at sunrise. Stored on this device."
-        >
-          <Toggle
-            checked={typeof document !== "undefined" && document.body.classList.contains("light")}
-            onChange={(v) => {
-              document.body.classList.toggle("light", v);
-              try {
-                localStorage.setItem("wf-mode", v ? "light" : "dark");
-              } catch {
-                /* private mode */
-              }
-            }}
-          />
-        </Row>
         <Row label="Dictation language" hint="Auto-detect works well for bilingual speakers.">
           <Select
             value={config.stt.language}
