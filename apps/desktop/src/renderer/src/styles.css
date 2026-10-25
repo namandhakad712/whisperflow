@@ -28,7 +28,7 @@
   --color-pill: rgba(255, 255, 255, 0.06);
 }
 
-/* NOCTURNE DAWN — light variant */
+/* NOCTURNE DAWN — light variant (all tokens, incl. rail/pill — they were invisible before) */
 body.light {
   --color-bg: #f7f7fa;
   --color-surface: #ffffff;
@@ -36,6 +36,12 @@ body.light {
   --color-line: rgba(12, 13, 18, 0.1);
   --color-ink: #0c0d12;
   --color-ink-dim: rgba(12, 13, 18, 0.62);
+  --color-rail: #ffffff;
+  --color-rail-item: rgba(12, 13, 18, 0.05);
+  --color-rail-active: rgba(41, 82, 227, 0.12);
+  --color-rail-text: #0c0d12;
+  --color-rail-text-dim: rgba(12, 13, 18, 0.55);
+  --color-pill: #ffffff;
 }
 
 /* ================= CLASSIC — measured 1:1 from the reference app =================

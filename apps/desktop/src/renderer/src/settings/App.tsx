@@ -9,12 +9,13 @@ import {
   History,
   Keyboard,
   ShieldCheck,
-  SlidersHorizontal,
   CircleHelp,
   PanelLeftClose,
   PanelLeftOpen,
   UserRound,
   Palette,
+  BarChart3,
+  StickyNote,
 } from "lucide-react";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
@@ -27,6 +28,8 @@ import { HistoryTab } from "./tabs/HistoryTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
 import { AdvancedTab } from "./tabs/AdvancedTab";
 import { AboutTab } from "./tabs/AboutTab";
+import { InsightsTab } from "./tabs/InsightsTab";
+import { ScratchpadTab } from "./tabs/ScratchpadTab";
 import { Onboarding } from "./Onboarding";
 
 /** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius. */
@@ -38,6 +41,8 @@ const MAIN = [
   { id: "commands", label: "Snippets", icon: TextSelect },
   { id: "advanced", label: "Style", icon: Sparkles },
   { id: "history", label: "History", icon: History },
+  { id: "insights", label: "Insights", icon: BarChart3 },
+  { id: "scratchpad", label: "Scratchpad", icon: StickyNote },
 ] as const;
 
 const SECONDARY = [
@@ -213,6 +218,8 @@ export function App() {
             {tab === "privacy" && <PrivacyTab />}
             {tab === "advanced" && <AdvancedTab />}
             {tab === "about" && <AboutTab />}
+            {tab === "insights" && <InsightsTab />}
+            {tab === "scratchpad" && <ScratchpadTab />}
           </div>
         </main>
       </div>
