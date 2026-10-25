@@ -64,7 +64,7 @@ export const PolishConfigSchema = z.object({
     .enum(["llama-local", "openai-compat", "none"])
     .default("llama-local"),
   /** Catalog id of the local GGUF model. */
-  modelId: z.string().default("qwen2.5-3b-instruct-q4"),
+  modelId: z.string().default("qwen3.5-4b-q4"),
   /** LLM sampling temperature — low keeps dictation faithful. */
   temperature: z.number().min(0).max(2).default(0.2),
   tone: z.enum(["neutral", "casual", "professional", "custom"]).default("neutral"),
