@@ -45,24 +45,57 @@ body.light {
 }
 
 /* ================= CLASSIC — measured 1:1 from the reference app =================
-   White content · #202020 rail · #30302F ink buttons · Figtree · 6-8px radii */
+   Dark hub: #141414 content · #1A1A1A cards r24 + layered shadows · #1C1C1C rail
+   cream #E9E8E1 text · #30302F ink buttons · 0.15s eased transitions */
 html[data-theme="classic"] {
-  --color-bg: #ffffff;
-  --color-surface: #fcfcfb;
-  --color-surface-2: #f4f3ef;
-  --color-line: rgba(26, 26, 26, 0.12);
-  --color-ink: #1a1a1a;
-  --color-ink-dim: rgba(26, 26, 26, 0.66);
+  --color-bg: #141414;
+  --color-surface: #1a1a1a;
+  --color-surface-2: #262626;
+  --color-line: rgba(233, 232, 225, 0.09);
+  --color-ink: #e9e8e1;
+  --color-ink-dim: rgba(233, 232, 225, 0.62);
   --color-accent: #30302f;
-  --color-accent-strong: #1a1a1a;
+  --color-accent-strong: #3a3a38;
   --color-forest: #30302f;
-  --color-coral: #b5542e;
+  --color-coral: #d4704c;
   --color-rail: #1c1c1c;
   --color-rail-item: #202020;
   --color-rail-active: #30302f;
   --color-rail-text: #e9e8e1;
   --color-rail-text-dim: rgba(233, 232, 225, 0.55);
   --color-pill: #e9e8e1;
+}
+/* measured card physics: r24, #1A1A1A, layered shadow */
+html[data-theme="classic"] .card {
+  border-radius: 24px;
+  background: #1a1a1a;
+  border: 0;
+  box-shadow:
+    0 4px 8px -2px rgba(0, 0, 0, 0.45),
+    0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+html[data-theme="classic"] .card > * {
+  transition: all 0.2s ease;
+}
+/* measured motion: 0.15s eased background transitions everywhere */
+html[data-theme="classic"] button,
+html[data-theme="classic"] a,
+html[data-theme="classic"] input,
+html[data-theme="classic"] select {
+  transition: background-color 0.15s cubic-bezier(0.2, 0.6, 0.35, 1), color 0.15s ease, border-color 0.15s ease;
+}
+/* top-bar pills: cream bg + ink text on the dark hub */
+html[data-theme="classic"] .bg-pill {
+  background: #e9e8e1 !important;
+  color: #1a1a1a !important;
+}
+html[data-theme="classic"] .bg-accent {
+  background: #30302f;
+  color: #e9e8e1;
+}
+html[data-theme="classic"] .seg button.on {
+  background: #30302f;
+  color: #e9e8e1;
 }
 html[data-theme="classic"] body.light {
   /* Classic is already light; dawn vars stay consistent */
