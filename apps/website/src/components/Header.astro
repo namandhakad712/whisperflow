@@ -2,9 +2,9 @@
 import Logo from "./Logo.astro";
 
 const nav = [
-  { href: "/features/", label: "Features" },
-  { href: "/docs/", label: "Docs" },
-  { href: "/pricing/", label: "Pricing" },
+  { href: "/whisperflow/features/", label: "Features" },
+  { href: "/whisperflow/docs/", label: "Docs" },
+  { href: "/whisperflow/pricing/", label: "Pricing" },
 ];
 const path = Astro.url.pathname;
 ---
@@ -16,7 +16,7 @@ const path = Astro.url.pathname;
 </div>
 <header class="sticky top-0 z-50 border-b border-line bg-bg/90 backdrop-blur-md">
   <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-    <a href="/" aria-label="WhisperFlow home"><Logo class="h-6" /></a>
+    <a href="/whisperflow/" aria-label="WhisperFlow home"><Logo class="h-6" /></a>
     <nav class="hidden items-center gap-1 rounded-full border border-line bg-cream p-1 md:flex" aria-label="Main">
       {nav.map((item) => (
         <a
@@ -40,7 +40,7 @@ const path = Astro.url.pathname;
       >
         ☾
       </button>
-      <a href="/download/" class="btn-primary !py-2.5 text-sm">Get started on Windows</a>
+      <a href="/whisperflow/download/" class="btn-primary !py-2.5 text-sm">Get started on Windows</a>
     </div>
   </div>
 </header>

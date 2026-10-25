@@ -32,7 +32,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "electron": "^45.0.0",
+    "electron": "45.0.0",
     "electron-builder": "^26.0.12",
     "electron-vite": "^4.0.0",
     "react": "^19.3.1",
@@ -42,5 +42,9 @@
     "vite": "^7.1.0",
     "vitest": "^3.2.4",
     "zustand": "^5.0.8"
+  },
+  "author": {
+    "name": "WhisperFlow contributors",
+    "email": "whisperflow@users.noreply.github.com"
   }
 }

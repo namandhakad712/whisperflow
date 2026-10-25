@@ -2,50 +2,71 @@
 import Logo from "./Logo.astro";
 const year = new Date().getFullYear();
 
-const groups = [
-  {
-    title: "Product",
-    links: [
-      ["Features", "/features/"],
-      ["Download", "/download/"],
-      ["Pricing", "/pricing/"],
-      ["Sponsors", "/sponsors/"],
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      ["Documentation", "/docs/"],
-      ["Getting started", "/docs/getting-started/"],
-      ["Models & hardware", "/docs/models/"],
-      ["Privacy", "/docs/privacy/"],
-    ],
-  },
-  {
-    title: "Project",
-    links: [
-      ["GitHub", "https://github.com/namandhakad712/whisperflow"],
-      ["Issues", "https://github.com/namandhakad712/whisperflow/issues"],
-      ["License (Apache-2.0)", "https://github.com/namandhakad712/whisperflow/blob/main/LICENSE"],
-    ],
-  },
+const product = [
+  ["Features", "/whisperflow/features/"],
+  ["Download", "/whisperflow/download/"],
+  ["Docs", "/whisperflow/docs/"],
+  ["Pricing", "/whisperflow/pricing/"],
+  ["Sponsors", "/whisperflow/sponsors/"],
+];
+const resources = [
+  ["Getting started", "/whisperflow/docs/getting-started/"],
+  ["Hotkeys & overlay", "/whisperflow/docs/hotkeys/"],
+  ["Models & hardware", "/whisperflow/docs/models/"],
+  ["Privacy & data", "/whisperflow/docs/privacy/"],
+];
+const project = [
+  ["GitHub", "https://github.com/namandhakad712/whisperflow"],
+  ["Releases", "https://github.com/namandhakad712/whisperflow/releases"],
+  ["Issues", "https://github.com/namandhakad712/whisperflow/issues"],
+  ["Changelog", "https://github.com/namandhakad712/whisperflow/blob/main/CHANGELOG.md"],
+  ["Security", "https://github.com/namandhakad712/whisperflow/blob/main/SECURITY.md"],
 ];
 ---
-<footer class="border-t border-line bg-bg">
+<footer class="border-t border-line bg-cream/60">
+  <!-- status strip -->
+  <div class="border-b border-line/60">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-4 text-[11px] text-ink-dim sm:px-6">
+      <span class="flex items-center gap-2">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#38C793] opacity-60"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-[#38C793]"></span>
+        </span>
+        all systems local — nothing to be down
+      </span>
+      <span>v0.1.0</span>
+      <span>Apache-2.0</span>
+      <span class="ml-auto font-mono tracking-wider">0 telemetry · 0 accounts · 0 caps</span>
+    </div>
+  </div>
+
   <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
-    <div class="grid gap-10 md:grid-cols-[1.2fr_repeat(3,1fr)]">
+    <div class="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
       <div>
-        <Logo class="h-6" />
-        <p class="mt-4 max-w-xs text-sm leading-6 text-ink-soft">
+        <a href="/whisperflow/" aria-label="WhisperFlow home"><Logo class="h-6" /></a>
+        <p class="mt-4 max-w-xs text-sm leading-6 text-ink-dim">
           Open-source, local-first AI voice dictation. Your voice, your models, your machine.
         </p>
+        <div class="mt-5 flex h-6 items-end gap-[3px]" aria-hidden="true">
+          {[10, 18, 24, 14, 22, 12, 20, 9, 16, 22, 11, 18, 8].map((h, i) => (
+            <span
+              class="w-[3px] origin-bottom rounded-full bg-[#2952E3]/70"
+              style={`height:${h}px;animation:wv 1.2s ease-in-out ${i * 0.09}s infinite`}
+            ></span>
+          ))}
+        </div>
+        <style>{`@keyframes wv{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}`}</style>
       </div>
-      {groups.map((g) => (
+      {[
+        ["Product", product],
+        ["Resources", resources],
+        ["Project", project],
+      ].map(([title, links]) => (
         <div>
-          <p class="text-xs font-bold uppercase tracking-widest text-ink-faint">{g.title}</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-ink-faint">{title}</p>
           <ul class="mt-4 space-y-2.5 text-sm">
-            {g.links.map(([label, href]) => (
-              <li><a class="text-ink-soft transition-colors hover:text-ink" href={href}>{label}</a></li>
+            {links.map(([label, href]) => (
+              <li><a class="text-ink-dim transition-colors hover:text-ink" href={href}>{label}</a></li>
             ))}
           </ul>
         </div>
@@ -60,12 +81,11 @@ const groups = [
         <rect x="17.8" y="5" width="3.4" height="14" rx="1.7" />
         <rect x="23.4" y="9" width="3.4" height="6" rx="1.7" />
       </svg>
-      <p class="font-display text-[18vw] leading-[0.85] tracking-tight text-ink sm:text-[9rem]">
-        WhisperFlow
-      </p>
+      <p class="font-display text-[17vw] leading-[0.85] tracking-tight text-ink sm:text-[8.5rem]">WhisperFlow</p>
     </div>
   </div>
-  <div class="mt-8 border-t border-line">
+
+  <div class="mt-8 border-t border-line/60">
     <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <p>© {year} WhisperFlow contributors · Apache-2.0</p>
       <p>Not affiliated with Wispr Inc. · Built with whisper.cpp &amp; llama.cpp</p>
