@@ -44,7 +44,7 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          name: v${{ github.ref_name }}
+          name: ${{ github.ref_name }} # the tag already carries the leading "v"
           generate_release_notes: true
           draft: false
           prerelease: false

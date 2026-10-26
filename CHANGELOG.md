@@ -2,6 +2,33 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.2] — 2026-10-26
+
+### Added — real hold-to-talk
+- **Press and hold to dictate.** Electron's global shortcuts only fire on key-down, so true
+  push-to-talk needed an OS-level keyboard hook (`uiohook-napi`, MIT, bundled). Hold the hotkey to
+  record, release to finish and polish.
+- **Typing detection.** Type a correction mid-dictation and the session holds open; the overlay
+  says `⌨ typing — dictation held`. The hook watches the configured combination only — keystrokes
+  are counted as booleans, never recorded, stored, or sent.
+- **Honest fallback.** If the hook can't load, the setting reports why and the app keeps working in
+  toggle mode. No silent breakage.
+- **Real Import buttons.** Dictionary imports word lists (`.txt`/`.csv`, one term per line,
+  `word → replacement` supported); Snippets import JSON arrays of `{phrase, action, payload}` —
+  both report how many landed and survive malformed files.
+
+### Fixed
+- **Local transcription returned empty text.** The whisper.cpp sidecar ships both `whisper-cli.exe`
+  and the legacy `main.exe`, and the binary picker grabbed `main.exe`, which ignores `-oj` (JSON
+  output). Now ranked by preference; caught by the new end-to-end STT verification script, which
+  drives the real production path (download sidecar → extract → download model → transcribe the
+  jfk.wav sample) and passes.
+- **Release pipeline.** The workflow was missing the `electron-vite build` step (empty asar), and
+  electron-builder silently dropped the 400 MB installer upload — releases now build with
+  `--publish never` and upload assets explicitly with `fail_on_unmatched_files`.
+- v0.1.2's first build attempt failed in CI on a UTF-8 BOM + mangled `package.json`; repaired and
+  the exact CI build command passes locally.
+
 ## [0.1.1] — 2026-10-26
 
 ### Added — release pipeline & auto-update
