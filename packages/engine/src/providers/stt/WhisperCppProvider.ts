@@ -16,7 +16,12 @@ export interface TranscribeOpts {
   prompt?: string;
 }
 
-const EXE_CANDIDATES = ["whisper-cli.exe", "main.exe", "whisper.exe", "whisper-cli", "main"];
+// Preference order matters: whisper.cpp releases ship BOTH the new
+// `whisper-cli.exe` and the legacy `main.exe` in the same folder, and the
+// legacy binary ignores `-oj` (JSON output) — silently yielding "" transcripts.
+// Directory iteration order is not guaranteed, so rank matches explicitly.
+const EXE_PREFERENCE = ["whisper-cli.exe", "whisper.exe", "main.exe", "whisper-cli", "main"];
+const EXE_CANDIDATES = new Set(EXE_PREFERENCE);
 const TIMEOUT_MS = 60_000;
 
 export class WhisperCppProvider {
@@ -32,25 +37,25 @@ export class WhisperCppProvider {
   /** Resolves the sidecar executable inside the extracted release dir. */
   findBinary(): string | null {
     if (this.binaryPath !== undefined) return this.binaryPath;
-    let found: string | null = null;
+    const found: string[] = [];
     try {
       const walk = (dir: string, depth: number): void => {
-        if (found || depth > 3) return;
+        if (found.length >= EXE_PREFERENCE.length || depth > 3) return;
         for (const ent of readdirSync(dir, { withFileTypes: true })) {
           const full = join(dir, ent.name);
           if (ent.isDirectory()) walk(full, depth + 1);
-          else if (EXE_CANDIDATES.includes(ent.name.toLowerCase())) {
-            found = full;
-            return;
-          }
+          else if (EXE_CANDIDATES.has(ent.name.toLowerCase())) found.push(full);
         }
       };
       walk(this.opts.binDir, 0);
     } catch {
-      found = null;
+      /* not extracted yet */
     }
-    this.binaryPath = found;
-    return found;
+    // Rank by preference: whisper-cli.exe first, legacy main.exe last.
+    const rank = (p: string) => EXE_PREFERENCE.indexOf(p.split(/[\\/]/).pop()!.toLowerCase());
+    const ranked = found.sort((a, b) => rank(a) - rank(b));
+    this.binaryPath = ranked[0] ?? null;
+    return this.binaryPath;
   }
 
   isReady(modelPath: string): boolean {

@@ -28,6 +28,8 @@ jobs:
       # electron-vite needs the workspace packages' dist/ to resolve them
       - run: npm run build -w packages/shared
       - run: npm run build -w packages/engine
+      # electron-builder packs out/ — build the app first (same as the CI job)
+      - run: npm run build -w apps/desktop
 
       - name: Build + publish installer
         working-directory: apps/desktop

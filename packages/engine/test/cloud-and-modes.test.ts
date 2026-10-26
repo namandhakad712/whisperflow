@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,6 +10,7 @@ import {
 import { ConfigStore } from "../src/config/ConfigStore.js";
 import { ModelManager } from "../src/models/manager.js";
 import { CloudSttProvider } from "../src/providers/stt/CloudSttProvider.js";
+import { WhisperCppProvider } from "../src/providers/stt/WhisperCppProvider.js";
 import { withSttFallback } from "../src/providers/stt/withFallback.js";
 import { DictationSession, type DictationSessionDeps, type SttAdapter } from "../src/orchestrator/DictationSession.js";
 import { createHistoryStore } from "../src/history/historyStore.js";
@@ -277,5 +278,34 @@ describe("cloud presets reflect verified provider reality", () => {
   it("points OpenAI at the current model, not the deprecated one", () => {
     expect(CLOUD_STT_PRESETS.openai.defaultModel).toBe("gpt-transcribe");
     expect(CLOUD_STT_PRESETS.openai.freeNote).toMatch(/2027-02-26/);
+  });
+});
+
+describe("whisper.cpp sidecar binary preference", () => {
+  // Releases ship BOTH whisper-cli.exe and the legacy main.exe in the same
+  // folder; the legacy binary ignores -oj and silently yields "" transcripts.
+  it("prefers whisper-cli.exe over the legacy main.exe", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "wf-bin-"));
+    const release = join(dir, "Release");
+    mkdirSync(release, { recursive: true });
+    // Create main.exe FIRST so naive directory-order collection would pick it.
+    writeFileSync(join(release, "main.exe"), Buffer.alloc(8));
+    writeFileSync(join(release, "whisper-cli.exe"), Buffer.alloc(8));
+    writeFileSync(join(release, "ggml-base.dll"), Buffer.alloc(8));
+
+    const provider = new WhisperCppProvider({ binDir: dir });
+    const found = provider.findBinary();
+    expect(found?.split(/[\\/]/).pop()?.toLowerCase()).toBe("whisper-cli.exe");
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("still finds main.exe when that is all there is", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "wf-bin-"));
+    mkdirSync(join(dir, "Release"), { recursive: true });
+    writeFileSync(join(dir, "Release", "main.exe"), Buffer.alloc(8));
+    const provider = new WhisperCppProvider({ binDir: dir });
+    expect(provider.findBinary()).toBe(join(dir, "Release", "main.exe"));
+    rmSync(dir, { recursive: true, force: true });
   });
 });
