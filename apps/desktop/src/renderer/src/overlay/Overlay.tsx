@@ -14,6 +14,8 @@ export function Overlay() {
   const [backdrop, setBackdrop] = useState<string>("");
   const [shape, setShape] = useState<"pill" | "rect" | "blob">("pill");
   const [recording, setRecording] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const typingTimer = useRef<number | null>(null);
   const [hotkeyHint, setHotkeyHint] = useState("the hotkey");
   const captureRef = useRef<Capture | null>(null);
   const startingRef = useRef(false);
@@ -41,6 +43,13 @@ export function Overlay() {
     const unsub = window.whisperflow.dictation.onState((ev) => {
       setEvent(ev);
       setRecording(Boolean(ev.recording));
+      // Typing-hold: the user typed mid-dictation. Show it briefly so they know
+      // the session is deliberately still live.
+      if (ev.typing) {
+        setTyping(true);
+        if (typingTimer.current) window.clearTimeout(typingTimer.current);
+        typingTimer.current = window.setTimeout(() => setTyping(false), 1600);
+      }
     });
     void readConfig();
     // Live: re-read config the moment it changes in the settings window.
@@ -118,6 +127,11 @@ export function Overlay() {
             </span>
           )}
           <p className="text-[11px] text-ink-dim/70">press {hotkeyHint} again to finish</p>
+          {typing && (
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-ink-dim">
+              ⌨ typing — dictation held
+            </span>
+          )}
           <button
             type="button"
             aria-label="Cancel dictation"

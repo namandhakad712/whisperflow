@@ -3,13 +3,14 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import os from "node:os";
-import { IPC, type DictionaryEntry, type TranscriptItem, type VoiceCommand } from "@whisperflow/shared";
+import { IPC, type AppPickFileRequest, type DictionaryEntry, type TranscriptItem, type VoiceCommand } from "@whisperflow/shared";
 import type { EnginePort } from "../engine/enginePort";
 import type { DictationController } from "../audio/dictationController";
 import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { applyLaunchAtLogin } from "../lifecycle/autostart";
 import { checkForUpdatesNow, installDownloadedUpdate } from "../lifecycle/updater";
+import { hookAvailable, hookUnavailableReason } from "../hotkeys/holdToTalk";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
@@ -24,6 +25,8 @@ export function registerIpc(deps: {
   windows: WindowManager;
   hotkeys: HotkeyManager;
   tray: TrayWithRefresh;
+  /** Fired after every successful settings save — hotkey mode may need to change. */
+  onConfigChanged(): void;
   onQuit(): void;
 }): void {
   const { engine, controller, windows, hotkeys } = deps;
@@ -54,8 +57,9 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
     const next = await engine.setConfig(patch ?? {});
     // Live windows (overlay) re-read config so shape/position/backdrop changes
-    // apply without a relaunch.
+    // apply without a relaunch; main re-evaluates hold-to-talk vs toggle.
     windows.sendToOverlay(IPC.SettingsChanged, null);
+    deps.onConfigChanged();
     return next;
   });
 
@@ -179,6 +183,10 @@ export function registerIpc(deps: {
     if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator, toggleMode: true } });
     return { ok };
   });
+  ipcMain.handle("app/keyboardHookStatus", () => {
+    // Hold-to-talk availability is reported honestly to the settings UI.
+    return { available: hookAvailable(), reason: hookUnavailableReason() };
+  });
   ipcMain.handle(IPC.AppHardware, async () => {
     const cpus = os.cpus();
     let gpu = "unknown";
@@ -221,14 +229,22 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.AppOpenConfigFolder, () => {
     void shell.openPath(app.getPath("userData"));
   });
-  ipcMain.handle(IPC.AppPickFile, async (_e, req: { title?: string; filters?: Array<{ name: string; extensions: string[] }> }) => {
+  ipcMain.handle(IPC.AppPickFile, async (_e, req: AppPickFileRequest) => {
     const result = await dialog.showOpenDialog({
       title: req?.title ?? "Choose a file",
       properties: ["openFile"],
       ...(req?.filters?.length ? { filters: req.filters } : {}),
     });
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
-    return { canceled: false, path: result.filePaths[0] };
+    const path = result.filePaths[0];
+    if (req?.readText) {
+      try {
+        return { canceled: false, path, content: readFileSync(path, "utf-8") };
+      } catch {
+        return { canceled: false, path }; // unreadable: the caller decides
+      }
+    }
+    return { canceled: false, path };
   });
   ipcMain.handle(IPC.AppPickFolder, async (_e, req: { title?: string }) => {
     const result = await dialog.showOpenDialog({

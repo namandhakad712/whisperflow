@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import { Button, Card, Kbd, Row, SectionTitle, Toggle } from "../../shared/ui";
 
@@ -25,6 +25,11 @@ export function ShortcutsTab() {
   const patch = useSettings((s) => s.patchConfig);
   const [recording, setRecording] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [hook, setHook] = useState<{ available: boolean; reason?: string } | null>(null);
+
+  useEffect(() => {
+    void window.whisperflowExtras.app.keyboardHookStatus().then(setHook);
+  }, []);
   if (!config) return null;
 
   const captureKey = (e: React.KeyboardEvent) => {
@@ -76,6 +81,35 @@ export function ShortcutsTab() {
             onChange={(v) => void patch({ hotkey: { toggleMode: v } })}
           />
         </Row>
+        <Row
+          label="Hold to talk"
+          hint={
+            hook?.available
+              ? "Press and hold the hotkey to talk; release to finish. Also detects typing mid-dictation and holds the session open."
+              : "Needs the global keyboard hook, which isn't available in this build — toggling on has no effect until it is."
+          }
+        >
+          <Toggle
+            checked={config.hotkey.holdMode}
+            disabled={!hook?.available}
+            onChange={(v) => void patch({ hotkey: { holdMode: v } })}
+          />
+        </Row>
+        {config.hotkey.holdMode && hook && (
+          <p className="border-t border-line/60 px-1 pt-3 text-xs leading-5 text-ink-dim">
+            {hook.available ? (
+              <>
+                The keyboard hook sees <span className="font-medium text-ink">key-up</span> events,
+                which Electron's global shortcuts can't. It watches for your combination only; other
+                keys are counted as typing — nothing is recorded.
+              </>
+            ) : (
+              <span className="text-red-400">
+                Keyboard hook unavailable{hook.reason ? `: ${hook.reason}` : ""}.
+              </span>
+            )}
+          </p>
+        )}
         <Row label="Cancel shortcut">
           <Kbd>Esc</Kbd>
         </Row>

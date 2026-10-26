@@ -23,6 +23,7 @@ export function CommandsTab() {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<VoiceCommand["action"]>("insert");
   const [payload, setPayload] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   if (!config) return null;
 
   const add = () => {
@@ -31,6 +32,43 @@ export function CommandsTab() {
     setPhrase("");
     setPayload("");
     void addCommand(clean, action, payload.trim() || undefined).then(loadConfig);
+  };
+
+  /**
+   * Imports snippets from JSON: `[{"phrase": "sign off", "action": "insert",
+   * "payload": "Best,\nNaman"}, …]`. Malformed entries are skipped, not fatal —
+   * a bad file reports how many were imported.
+   */
+  const importJson = async () => {
+    const picked = await window.whisperflowExtras.app.pickFile({
+      title: "Import snippets from JSON",
+      filters: [{ name: "JSON", extensions: ["json"] }],
+      readText: true,
+    });
+    if (picked.canceled || !picked.content) return;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(picked.content);
+    } catch {
+      setNotice("That file isn't valid JSON — nothing was imported.");
+      setTimeout(() => setNotice(null), 5000);
+      return;
+    }
+    const rows = Array.isArray(parsed) ? parsed : [];
+    let added = 0;
+    for (const row of rows) {
+      if (typeof row !== "object" || row === null) continue;
+      const r = row as { phrase?: unknown; action?: unknown; payload?: unknown };
+      if (typeof r.phrase !== "string" || !r.phrase.trim()) continue;
+      const a = r.action;
+      if (a !== "insert" && a !== "replace" && a !== "undo") continue;
+      if (a !== "undo" && typeof r.payload !== "string") continue;
+      await addCommand(r.phrase.trim(), a, a === "undo" ? undefined : (r.payload as string));
+      added++;
+    }
+    await loadConfig();
+    setNotice(added > 0 ? `Imported ${added} snippet${added === 1 ? "" : "s"}.` : "No usable snippets in that file (expected an array of {phrase, action, payload}).");
+    setTimeout(() => setNotice(null), 5000);
   };
 
   const commands = config.commands.filter((c) => {
@@ -46,7 +84,7 @@ export function CommandsTab() {
     <section>
       <PageHeader
         title="Snippets"
-        actions={<><Button variant="ghost" onClick={() => void loadConfig()}>Import</Button><Button onClick={add} disabled={!phrase.trim()}>Add new</Button></>}
+        actions={<><Button variant="ghost" onClick={() => void importJson()}>Import</Button><Button onClick={add} disabled={!phrase.trim()}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}
@@ -76,6 +114,11 @@ export function CommandsTab() {
         <TextInput value={search} onChange={setSearch} placeholder="Search snippets…" className="w-56" />
       </div>
 
+      {notice && (
+        <p className="mb-5 rounded-lg border border-line bg-surface-2/60 px-4 py-3 text-sm text-ink-dim">
+          {notice}
+        </p>
+      )}
       {commands.length === 0 ? (
         <EmptyState
           icon="🎙️"

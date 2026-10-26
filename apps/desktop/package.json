@@ -24,7 +24,8 @@
     "@whisperflow/engine": "*",
     "@whisperflow/shared": "*",
     "electron-updater": "^6.6.2",
-    "lucide-react": "^1.61.0"
+    "lucide-react": "^1.61.0",
+    "uiohook-napi": "^1.5.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",

@@ -8,6 +8,7 @@ export function DictionaryTab() {
   const [term, setTerm] = useState("");
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   if (!config) return null;
 
   const add = () => {
@@ -15,6 +16,32 @@ export function DictionaryTab() {
     if (!clean) return;
     setTerm("");
     void addDictionaryEntry(clean).then(loadConfig);
+  };
+
+  /** Imports a word list: one term per line, optional "word → replacement". */
+  const importList = async () => {
+    const picked = await window.whisperflowExtras.app.pickFile({
+      title: "Import a dictionary word list",
+      filters: [{ name: "Text", extensions: ["txt", "csv", "md"] }],
+      readText: true,
+    });
+    if (picked.canceled || !picked.content) return;
+    const lines = picked.content
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !l.startsWith("#"));
+    let added = 0;
+    for (const line of lines) {
+      await addDictionaryEntry(line);
+      added++;
+    }
+    await loadConfig();
+    setNotice(
+      added > 0
+        ? `Imported ${added} term${added === 1 ? "" : "s"}${picked.path ? ` from ${picked.path.split(/[\\/]/).pop()}` : ""}.`
+        : "That file had no lines to import.",
+    );
+    setTimeout(() => setNotice(null), 5000);
   };
 
   const entries = config.dictionary.filter((e) => {
@@ -26,7 +53,7 @@ export function DictionaryTab() {
     <section>
       <PageHeader
         title="Dictionary"
-        actions={<><Button variant="ghost" onClick={() => void loadConfig()}>Import</Button><Button onClick={add} disabled={!term.trim()}>Add new</Button></>}
+        actions={<><Button variant="ghost" onClick={() => void importList()}>Import</Button><Button onClick={add} disabled={!term.trim()}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}
@@ -85,6 +112,11 @@ export function DictionaryTab() {
             );
           })}
         </div>
+      )}
+      {notice && (
+        <p className="mb-5 rounded-lg border border-line bg-surface-2/60 px-4 py-3 text-sm text-ink-dim">
+          {notice}
+        </p>
       )}
       {entries.length > 0 && (
         <p className="mt-5 text-xs leading-5 text-ink-dim">

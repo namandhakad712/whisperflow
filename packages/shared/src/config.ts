@@ -17,6 +17,12 @@ export const HotkeyConfigSchema = z.object({
   pushToTalk: z.string().min(1).default("Control+Shift+Space"),
   /** `false` = hold-to-talk, `true` = press to start / press to stop. */
   toggleMode: z.boolean().default(false),
+  /**
+   * Hold-to-talk needs a global keyboard hook (uiohook-napi) to see key-up
+   * events; Electron's globalShortcut only fires on key-down. When the hook is
+   * unavailable this silently falls back to toggle mode.
+   */
+  holdMode: z.boolean().default(false),
 });
 export type HotkeyConfig = z.infer<typeof HotkeyConfigSchema>;
 

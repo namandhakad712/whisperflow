@@ -96,6 +96,8 @@ const extras = {
     checkForUpdates: () => ipcRenderer.invoke("app/checkForUpdates") as Promise<{ message: string }>,
     exportBackup: () => ipcRenderer.invoke("app/exportBackup") as Promise<{ exported: boolean; path?: string }>,
     onNavigate: (cb: (route: string) => void) => subscribe<string>("app/navigate", cb),
+    keyboardHookStatus: () =>
+      ipcRenderer.invoke("app/keyboardHookStatus") as Promise<{ available: boolean; reason?: string }>,
   },
   settings: {
     /** Fired after every settings/set — lets live windows re-read config. */

@@ -1,4 +1,5 @@
 import { app, session } from "electron";
+import type { WhisperFlowConfig } from "@whisperflow/shared";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { WindowManager } from "./windows/WindowManager";
@@ -7,6 +8,7 @@ import { HotkeyManager } from "./hotkeys/hotkeys";
 import { DictationController } from "./audio/dictationController";
 import { registerIpc } from "./ipc/register";
 import { createEnginePort, resolveEngineDirs } from "./engine/enginePort";
+import { HoldToTalkWatcher, hookAvailable, parseAccelerator, type KeyboardHookEvents } from "./hotkeys/holdToTalk";
 import { applyLaunchAtLogin } from "./lifecycle/autostart";
 import { initUpdater } from "./lifecycle/updater";
 import { initLogging, log } from "./lib/log";
@@ -57,7 +59,10 @@ async function bootstrap(): Promise<void> {
     engine,
     windows,
     hotkeys,
-    onActivity: (active, recording) => trayHandle.setActivity?.(active, recording),
+    onActivity: (active, recording) => {
+      trayHandle.setActivity?.(active, recording);
+      holdWatcher?.setArmed(active); // typing detection runs only mid-dictation
+    },
   });
   function controllerToggle(): void {
     void controller.toggle();
@@ -69,9 +74,45 @@ async function bootstrap(): Promise<void> {
   const config = await engine.getConfig();
   applyLaunchAtLogin(config.general?.launchAtLogin === true);
 
+  // Hold-to-talk: a global keyboard hook sees key-up, which globalShortcut
+  // cannot. When armed it owns the main hotkey; otherwise the normal toggle
+  // registration is used.
+  let holdWatcher: HoldToTalkWatcher | null = null;
+  const holdEvents: KeyboardHookEvents = {
+    onHoldStart: () => void controller.start(),
+    onHoldEnd: () => void controller.finish(),
+    onTyping: () => {
+      log("hotkey: typing detected — holding the session open");
+      windows.sendToOverlay("dictation/state", { state: "listening", typing: true });
+    },
+    onFirstKey: (keycode) => log(`hotkey: hook is live — first keycode ${keycode}`),
+  };
+
+  const holdWanted = (cfg: WhisperFlowConfig) => Boolean(cfg.hotkey?.holdMode) && hookAvailable();
+  function applyHotkeyConfig(cfg: WhisperFlowConfig): void {
+    const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
+    if (holdWanted(cfg)) {
+      if (!holdWatcher || holdWatcher.accelerator !== accelerator) {
+        holdWatcher?.stop();
+        const parsed = parseAccelerator(accelerator);
+        log(`hotkey: parsed "${accelerator}" main=${parsed.main} groups=${parsed.modifierGroups.map((g) => g.join("|")).join(",")}`);
+        holdWatcher = new HoldToTalkWatcher(accelerator, holdEvents);
+        holdWatcher.start();
+        log(`hotkey: hold-to-talk armed (${accelerator}) via keyboard hook`);
+      }
+    } else if (holdWatcher) {
+      holdWatcher.stop();
+      holdWatcher = null;
+      log("hotkey: hold-to-talk off — toggle mode");
+    }
+  }
+  applyHotkeyConfig(config);
+
   const mainHotkey = config.hotkey?.pushToTalk || "Control+Shift+Space";
-  if (!hotkeys.bindMain(mainHotkey)) {
-    log(`hotkey: "${mainHotkey}" is taken by another app — rebind in Settings → Shortcuts`);
+  if (!holdWanted(config)) {
+    if (!hotkeys.bindMain(mainHotkey)) {
+      log(`hotkey: "${mainHotkey}" is taken by another app — rebind in Settings → Shortcuts`);
+    }
   }
 
   const tray = createTray({
@@ -94,7 +135,21 @@ async function bootstrap(): Promise<void> {
   };
   trayHandle.setActivity = (active, recording) => tray.setActivity?.(active, recording);
 
-  registerIpc({ engine, controller, windows, hotkeys, tray, onQuit: () => app.quit() });
+  registerIpc({
+    engine,
+    controller,
+    windows,
+    hotkeys,
+    tray,
+    onQuit: () => app.quit(),
+    onConfigChanged: () => {
+      void engine.getConfig().then((cfg) => {
+        applyHotkeyConfig(cfg);
+        const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
+        if (!holdWanted(cfg) && hotkeys.current !== accelerator) hotkeys.bindMain(accelerator);
+      });
+    },
+  });
 
   initUpdater(log, {
     getConfig: () => engine.getConfig(),

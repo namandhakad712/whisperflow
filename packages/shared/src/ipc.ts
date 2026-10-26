@@ -266,8 +266,10 @@ export interface AppPickFileRequest {
   title?: string;
   /** e.g. [{ name: "Images", extensions: ["png", "jpg", "gif", "webp"] }] */
   filters?: Array<{ name: string; extensions: string[] }>;
+  /** Return the file's text content too — the renderer has no fs access. */
+  readText?: boolean;
 }
-export type AppPickFileResponse = { canceled: boolean; path?: string };
+export type AppPickFileResponse = { canceled: boolean; path?: string; content?: string };
 export interface AppPickFolderRequest {
   title?: string;
 }

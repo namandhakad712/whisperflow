@@ -72,4 +72,6 @@ export interface DictationStateEvent {
   appendText?: string;
   /** True while the recorder is running — the overlay shows a REC indicator. */
   recording?: boolean;
+  /** True while the user is typing mid-dictation — the overlay holds and says so. */
+  typing?: boolean;
 }
