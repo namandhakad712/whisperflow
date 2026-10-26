@@ -29,6 +29,23 @@ interface UpdaterDeps {
   send(status: UpdateStatus): void;
 }
 
+/** The slice of electron-updater's AppUpdater this file touches. */
+interface ElectronUpdater {
+  logger: unknown;
+  autoDownload: boolean;
+  channel: string;
+  on(event: "update-available" | "update-not-available" | "update-downloaded", handler: (info: UpdateInfo) => void): unknown;
+  on(event: "error", handler: (err: unknown) => void): unknown;
+  checkForUpdates(): Promise<{ updateInfo?: { version?: string } } | null>;
+  quitAndInstall(silent?: boolean, forceRunAfter?: boolean): void;
+}
+
+/** Result info the updater hands back on its events. */
+interface UpdateInfo {
+  version?: string;
+  releaseNotes?: string;
+}
+
 let checkNow: () => Promise<string> = async () => "dev build — updates skipped";
 let installNow: () => void = () => {};
 
@@ -40,7 +57,24 @@ export function initUpdater(log: (...args: unknown[]) => void, deps?: UpdaterDep
   }
   void (async () => {
     try {
-      const { autoUpdater } = await import("electron-updater");
+      // electron-updater exports autoUpdater as an Object.defineProperty
+      // *getter*, which Node's CJS↔ESM interop cannot see as a named export —
+      // so the namespace has no `autoUpdater`, and the classic
+      // `const { autoUpdater } = await import(...)` destructures undefined.
+      // The CJS `default` export is the real module object. Handle both shapes
+      // (this only fails in a *packaged* build, since dev builds skip the path).
+      const mod = (await import("electron-updater")) as {
+        autoUpdater?: ElectronUpdater;
+        default?: { autoUpdater?: ElectronUpdater };
+      };
+      const autoUpdater = mod.autoUpdater ?? mod.default?.autoUpdater;
+      if (!autoUpdater) {
+        throw new Error(
+          "electron-updater did not export autoUpdater " +
+            `(keys: ${Object.keys(mod).slice(0, 8).join(",")}, ` +
+            `default keys: ${mod.default ? Object.keys(mod.default).slice(0, 8).join(",") : "none"})`,
+        );
+      }
       autoUpdater.logger = null;
       autoUpdater.autoDownload = true;
 
