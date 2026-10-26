@@ -46,6 +46,7 @@ const api: WhisperflowApi = {
     delete: (request) => ipcRenderer.invoke(IPC.ModelsDelete, request),
     setActive: (request) => ipcRenderer.invoke(IPC.ModelsSetActive, request),
     recommend: () => ipcRenderer.invoke(IPC.ModelsRecommend),
+    deleteUnused: () => ipcRenderer.invoke(IPC.ModelsDeleteUnused),
     onProgress: (listener) => subscribe(IPC.ModelsProgress, listener),
   },
   audio: {

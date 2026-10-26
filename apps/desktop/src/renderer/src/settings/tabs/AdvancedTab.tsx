@@ -120,6 +120,15 @@ export function AdvancedTab() {
               onChange={(v) => void patch({ polish: { remote: { apiKey: v } } })}
               placeholder="API key (stored locally only)"
             />
+            <Row
+              label="Fall back to the local model"
+              hint="If the endpoint fails (quota, network, 5xx), retry on the downloaded GGUF. With it off, a failure drops straight to offline cleanup."
+            >
+              <Toggle
+                checked={config.polish.fallbackToLocal}
+                onChange={(v) => void patch({ polish: { fallbackToLocal: v } })}
+              />
+            </Row>
           </div>
         )}
       </Card>

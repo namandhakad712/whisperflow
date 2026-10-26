@@ -38,25 +38,42 @@ export const AudioConfigSchema = z.object({
 });
 export type AudioConfig = z.infer<typeof AudioConfigSchema>;
 
-/** Cloud STT provider presets for BYO-key transcription. */
+/**
+ * Cloud STT provider presets for BYO-key transcription.
+ *
+ * Every number here was fetched from the provider's own docs on the date in
+ * `verified`. Re-verify before quoting them in marketing copy.
+ */
 export const CLOUD_STT_PRESETS = {
   groq: {
-    label: "Groq (generous free tier)",
+    label: "Groq — free tier",
     baseUrl: "https://api.groq.com/openai/v1",
     defaultModel: "whisper-large-v3-turbo",
-    models: [
-      "whisper-large-v3-turbo",
-      "whisper-large-v3",
-      "distil-whisper-large-v3-en",
-    ],
+    models: ["whisper-large-v3-turbo", "whisper-large-v3"],
     docs: "https://console.groq.com/docs/speech-to-text",
+    freeNote:
+      "Free tier: 20 RPM, ~2,000 requests/day, 7,200 audio-sec/hour. Groq's data page says inputs are not retained by default (abuse logs ≤30 days; zero-data-retention available).",
+    verified: "2026-10-26",
+  },
+  mistral: {
+    label: "Mistral — Voxtral",
+    baseUrl: "https://api.mistral.ai/v1",
+    defaultModel: "voxtral-mini-transcribe-3-0",
+    models: ["voxtral-mini-transcribe-3-0", "voxtral-mini-latest", "voxtral-small-latest"],
+    docs: "https://docs.mistral.ai/models/voxtral-mini-transcribe-3-0",
+    freeNote:
+      "Voxtral Mini Transcribe 3 costs $0.0035/min (~$0.21/hour). Free-mode quota is not published — it shows in your Mistral console. Users report ~$10/month of free usage, which would be ~47 hours, but treat that as unconfirmed until you see your own console.",
+    verified: "2026-10-26",
   },
   openai: {
     label: "OpenAI",
     baseUrl: "https://api.openai.com/v1",
-    defaultModel: "whisper-1",
-    models: ["whisper-1"],
+    defaultModel: "gpt-transcribe",
+    models: ["gpt-transcribe", "whisper-1"],
     docs: "https://platform.openai.com/docs/api-reference/audio",
+    freeNote:
+      "No free tier — pay per minute. Note: `whisper-1` is deprecated with a shutdown date of 2027-02-26; `gpt-transcribe` is the current model.",
+    verified: "2026-10-26",
   },
   custom: {
     label: "Custom — OpenAI-compatible endpoint",
@@ -64,6 +81,8 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "",
     models: [],
     docs: "",
+    freeNote: "Anything that speaks POST /audio/transcriptions and returns JSON { text }.",
+    verified: "2026-10-26",
   },
 } as const;
 
@@ -72,7 +91,7 @@ export type CloudSttProviderId = keyof typeof CLOUD_STT_PRESETS;
 /** BYO cloud STT endpoint (OpenAI /audio/transcriptions format). Blocked when `privacy.localOnly`. */
 export const CloudSttConfigSchema = z.object({
   /** Preset decides the default base URL + model list. */
-  provider: z.enum(["groq", "openai", "custom"]).default("groq"),
+  provider: z.enum(["groq", "mistral", "openai", "custom"]).default("groq"),
   /** Base URL. Empty = the preset's default. */
   baseUrl: z.string().default(""),
   /** API key. Stored locally in config.json only — never sent anywhere but the endpoint. */
@@ -90,6 +109,12 @@ export const SttConfigSchema = z.object({
   /** BCP-47-ish tag or `"auto"`. */
   language: z.string().default("auto"),
   cloud: CloudSttConfigSchema.prefault({}),
+  /**
+   * Backup engine used when the primary one fails mid-dictation.
+   * `"none"` (default) never silently sends audio anywhere: a failed local run
+   * stays local, a failed cloud run fails loudly.
+   */
+  fallback: z.enum(["none", "local", "cloud"]).default("none"),
 });
 export type SttConfig = z.infer<typeof SttConfigSchema>;
 
@@ -137,6 +162,12 @@ export const PolishConfigSchema = z.object({
   /** Free-form extra instructions used when `tone === "custom"`. */
   customInstructions: z.string().default(""),
   remote: RemotePolishConfigSchema.prefault({}),
+  /**
+   * When the remote polish endpoint fails (quota, network, 5xx), retry on the
+   * local GGUF model if it is downloaded. If it isn't, offline cleanup runs —
+   * dictation is never blocked by the polish stage.
+   */
+  fallbackToLocal: z.boolean().default(true),
 });
 export type PolishConfig = z.infer<typeof PolishConfigSchema>;
 

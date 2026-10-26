@@ -86,26 +86,73 @@ export function ModelsTab() {
 
       <HardwareCard />
 
-      {/* ---- engine source: local vs cloud ---- */}
+      {/* ---- engine source: local vs BYOK ---- */}
       <Card className="mb-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold">Transcription engine</p>
-            <p className="mt-1 text-sm text-ink-dim">
-              Local keeps audio on this machine. Cloud sends it to your own key (Groq's free tier is
-              generous; it's your account, not ours).
-            </p>
-          </div>
-          <Select
-            value={sttProvider}
-            onChange={(v) => void patch({ stt: { provider: v as SttProvider } })}
-            options={[
-              { value: "whispercpp-local", label: "Local — whisper.cpp" },
-              { value: "cloud", label: "Cloud — BYO API key" },
-            ]}
-          />
+        <p className="text-[15px] font-semibold">Transcription engine</p>
+        <p className="mt-1 text-sm text-ink-dim">
+          Local keeps every word on this machine. Cloud sends audio to the key you supply — your
+          account, your limits, never ours.
+        </p>
+        {/* segmented switch — the setting people actually flip */}
+        <div
+          role="radiogroup"
+          aria-label="Transcription engine source"
+          className="mt-4 inline-flex rounded-xl border border-line bg-surface-2 p-1"
+        >
+          {(
+            [
+              ["whispercpp-local", "Local", "whisper.cpp · offline"],
+              ["cloud", "BYOK cloud", "your API key"],
+            ] as const
+          ).map(([value, label, hint]) => {
+            const active = sttProvider === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => void patch({ stt: { provider: value as SttProvider } })}
+                className={`rounded-lg px-4 py-2 text-left transition-colors ${
+                  active ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
+                }`}
+              >
+                <span className="block text-[13px] font-semibold">{label}</span>
+                <span className={`block text-[10px] ${active ? "text-accent-ink/80" : "text-ink-dim/80"}`}>
+                  {hint}
+                </span>
+              </button>
+            );
+          })}
         </div>
+
         {sttProvider === "cloud" && <CloudSttCard />}
+
+        {/* fallback chain — explicit, because a silent fallback can leak audio */}
+        <div className="mt-5 border-t border-line/60 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">If the engine fails</p>
+              <p className="mt-0.5 max-w-md text-xs leading-5 text-ink-dim">
+                {fallbackHint(sttProvider, config.stt.fallback)}
+              </p>
+            </div>
+            <Select
+              value={config.stt.fallback}
+              onChange={(v) =>
+                void patch({ stt: { fallback: v as "none" | "local" | "cloud" } })
+              }
+              options={[
+                { value: "none", label: "Nothing — fail loudly" },
+                {
+                  value: "local",
+                  label: sttProvider === "cloud" ? "Local whisper.cpp" : "Local whisper.cpp (already primary)",
+                },
+                { value: "cloud", label: "Cloud BYO key" },
+              ].filter((o) => !(o.value === "local" && sttProvider === "whispercpp-local"))}
+            />
+          </div>
+        </div>
       </Card>
 
       {sttProvider === "whispercpp-local" && (
@@ -186,14 +233,96 @@ export function ModelsTab() {
           </div>
 
           <CustomModelForm onAdded={() => void loadModels().then(() => void loadConfig())} />
+          <CleanupCard />
         </>
       )}
+      <BestPracticesCard />
     </section>
   );
 }
 
 function tierLabel(tier: string): string {
   return tier === "low" ? "Light" : tier === "mid" ? "Standard" : "Power";
+}
+
+function fallbackHint(primary: SttProvider, fallback: "none" | "local" | "cloud"): string {
+  if (fallback === "none") {
+    return primary === "cloud"
+      ? "Cloud failures surface as an error and nothing is retried locally — no surprise switching."
+      : "Local failures surface as an error. Nothing is ever sent to a network on your behalf.";
+  }
+  if (fallback === "local") {
+    return "If the cloud call fails (quota, network, 5xx), that segment is re-transcribed on this machine. Audio only leaves the box for the attempt that already started.";
+  }
+  return "If the local engine fails, the segment goes to your cloud key. Requires a key + the local-only lock off.";
+}
+
+/** Disk hygiene: downloaded models nobody points at are dead weight. */
+function CleanupCard() {
+  const statuses = useSettings((s) => s.statuses);
+  const config = useSettings((s) => s.config)!;
+  const loadModels = useSettings((s) => s.loadModels);
+  const loadConfig = useSettings((s) => s.loadConfig);
+  const [result, setResult] = useState<string | null>(null);
+
+  const keep = new Set([config.stt.modelId, config.polish.modelId, "whisper-bin-x64"]);
+  const unused = statuses.filter((s) => s.state === "downloaded" && !keep.has(s.entryId));
+
+  return (
+    <Card className="mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold">Disk</p>
+          <p className="mt-1 text-sm text-ink-dim">
+            {unused.length === 0
+              ? "No unused models on disk — everything downloaded is either active or the engine."
+              : `${unused.length} downloaded model${unused.length === 1 ? "" : "s"} that nothing points at.`}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          disabled={unused.length === 0}
+          onClick={async () => {
+            const r = await window.whisperflow.models.deleteUnused();
+            setResult(r.deleted.length ? `Removed ${r.deleted.length} model(s).` : "Nothing to remove.");
+            await loadModels();
+            await loadConfig();
+          }}
+        >
+          Remove unused
+        </Button>
+      </div>
+      {result && <p className="mt-2 text-xs text-accent">{result}</p>}
+    </Card>
+  );
+}
+
+/** Short, opinionated guidance — the things people get wrong first. */
+function BestPracticesCard() {
+  const items = [
+    ["Small beats huge", "For dictation cleanup a 2–4B model is faster and more faithful than a 70B one. Bigger models rewrite your words."],
+    ["One model per role", "Keep exactly one transcription model and one polish model active — extras just eat disk."],
+    ["Local for sensitive audio", "Turn on the local-only lock (Privacy) when the audio must never touch a network. It hard-blocks cloud STT and remote polish."],
+    ["Give the model a warm-up", "The first dictation after launch pays the model load; the second is the real speed. Judge latency on the second."],
+    ["Test after switching", "Change a model → dictate one sentence in Notepad. It takes 5 seconds and proves the whole chain (mic → STT → polish → paste)."],
+    ["Keep the dictionary small", "10–30 names/jargon terms help; 500 hurt accuracy. The dictionary biases spelling, it isn't a thesaurus."],
+  ] as const;
+
+  return (
+    <Card className="mb-8">
+      <p className="text-[15px] font-semibold">Best practices</p>
+      <ul className="mt-3 space-y-3">
+        {items.map(([title, body]) => (
+          <li key={title} className="flex gap-3">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+            <p className="text-[13px] leading-5 text-ink-dim">
+              <span className="font-semibold text-ink">{title}.</span> {body}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
 }
 
 /** The user's machine, front and center — no guessing what fits. */
@@ -315,10 +444,23 @@ function CloudSttCard() {
           <span className="text-xs text-red-400">Local-only lock is on — cloud STT is blocked.</span>
         )}
       </div>
+      <p className="rounded-lg border border-line bg-surface-2/50 px-3 py-2.5 text-xs leading-5 text-ink-dim">
+        <span className="font-semibold text-ink">{preset.label}.</span> {preset.freeNote}
+        {preset.docs && (
+          <>
+            {" "}
+            <a href={preset.docs} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+              Provider docs ↗
+            </a>
+          </>
+        )}
+        <span className="block pt-1 text-[10px] uppercase tracking-wider text-ink-dim/70">
+          limits verified {preset.verified} — they change; check before relying on them
+        </span>
+      </p>
       <p className="text-xs leading-5 text-ink-dim">
-        Groq's free tier runs whisper-large-v3-turbo at ~2,000 requests/day — more than enough for
-        hours of dictation. OpenAI and any compatible endpoint work the same way. Your key never
-        leaves this machine except to the endpoint you typed.
+        Your key is written to your local config only and is sent to nothing but the endpoint above.
+        A transcription request posts a short WAV per utterance — no accounts, no identifiers.
       </p>
     </div>
   );

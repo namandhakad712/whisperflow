@@ -9,7 +9,7 @@ const sections = [
   { href: "/whisperflow/docs/getting-started/", label: "Getting started" },
   { href: "/whisperflow/docs/hotkeys/", label: "Hotkeys & overlay" },
   { href: "/whisperflow/docs/models/", label: "Models & hardware" },
-  { href: "/whisperflow/docs/free-ai/", label: "Free AI for polish" },
+  { href: "/whisperflow/docs/free-ai/", label: "Free AI (polish + STT)" },
   { href: "/whisperflow/docs/privacy/", label: "Privacy & data" },
 ];
 const path = Astro.url.pathname;
@@ -32,7 +32,7 @@ const path = Astro.url.pathname;
         ))}
       </nav>
     </aside>
-    <article class="prose prose-headings:font-display prose-a:text-forest max-w-3xl">
+    <article class="prose prose-headings:font-display max-w-3xl">
       <h1>{title}</h1>
       <slot />
     </article>

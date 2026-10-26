@@ -41,6 +41,7 @@ export interface EnginePort {
   deleteModel(id: string): Promise<void>;
   setActiveModel(role: "stt" | "polish", id: string): Promise<void>;
   recommendModels(): Promise<TierRecommendation>;
+  deleteUnusedModels(): Promise<{ deleted: string[] }>;
   testCloudStt(): Promise<{ ok: boolean; message: string }>;
   dispose(): Promise<void>;
 }
@@ -88,6 +89,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
     deleteModel: (id) => engine.models.delete(id),
     setActiveModel: (role, id) => engine.models.setActive(role, id),
     recommendModels: () => engine.models.recommend(),
+    deleteUnusedModels: () => engine.models.deleteUnused(),
     testCloudStt: () => engine.stt.testCloud(),
     dispose: () => engine.dispose(),
   };

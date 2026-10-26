@@ -10,7 +10,8 @@ import {
 import { ConfigStore } from "../src/config/ConfigStore.js";
 import { ModelManager } from "../src/models/manager.js";
 import { CloudSttProvider } from "../src/providers/stt/CloudSttProvider.js";
-import { DictationSession, type DictationSessionDeps } from "../src/orchestrator/DictationSession.js";
+import { withSttFallback } from "../src/providers/stt/withFallback.js";
+import { DictationSession, type DictationSessionDeps, type SttAdapter } from "../src/orchestrator/DictationSession.js";
 import { createHistoryStore } from "../src/history/historyStore.js";
 
 const FRAME = 1024;
@@ -167,8 +168,7 @@ describe("ModelManager custom catalog + auto-activate", () => {
   });
 });
 
-describe("meeting mode (append dictation)", () => {
-  it("emits each utterance as appendText and skips the final injection", async () => {
+describe("meeting mode (append dictation)", () => {  it("emits each utterance as appendText and skips the final injection", async () => {
     const events: DictationStateEvent[] = [];
     const deps: DictationSessionDeps = {
       config: WhisperFlowConfigSchema.parse({
@@ -199,5 +199,83 @@ describe("meeting mode (append dictation)", () => {
     // Controller skips injection on empty final; history still archives everything.
     expect(result.final).toBe("");
     expect(deps.history!.list()[0]!.rawText).toContain("one more thing one more thing");
+  });
+});
+
+describe("stt fallback chain", () => {
+  const ok = (text: string): SttAdapter => ({
+    async transcribe() {
+      return text;
+    },
+    modelPathFor: () => "/models/x.bin",
+  });
+  const failing = (): SttAdapter => ({
+    async transcribe() {
+      throw new Error("quota exceeded");
+    },
+    modelPathFor: () => "/models/x.bin",
+  });
+
+  it("uses the backup when the primary throws", async () => {
+    const logs: string[] = [];
+    const adapter = withSttFallback(failing(), ok("from-backup"), (m) => logs.push(m))!;
+    await expect(adapter.transcribe(new Float32Array(10), { language: "en" })).resolves.toBe("from-backup");
+    expect(logs.join(" ")).toMatch(/fallback/i);
+  });
+
+  it("never calls the backup when the primary succeeds", async () => {
+    let backupCalls = 0;
+    const backup: SttAdapter = {
+      async transcribe() {
+        backupCalls += 1;
+        return "backup";
+      },
+      modelPathFor: () => "/models/x.bin",
+    };
+    const adapter = withSttFallback(ok("primary"), backup)!;
+    await expect(adapter.transcribe(new Float32Array(10), { language: "en" })).resolves.toBe("primary");
+    expect(backupCalls).toBe(0);
+  });
+
+  it("returns the single available adapter when there is no pair", () => {
+    const only = ok("solo");
+    expect(withSttFallback(only, null)).toBe(only);
+    expect(withSttFallback(null, only)).toBe(only);
+    expect(withSttFallback(null, null)).toBeNull();
+  });
+
+  it("is ready when either side can serve (cloud has no local path)", () => {
+    const cloud: SttAdapter = {
+      async transcribe() {
+        return "cloud";
+      },
+      modelPathFor: () => null,
+      ready: () => true,
+    };
+    const localMissingModel: SttAdapter = {
+      async transcribe() {
+        return "local";
+      },
+      modelPathFor: () => null,
+    };
+    const adapter = withSttFallback(cloud, localMissingModel)!;
+    expect(adapter.ready?.("whisper-small")).toBe(true);
+  });
+});
+
+describe("cloud presets reflect verified provider reality", () => {
+  it("drops the Groq model id that no longer exists", () => {
+    expect([...CLOUD_STT_PRESETS.groq.models]).not.toContain("distil-whisper-large-v3-en");
+    expect([...CLOUD_STT_PRESETS.groq.models]).toContain("whisper-large-v3-turbo");
+  });
+
+  it("offers Mistral Voxtral with the documented default id", () => {
+    expect(CLOUD_STT_PRESETS.mistral.defaultModel).toBe("voxtral-mini-transcribe-3-0");
+    expect(CLOUD_STT_PRESETS.mistral.baseUrl).toBe("https://api.mistral.ai/v1");
+  });
+
+  it("points OpenAI at the current model, not the deprecated one", () => {
+    expect(CLOUD_STT_PRESETS.openai.defaultModel).toBe("gpt-transcribe");
+    expect(CLOUD_STT_PRESETS.openai.freeNote).toMatch(/2027-02-26/);
   });
 });

@@ -31,7 +31,7 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     sizeBytes: 147_964_211,
     format: "ggml",
     tiers: ["low"],
-    license: "Apache-2.0",
+    license: "MIT",
     notes: "Fast, English-only. ~148 MB.",
   },
   {
@@ -44,7 +44,7 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     sizeBytes: 487_601_967,
     format: "ggml",
     tiers: ["low", "mid", "high"],
-    license: "Apache-2.0",
+    license: "MIT",
     notes: "Good balance, 100+ languages. ~488 MB. Default.",
   },
   {
@@ -84,7 +84,8 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     format: "gguf",
     tiers: ["mid", "high"],
     license: "Apache-2.0",
-    notes: "Default polish model — best-in-size-class instruction following (IFEval 89.8), 201 languages. ~2.7 GB.",
+    notes:
+      "Default polish model — strong instruction following at 4B, Apache-2.0. Use the text path only (don't load the mmproj vision file). ~2.7 GB.",
   },
   {
     id: "qwen3.5-2b-q4",

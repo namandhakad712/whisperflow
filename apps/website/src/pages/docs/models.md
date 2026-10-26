@@ -23,9 +23,17 @@ Language can be pinned per-dictation or left on auto-detect.
 ## Transcription (cloud, BYO key)
 
 Prefer zero downloads? Point transcription at a cloud endpoint instead:
-**Settings → Models → Transcription engine → Cloud**. The practical free default is Groq
-(whisper-large-v3-turbo, ~2,000 requests/day — see [free AI options](/whisperflow/docs/free-ai/)).
-OpenAI and any compatible endpoint work identically. Blocked when the local-only lock is on.
+**Settings → Models → Transcription engine → BYO cloud**. Then pick a provider:
+
+- **Groq** — free tier, `whisper-large-v3-turbo` (20 RPM, ~2,000 req/day, 7,200 audio-sec/hour)
+- **Mistral** — `voxtral-mini-transcribe-3-0` at **$0.0035/min** (~$0.21/hour); free-mode quota is
+  only visible in your Mistral console
+- **OpenAI** — `gpt-transcribe` (`whisper-1` is deprecated, shutdown 2027-02-26)
+- **Custom** — anything that speaks `POST /audio/transcriptions` and returns `{ text }`
+
+See [free AI options](/whisperflow/docs/free-ai/) for the dated limits. Blocked when the local-only
+lock is on. You can also set a **fallback engine** (Models → "If the engine fails") so a cloud
+outage retries on local whisper.cpp — or leave it off so nothing ever leaves the machine by surprise.
 
 ## Polish (llama.cpp, GGUF)
 

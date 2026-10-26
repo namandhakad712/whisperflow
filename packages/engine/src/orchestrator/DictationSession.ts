@@ -30,8 +30,14 @@ export interface DictationResult {
 }
 
 export interface SttAdapter {
-  transcribe(pcm: Float32Array, opts: { modelPath: string; language: string; prompt?: string }): Promise<string>;
+  transcribe(pcm: Float32Array, opts: { modelPath?: string; language: string; prompt?: string }): Promise<string>;
+  /** On-disk weights path for local providers — `null` when the provider needs no file (cloud). */
   modelPathFor(modelId: string): string | null;
+  /**
+   * Readiness gate. Defaults to "a model path exists"; cloud adapters override
+   * it to `true` because there are no local weights to check.
+   */
+  ready?(modelId: string): boolean;
 }
 
 export interface DictationSessionDeps {
@@ -172,14 +178,20 @@ export class DictationSession {
     if (!stt) return;
     const config = this.deps.config;
     const modelPath = stt.modelPathFor(config.stt.modelId);
-    if (!modelPath) {
+    // Cloud adapters have no local weights: they declare readiness themselves.
+    const ready = stt.ready ? stt.ready(config.stt.modelId) : modelPath !== null;
+    if (!ready) {
       this.deps.logger?.(`stt model ${config.stt.modelId} not on disk — segment skipped`);
       return;
     }
     const prompt = this.raw.slice(-220);
     this.sttQueue = this.sttQueue.then(async () => {
       if (this.cancelled) return;
-      const text = await stt.transcribe(pcm, { modelPath, language: config.stt.language, prompt });
+      const text = await stt.transcribe(pcm, {
+        ...(modelPath ? { modelPath } : {}),
+        language: config.stt.language,
+        prompt,
+      });
       if (this.cancelled || !text) return;
       if (this.deps.appendMode) {
         // Insert this utterance now; keep accumulating for the final transcript.

@@ -52,6 +52,7 @@ export const IPC = {
   ModelsDelete: "models/delete",
   ModelsSetActive: "models/setActive",
   ModelsRecommend: "models/recommend",
+  ModelsDeleteUnused: "models/deleteUnused",
 
   /** emit (main → renderer) — fired after every settings/set so live windows re-read config */
   SettingsChanged: "settings/changed",
@@ -199,6 +200,10 @@ export interface ModelsSetActiveRequest {
 export type ModelsSetActiveResponse = void;
 export type ModelsRecommendRequest = void;
 export type ModelsRecommendResponse = TierRecommendation;
+export type ModelsDeleteUnusedRequest = void;
+export interface ModelsDeleteUnusedResponse {
+  deleted: string[];
+}
 
 export type SttTestRequest = void;
 export interface SttTestResponse {
@@ -266,6 +271,7 @@ export interface IpcInvokeMap {
   [IPC.ModelsDelete]: { request: ModelsDeleteRequest; response: ModelsDeleteResponse };
   [IPC.ModelsSetActive]: { request: ModelsSetActiveRequest; response: ModelsSetActiveResponse };
   [IPC.ModelsRecommend]: { request: ModelsRecommendRequest; response: ModelsRecommendResponse };
+  [IPC.ModelsDeleteUnused]: { request: ModelsDeleteUnusedRequest; response: ModelsDeleteUnusedResponse };
   [IPC.SttTest]: { request: SttTestRequest; response: SttTestResponse };
   [IPC.AudioDevices]: { request: AudioDevicesRequest; response: AudioDevicesResponse };
   [IPC.AppOpenSettings]: { request: AppOpenSettingsRequest; response: AppOpenSettingsResponse };
@@ -331,6 +337,8 @@ export interface WhisperflowApi {
     setActive(request: ModelsSetActiveRequest): Promise<ModelsSetActiveResponse>;
     /** The engine's pick of catalog ids for THIS machine's hardware tier. */
     recommend(): Promise<ModelsRecommendResponse>;
+    /** Removes downloaded models no role points at (disk cleanup). */
+    deleteUnused(): Promise<ModelsDeleteUnusedResponse>;
     onProgress(listener: (event: ModelsProgressEmit) => void): Unsubscribe;
   };
   audio: {

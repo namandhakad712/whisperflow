@@ -41,3 +41,9 @@ desktop.ini
 # Electron packaging
 apps/desktop/release/
 .playwright-cli/
+
+temp/
+culture_languages.univer
+
+smoke.out
+smoke.err

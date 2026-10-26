@@ -63,13 +63,26 @@ export class CloudSttProvider {
     }
     const { baseUrl, apiKey, model } = this.resolved();
     if (!apiKey) return { ok: false, message: "Add an API key first." };
+    const base = baseUrl.replace(/\/+$/, "");
     try {
-      const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/models`, {
-        headers: { authorization: `Bearer ${apiKey}` },
-      });
-      if (res.ok) return { ok: true, message: `Key works — ready to use ${model}.` };
+      const res = await fetch(`${base}/models`, { headers: { authorization: `Bearer ${apiKey}` } });
       if (res.status === 401 || res.status === 403) return { ok: false, message: "Key rejected (401/403)." };
-      return { ok: true, message: `Endpoint answered ${res.status} — key looks usable.` };
+      if (!res.ok) return { ok: true, message: `Endpoint answered ${res.status} — key looks usable.` };
+
+      // Best-effort: does the endpoint actually expose the configured model id?
+      try {
+        const body = (await res.json()) as { data?: Array<{ id?: string }> };
+        const ids = (body.data ?? []).map((m) => m.id).filter((id): id is string => Boolean(id));
+        if (ids.length > 0 && model && !ids.includes(model)) {
+          return {
+            ok: true,
+            message: `Key works, but "${model}" is not in this endpoint's model list (e.g. ${ids.slice(0, 3).join(", ")}). Double-check the id.`,
+          };
+        }
+      } catch {
+        /* non-JSON /models — the 200 already proved the key */
+      }
+      return { ok: true, message: `Key works — ready to use ${model}.` };
     } catch (err) {
       return { ok: false, message: `Could not reach ${baseUrl}: ${String(err).slice(0, 80)}` };
     }

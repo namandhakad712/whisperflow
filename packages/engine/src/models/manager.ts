@@ -155,6 +155,25 @@ export class ModelManager {
     if (entry.format === "binary") {
       await rm(join(this.opts.binDir, entry.file), { force: true });
     }
+    // A custom entry also leaves the catalog — deleting it should not leave a
+    // ghost row behind in the Models page.
+    if (entry.custom) {
+      const custom = this.opts.config.get().models.custom.filter((c) => c.id !== id);
+      this.opts.config.set({ models: { custom } });
+    }
+  }
+
+  /** Deletes every downloaded model that no role currently points at. */
+  async deleteUnused(): Promise<{ deleted: string[] }> {
+    const cfg = this.opts.config.get();
+    const keep = new Set([cfg.stt.modelId, cfg.polish.modelId, "whisper-bin-x64"]);
+    const deleted: string[] = [];
+    for (const status of await this.status()) {
+      if (status.state !== "downloaded" || keep.has(status.entryId)) continue;
+      await this.delete(status.entryId);
+      deleted.push(status.entryId);
+    }
+    return { deleted };
   }
 
   /** Points the config's active model for a role at a catalog entry. */

@@ -20,8 +20,10 @@ import { ModelManager } from "./models/manager.js";
 import { CATALOG } from "./models/catalog.js";
 import { WhisperCppProvider } from "./providers/stt/WhisperCppProvider.js";
 import { CloudSttProvider } from "./providers/stt/CloudSttProvider.js";
+import { withSttFallback } from "./providers/stt/withFallback.js";
 import { LocalLlamaProvider } from "./providers/polish/LocalLlamaProvider.js";
 import { RemoteOpenAIProvider } from "./providers/polish/RemoteOpenAIProvider.js";
+import type { PolishInput, PolishProvider } from "./providers/polish/PolishProvider.js";
 import { DictationSession, type SttAdapter } from "./orchestrator/DictationSession.js";
 import { pcmToWav } from "./audio/wav.js";
 
@@ -58,6 +60,8 @@ export interface WhisperFlowEngine {
     delete(id: string): Promise<void>;
     setActive(role: "stt" | "polish", id: string): Promise<void>;
     recommend(tier?: HardwareTier): Promise<TierRecommendation>;
+    /** Frees disk: removes downloaded models nothing points at. */
+    deleteUnused(): Promise<{ deleted: string[] }>;
   };
   stt: {
     /** Validates the configured cloud STT key against its endpoint (no audio sent). */
@@ -78,7 +82,7 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
   const sttProvider = new WhisperCppProvider({ binDir: opts.dirs.bin });
   const localPolish = new LocalLlamaProvider({
     resolveModelPath: (id) => {
-      const entry = CATALOG.find((e) => e.id === id);
+      const entry = manager.entry(id);
       return entry ? manager.localPath(entry) : null;
     },
     temperature: () => config.get().polish.temperature,
@@ -87,12 +91,57 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
   const remotePolish = new RemoteOpenAIProvider(() => config.get());
   const cloudStt = new CloudSttProvider(() => config.get());
 
-  const activePolish = () => {
-    const provider = config.get().polish.provider;
+  /** Remote polish, with an optional local-model rescue before offline cleanup. */
+  const activePolish = (): PolishProvider | null => {
+    const cfg = config.get();
+    const provider = cfg.polish.provider;
     if (provider === "none") return null;
-    if (provider === "openai-compat") return remotePolish;
-    return localPolish;
+    if (provider !== "openai-compat") return localPolish;
+    if (!cfg.polish.fallbackToLocal) return remotePolish;
+    return {
+      id: "openai-compat",
+      available: () => remotePolish.available(),
+      async *polish(input: PolishInput) {
+        try {
+          yield* remotePolish.polish(input);
+        } catch (err) {
+          const local = await localPolish.available();
+          if (!local) throw err; // session falls back to offline cleanup
+          logger(`polish: remote failed (${String(err).slice(0, 80)}) — using the local model`);
+          yield* localPolish.polish(input);
+        }
+      },
+    };
   };
+
+  /** Local whisper.cpp adapter, when the sidecar binary exists. */
+  const localStt = (): SttAdapter | null =>
+    sttProvider.findBinary() === null
+      ? null
+      : {
+          transcribe: (pcm, o) => sttProvider.transcribe(pcm, o),
+          modelPathFor: (id) => {
+            const entry = manager.entry(id);
+            return entry && entry.role === "stt" && entry.format !== "binary" ? manager.localPath(entry) : null;
+          },
+        };
+
+  /** Cloud BYOK adapter, when a key is configured and the local-only lock is off. */
+  const cloudSttAdapter = (): SttAdapter | null =>
+    cloudStt.isReady()
+      ? {
+          transcribe: (pcm, o) => cloudStt.transcribe(pcm, o),
+          modelPathFor: () => null,
+          ready: () => true,
+        }
+      : null;
+
+  /**
+   * Wraps a primary engine with a backup: if the primary throws (quota, network,
+   * missing weights), the backup transcribes that same segment instead.
+   */
+  const pickStt = (primary: SttAdapter | null, backup: SttAdapter | null): SttAdapter | null =>
+    withSttFallback(primary, backup, logger);
 
   return {
     id: "whisperflow-engine",
@@ -104,23 +153,12 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     },
     async startDictation(sessionOpts) {
       const cfg = config.get();
-      // STT adapter: cloud BYOK when configured (and not locked to local),
-      // otherwise whisper.cpp with a model already on disk.
-      let stt: SttAdapter | null = null;
-      if (cfg.stt.provider === "cloud" && cloudStt.isReady()) {
-        stt = {
-          transcribe: (pcm, o) => cloudStt.transcribe(pcm, o),
-          modelPathFor: () => null,
-        };
-      } else if (sttProvider.findBinary() !== null) {
-        stt = {
-          transcribe: (pcm, o) => sttProvider.transcribe(pcm, o),
-          modelPathFor: (id) => {
-            const entry = manager.entry(id);
-            return entry && entry.role === "stt" && entry.format !== "binary" ? manager.localPath(entry) : null;
-          },
-        };
-      }
+      const local = localStt();
+      const cloud = cloudSttAdapter();
+      const primary = cfg.stt.provider === "cloud" ? cloud : local;
+      const backup =
+        cfg.stt.fallback === "local" ? local : cfg.stt.fallback === "cloud" ? cloud : null;
+      const stt = pickStt(primary, backup);
       return new DictationSession({
         config: structuredClone(cfg),
         stt,
@@ -162,6 +200,9 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
       },
       async recommend(tier) {
         return manager.recommend(tier);
+      },
+      async deleteUnused() {
+        return manager.deleteUnused();
       },
     },
     stt: {

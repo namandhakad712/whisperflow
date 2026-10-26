@@ -10,8 +10,8 @@ import { join } from "node:path";
 import { pcmToWav } from "../../audio/wav.js";
 
 export interface TranscribeOpts {
-  /** Catalog model id — resolved to a ggml file by the caller. */
-  modelPath: string;
+  /** On-disk ggml weights file — required here (cloud adapters pass none). */
+  modelPath?: string;
   language: string;
   prompt?: string;
 }
@@ -73,6 +73,9 @@ export class WhisperCppProvider {
   private async transcribeNow(pcm: Float32Array, opts: TranscribeOpts): Promise<string> {
     const bin = this.findBinary();
     if (!bin) throw new Error("whisper.cpp binary not found — download it in Settings → Models");
+    if (!opts.modelPath) {
+      throw new Error("no whisper model selected — download one in Settings → Models");
+    }
 
     const dir = mkdtempSync(join(tmpdir(), "whisperflow-stt-"));
     try {

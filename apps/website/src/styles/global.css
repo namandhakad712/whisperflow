@@ -253,3 +253,87 @@ details.faq summary::-webkit-details-marker {
 details.faq[open] .faq-chevron {
   transform: rotate(45deg);
 }
+
+/* ---------------------------------------------------------------------------
+   DOCS TYPOGRAPHY — theme-aware.
+   Tailwind Typography ships light-mode grays by default (--tw-prose-body =
+   gray-700), which is near-invisible on Nocturne's near-black page. Bind every
+   prose token to our own design tokens instead, so docs read correctly in BOTH
+   Nocturne (dark, default) and Dawn (light).
+   --------------------------------------------------------------------------- */
+.prose {
+  --tw-prose-body: var(--color-ink-soft);
+  --tw-prose-headings: var(--color-ink);
+  --tw-prose-lead: var(--color-ink-soft);
+  --tw-prose-links: var(--color-accent-strong);
+  --tw-prose-bold: var(--color-ink);
+  --tw-prose-counters: var(--color-ink-faint);
+  --tw-prose-bullets: var(--color-accent-strong);
+  --tw-prose-hr: var(--color-line);
+  --tw-prose-quotes: var(--color-ink);
+  --tw-prose-quote-borders: var(--color-accent);
+  --tw-prose-captions: var(--color-ink-faint);
+  --tw-prose-code: var(--color-ink);
+  --tw-prose-pre-code: #eef0f6;
+  --tw-prose-pre-bg: var(--color-cream);
+  --tw-prose-th-borders: var(--color-line);
+  --tw-prose-td-borders: var(--color-line);
+  color: var(--color-ink-soft);
+}
+.prose :where(h1, h2, h3, h4, strong, b) {
+  color: var(--color-ink);
+}
+.prose :where(a) {
+  color: var(--color-accent-strong);
+  text-decoration-color: color-mix(in oklab, var(--color-accent-strong) 45%, transparent);
+  text-underline-offset: 3px;
+}
+.prose :where(a):hover {
+  color: var(--color-ink);
+  text-decoration-color: var(--color-ink);
+}
+.prose :where(code):not(pre code) {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.86em;
+}
+.prose :where(code):not(pre code)::before,
+.prose :where(code):not(pre code)::after {
+  content: "";
+}
+.prose :where(pre) {
+  background: var(--color-cream);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+.prose :where(table) {
+  font-size: 0.9em;
+}
+.prose :where(thead th) {
+  color: var(--color-ink);
+}
+.prose :where(tbody td, thead th) {
+  border-color: var(--color-line);
+}
+.prose :where(blockquote) {
+  border-left-color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-surface-2) 55%, transparent);
+  border-radius: 0 12px 12px 0;
+  padding: 0.35rem 1rem;
+  font-style: normal;
+}
+.prose :where(blockquote p:first-of-type)::before,
+.prose :where(blockquote p:last-of-type)::after {
+  content: "";
+}
+/* Dawn: links need the deeper blue on white, everything else rides the tokens */
+:root[data-mode="light"] .prose {
+  --tw-prose-links: #1d47ee;
+  --tw-prose-pre-code: #0c0d12;
+  --tw-prose-pre-bg: #f1f2f6;
+}
+:root[data-mode="light"] .prose :where(a) {
+  color: #1d47ee;
+}

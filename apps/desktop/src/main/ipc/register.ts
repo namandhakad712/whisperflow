@@ -137,6 +137,7 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.ModelsDelete, (_e, req: { id: string }) => engine.deleteModel(req.id));
   ipcMain.handle(IPC.ModelsSetActive, (_e, req: { role: "stt" | "polish"; id: string }) => engine.setActiveModel(req.role, req.id));
   ipcMain.handle(IPC.ModelsRecommend, () => engine.recommendModels());
+  ipcMain.handle(IPC.ModelsDeleteUnused, () => engine.deleteUnusedModels());
 
   // ---- cloud STT (BYOK) -----------------------------------------------------------
   ipcMain.handle(IPC.SttTest, () => engine.testCloudStt());
