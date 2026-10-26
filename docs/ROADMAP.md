@@ -22,10 +22,10 @@ onboarding with ASR config board, Insights, Scratchpad, website on GitHub Pages.
       1.94% WER — `docs/research/model-recommender.md`), SenseVoice via sherpa-onnx
 - [ ] SQLite history upgrade (drop-in behind the repository interface)
 - [ ] Whisper.cpp streaming server mode for lower first-token latency
-- [ ] Hold-to-talk + typing detection via optional native hook (Electron lacks key-up events)
+- [x] Hold-to-talk + typing detection via optional native hook (uiohook-napi; verified E2E)
 - [ ] macOS + Linux packaging (injection + hotkeys need per-OS ports)
 - [ ] i18n (App Language setting), starting with the site's existing locales list
-- [ ] Insights heatmap + notifications pill (remaining 🟡 parity items)
+- [ ] Notifications pill (remaining 🟡 parity item; Insights heatmap shipped)
 
 ## v0.3+ — exploring
 - [ ] Voice profile learning (tone-match pairs, local-only)

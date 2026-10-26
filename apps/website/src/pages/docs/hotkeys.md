@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/Doc.astro
 title: Hotkeys & overlay
-description: Push-to-talk, toggle mode, rebinding, and how the dictation overlay behaves.
+description: Press-and-hold push-to-talk, typing detection, toggle mode, rebinding, and how the dictation overlay behaves.
 ---
 
 ## Push-to-talk
@@ -10,6 +10,24 @@ The default hotkey is **Ctrl+Shift+Space**:
 
 - **Hold** to record; **release** to finish and polish. This is push-to-talk mode.
 - The overlay appears near your cursor the moment recording starts.
+
+### How the key release is detected
+
+Electron's global shortcuts only fire on key-down — the OS never tells an app
+when a key goes back up. Press-and-hold therefore uses a small global keyboard
+hook (`uiohook-napi`, MIT, bundled). It watches for your configured combination
+only; while you dictate, other keys are counted as booleans so the session can
+be held open — **nothing you type is ever recorded, stored, or sent**.
+
+If the hook cannot load on your machine, the setting stays visible but switches
+itself off and the app keeps working in toggle mode.
+
+## Typing while dictating
+
+Say a sentence, type a correction, keep talking — WhisperFlow holds the session
+open when it detects typing and the overlay says so (`⌨ typing — dictation
+held`). Dictation ends only when you release the hotkey (or press it again, in
+toggle mode).
 
 ## Toggle mode
 
