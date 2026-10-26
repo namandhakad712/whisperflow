@@ -52,7 +52,7 @@ jobs:
 
       - name: Pack installer
         working-directory: apps/desktop
-        run: npx electron-builder --win nsis --prepackaged release/win-unpacked
+        run: npx electron-builder --win nsis --prepackaged release/win-unpacked --publish never
 
       # The release: installer + latest.yml + blockmap. latest.yml + blockmap are
       # the auto-update feed — blockmap is what makes electron-updater download
