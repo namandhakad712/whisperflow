@@ -50,7 +50,15 @@ async function bootstrap(): Promise<void> {
   const windows = new WindowManager({ preloadPath: resolvePreloadPath(), resolveRenderer });
   windowsRef = windows;
   const hotkeys = new HotkeyManager({ onToggle: () => void controllerToggle(), onCancel: () => controllerCancel() });
-  const controller = new DictationController({ engine, windows, hotkeys });
+  // The controller is created before the tray; it reaches the tray through this
+  // late-bound handle (both sides only call each other after bootstrap).
+  const trayHandle: { setActivity?: (active: boolean, recording: boolean) => void } = {};
+  const controller = new DictationController({
+    engine,
+    windows,
+    hotkeys,
+    onActivity: (active, recording) => trayHandle.setActivity?.(active, recording),
+  });
   function controllerToggle(): void {
     void controller.toggle();
   }
@@ -80,7 +88,11 @@ async function bootstrap(): Promise<void> {
     },
     checkForUpdates: () => log("updater: manual check requested"),
     quit: () => app.quit(),
-  }) as Electron.Tray & { refresh?: (v: boolean, r?: boolean) => void };
+  }) as Electron.Tray & {
+    refresh?: (v: boolean) => void;
+    setActivity?: (active: boolean, recording: boolean) => void;
+  };
+  trayHandle.setActivity = (active, recording) => tray.setActivity?.(active, recording);
 
   registerIpc({ engine, controller, windows, hotkeys, tray, onQuit: () => app.quit() });
 

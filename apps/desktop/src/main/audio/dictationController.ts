@@ -32,8 +32,14 @@ export class DictationController {
       engine: EnginePort;
       windows: WindowManager;
       hotkeys: HotkeyManager;
+      /** Notifies the host (tray tooltip/state) when activity changes. */
+      onActivity?: (active: boolean, recording: boolean) => void;
     },
   ) {}
+
+  private notify(): void {
+    this.deps.onActivity?.(this.active, this.recording);
+  }
 
   get active(): boolean {
     return this.session !== null;
@@ -70,6 +76,7 @@ export class DictationController {
           this.audioPath ? " (saving audio)" : ""
         }`,
       );
+      this.notify();
     } catch (err) {
       log("dictation: failed to start:", err);
       this.broadcast({ state: "error", error: String(err) });
@@ -109,6 +116,7 @@ export class DictationController {
       this.recording = false;
       this.deps.hotkeys.unbindEscape();
       this.finishing = false;
+      this.notify();
     }
   }
 
@@ -125,6 +133,7 @@ export class DictationController {
     this.deps.windows.hideOverlay();
     this.deps.hotkeys.unbindEscape();
     this.broadcast({ state: "cancelled" });
+    this.notify();
     log("dictation: cancelled");
   }
 

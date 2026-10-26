@@ -16,14 +16,37 @@ export function createTray(controller: TrayController): Tray {
   const iconPath = join(__dirname, "../../resources/tray.png");
   const image = nativeImage.createFromPath(iconPath);
   const tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
-  tray.setToolTip("WhisperFlow — hold nothing back");
 
-  const rebuild = (launchAtLogin: boolean, recording: boolean) => {
+  let launchAtLogin = false;
+  let active = false;
+  let recording = false;
+
+  const tooltip = () =>
+    recording
+      ? "WhisperFlow — recording… (press the hotkey or the tray to stop)"
+      : active
+        ? "WhisperFlow — listening…"
+        : "WhisperFlow — hold nothing back";
+
+  const rebuild = () => {
+    tray.setToolTip(tooltip());
     tray.setContextMenu(Menu.buildFromTemplate(menuTemplate(launchAtLogin, recording, controller)));
   };
-  rebuild(false, false);
-  (tray as Tray & { refresh: (v: boolean, r?: boolean) => void }).refresh = (v, r) =>
-    rebuild(v, r ?? controller.isRecording());
+  rebuild();
+
+  (tray as Tray & {
+    refresh: (v: boolean) => void;
+    setActivity: (a: boolean, r: boolean) => void;
+  }).refresh = (v) => {
+    launchAtLogin = v;
+    rebuild();
+  };
+  (tray as Tray & { setActivity: (a: boolean, r: boolean) => void }).setActivity = (a, r) => {
+    active = a;
+    recording = r;
+    rebuild();
+  };
+
   tray.on("click", () => controller.openSettings());
   return tray;
 }

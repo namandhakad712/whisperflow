@@ -31,18 +31,26 @@ jobs:
       # electron-builder packs out/ — build the app first (same as the CI job)
       - run: npm run build -w apps/desktop
 
-      - name: Build + publish installer
+      # Build only; the release upload below is explicit and fails loudly if an
+      # artifact is missing (electron-builder's own publisher dropped the 400 MB
+      # exe upload silently once — never again).
+      - name: Build installer
         working-directory: apps/desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis --publish always
+        run: npx electron-builder --win nsis --publish never
 
-      # latest.yml + blockmap are the auto-update feed; make sure they are
-      # attached to the release even if electron-builder's attach step raced.
-      - name: Attach update feed files
+      # The release: installer + latest.yml + blockmap. latest.yml + blockmap are
+      # the auto-update feed — blockmap is what makes electron-updater download
+      # only the changed blocks between versions.
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          name: v${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
           files: |
+            apps/desktop/release/WhisperFlow-Setup-*.exe
             apps/desktop/release/latest.yml
             apps/desktop/release/*.blockmap
         env:
