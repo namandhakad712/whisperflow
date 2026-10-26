@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { WhisperFlowConfig } from "@whisperflow/shared";
+import { POLISH_PRESETS, type WhisperFlowConfig } from "@whisperflow/shared";
 import { useSettings } from "../store";
 import { Button, Card, PageHeader, Row, Select, TextInput, Toggle } from "../../shared/ui";
 
@@ -104,6 +104,31 @@ export function AdvancedTab() {
               Groq, OpenRouter, Ollama, vLLM — anything speaking the OpenAI chat format.
               Requires the local-only lock (Privacy) to be OFF.
             </p>
+            {/* one-click presets — verified endpoints, no typing required */}
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(POLISH_PRESETS) as Array<keyof typeof POLISH_PRESETS>).map((id) => {
+                const preset = POLISH_PRESETS[id];
+                const active =
+                  config.polish.remote.baseUrl === preset.baseUrl && config.polish.remote.model === preset.model;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() =>
+                      void patch({ polish: { remote: { baseUrl: preset.baseUrl, model: preset.model } } })
+                    }
+                    className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                      active
+                        ? "border-accent/70 bg-accent/10"
+                        : "border-line bg-surface-2/60 hover:border-accent/40"
+                    }`}
+                  >
+                    <span className="block text-[12px] font-semibold">{preset.label}</span>
+                    <span className="block text-[10px] text-ink-dim">{preset.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
             <TextInput
               value={config.polish.remote.baseUrl}
               onChange={(v) => void patch({ polish: { remote: { baseUrl: v } } })}

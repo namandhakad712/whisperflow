@@ -139,8 +139,7 @@ export const ModelsConfigSchema = z.object({
 export type ModelsConfig = z.infer<typeof ModelsConfigSchema>;
 
 /** BYO OpenAI-compatible endpoint for polish. Blocked when `privacy.localOnly`. */
-export const RemotePolishConfigSchema = z.object({
-  /** Base URL, e.g. `"https://api.openai.com/v1"` — no trailing `/chat/completions`. */
+export const RemotePolishConfigSchema = z.object({  /** Base URL, e.g. `"https://api.openai.com/v1"` — no trailing `/chat/completions`. */
   baseUrl: z.string().default(""),
   /** API key. Stored locally in config.json only. */
   apiKey: z.string().default(""),
@@ -148,6 +147,29 @@ export const RemotePolishConfigSchema = z.object({
   model: z.string().default(""),
 });
 export type RemotePolishConfig = z.infer<typeof RemotePolishConfigSchema>;
+
+/**
+ * One-click polish endpoints. Polish is a tiny job — a 8–120B model at low
+ * temperature, or a small free endpoint, is plenty. Verified 2026-10-26.
+ */
+export const POLISH_PRESETS = {
+  groq: {
+    label: "Groq · gpt-oss-120b",
+    hint: "Fast, ~1,000 req/day free",
+    baseUrl: "https://api.groq.com/openai/v1",
+    model: "openai/gpt-oss-120b",
+    note: "Groq's free tier. Inputs not retained by default; ZDR available.",
+  },
+  openrouterPoolside: {
+    label: "OpenRouter · Poolside Laguna S 2.1",
+    hint: "$0 endpoint (poolside/laguna-s-2.1:free)",
+    baseUrl: "https://openrouter.ai/api/v1",
+    model: "poolside/laguna-s-2.1:free",
+    note: "Poolside's Laguna is a text→text model with a verified $0 OpenRouter endpoint (262k ctx). Not a speech model — this is for polish only. Training policy is per-upstream-provider.",
+  },
+} as const;
+
+export type PolishPresetId = keyof typeof POLISH_PRESETS;
 
 export const PolishConfigSchema = z.object({
   /** `"none"` disables polish and uses the offline cleanup fallback. */
