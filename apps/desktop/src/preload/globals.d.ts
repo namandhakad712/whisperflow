@@ -12,6 +12,7 @@ declare global {
         exportBackup(): Promise<{ exported: boolean; path?: string }>;
         onNavigate(cb: (route: string) => void): () => void;
       };
+      settings: { onChanged(cb: () => void): () => void };
     };
   }
 }

@@ -1,33 +1,44 @@
 import { useEffect, useState } from "react";
 import type { ModelStatus } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Card, PageHeader } from "../../shared/ui";
+import { Card, PageHeader, Toggle } from "../../shared/ui";
 
 /** Reference-pattern setup card: progress bar + checklist, wired to REAL app state. */
 function SetupChecklist() {
   const statuses = useSettings((s) => s.statuses);
   const config = useSettings((s) => s.config);
+  const progress = useSettings((s) => s.progress);
   const loadModels = useSettings((s) => s.loadModels);
+  const bindProgress = useSettings((s) => s.bindProgress);
   const [done, setDone] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     void loadModels();
-  }, [loadModels]);
+    // Live refresh: re-pull statuses on every download event so the checklist
+    // ticks the moment a download lands — even while this tab was not mounted
+    // when the download started.
+    return bindProgress();
+  }, [loadModels, bindProgress]);
 
   useEffect(() => {
+    const sttCloud = config?.stt.provider === "cloud";
     const engineReady = statuses.some((s) => s.entryId === "whisper-bin-x64" && s.state === "downloaded");
-    const modelReady = statuses.some((s) => s.entryId === config?.stt.modelId && s.state === "downloaded");
+    const modelReady =
+      sttCloud ||
+      statuses.some((s) => s.entryId === config?.stt.modelId && s.state === "downloaded");
     setDone({
       hotkey: true,
-      models: engineReady && modelReady,
+      engine: sttCloud || engineReady,
+      models: sttCloud || modelReady,
       dictionary: (config?.dictionary.length ?? 0) > 0,
       snippet: (config?.commands.length ?? 0) > 0,
     });
-  }, [statuses, config]);
+  }, [statuses, config, progress]);
 
   const steps: Array<{ id: string; label: string; hint: string; action: () => void; actionLabel: string }> = [
     { id: "hotkey", label: "Test your hotkey", hint: "Press it anywhere — the overlay appears", action: () => (window.location.hash = "#/shortcuts"), actionLabel: "Open" },
-    { id: "models", label: "Download the engine", hint: "whisper.cpp binary + your transcription model", action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
+    { id: "engine", label: "Get the transcription engine", hint: "whisper.cpp binary (local) — or pick a cloud API in Models", action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
+    { id: "models", label: "Download a transcription model", hint: "The active model: " + (config?.stt.modelId ?? "—"), action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
     { id: "dictionary", label: "Add dictionary words", hint: "Names and jargon it should never misspell", action: () => (window.location.hash = "#/dictionary"), actionLabel: "Open" },
     { id: "snippet", label: "Create a snippet", hint: "Text you re-type — email, intro, prompt", action: () => (window.location.hash = "#/commands"), actionLabel: "Open" },
   ];
@@ -167,44 +178,20 @@ export function GeneralTab() {
             <option value="classic">Classic</option>
           </select>
         </div>
-        <div className="flex items-center justify-between gap-6 px-5 py-5">
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold">Custom overlay backdrop</p>
-            <p className="mt-1 truncate text-sm text-ink-dim">
-              {config.general.overlayBackdrop || "None — paste an image/GIF path or URL"}
-            </p>
-          </div>
-          <input
-            type="text"
-            value={config.general.overlayBackdrop}
-            placeholder="C:\\pics\\wave.gif"
-            onChange={(e) => void useSettings.getState().patchConfig({ general: { overlayBackdrop: e.target.value } })}
-            className="w-52 shrink-0 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent/60"
-          />
-        </div>
+        <ChangeRow
+          label="Overlay & modes"
+          value="Shape · position · backdrop · meeting mode · recorder"
+          onChange={() => go("overlay")}
+        />
         <div className="flex items-center justify-between gap-6 px-5 py-5">
           <div>
             <p className="text-[15px] font-semibold">Save dictation history</p>
             <p className="mt-1 text-sm text-ink-dim">Stored locally only. Never synced.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              const next = !config.general.historyEnabled;
-              void useSettings.getState().patchConfig({ general: { historyEnabled: next } });
-            }}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              config.general.historyEnabled ? "bg-accent" : "bg-line"
-            }`}
-            role="switch"
-            aria-checked={config.general.historyEnabled}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-bg shadow transition-transform ${
-                config.general.historyEnabled ? "translate-x-[22px]" : "translate-x-0.5"
-              }`}
-            />
-          </button>
+          <Toggle
+            checked={config.general.historyEnabled}
+            onChange={(v) => void useSettings.getState().patchConfig({ general: { historyEnabled: v } })}
+          />
         </div>
       </Card>
       <p className="mt-5 text-xs leading-5 text-ink-dim">

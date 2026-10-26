@@ -19,9 +19,13 @@ import { createHistoryStore, type HistoryStore } from "./history/historyStore.js
 import { ModelManager } from "./models/manager.js";
 import { CATALOG } from "./models/catalog.js";
 import { WhisperCppProvider } from "./providers/stt/WhisperCppProvider.js";
+import { CloudSttProvider } from "./providers/stt/CloudSttProvider.js";
 import { LocalLlamaProvider } from "./providers/polish/LocalLlamaProvider.js";
 import { RemoteOpenAIProvider } from "./providers/polish/RemoteOpenAIProvider.js";
-import { DictationSession } from "./orchestrator/DictationSession.js";
+import { DictationSession, type SttAdapter } from "./orchestrator/DictationSession.js";
+import { pcmToWav } from "./audio/wav.js";
+
+export { pcmToWav };
 
 export interface EngineDirs {
   root: string;
@@ -33,6 +37,8 @@ export interface StartDictationOptions {
   onEvent: (ev: DictationStateEvent) => void;
   /** Target app name, when the host knows it (used as polish context). */
   app?: string;
+  /** Absolute path of the recording file when the host is saving audio. */
+  audioPath?: string;
 }
 
 export interface WhisperFlowEngine {
@@ -52,6 +58,10 @@ export interface WhisperFlowEngine {
     delete(id: string): Promise<void>;
     setActive(role: "stt" | "polish", id: string): Promise<void>;
     recommend(tier?: HardwareTier): Promise<TierRecommendation>;
+  };
+  stt: {
+    /** Validates the configured cloud STT key against its endpoint (no audio sent). */
+    testCloud(): Promise<{ ok: boolean; message: string }>;
   };
   dispose(): Promise<void>;
 }
@@ -75,6 +85,7 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     logger,
   });
   const remotePolish = new RemoteOpenAIProvider(() => config.get());
+  const cloudStt = new CloudSttProvider(() => config.get());
 
   const activePolish = () => {
     const provider = config.get().polish.provider;
@@ -93,21 +104,31 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     },
     async startDictation(sessionOpts) {
       const cfg = config.get();
-      const sttReady = sttProvider.findBinary() !== null;
+      // STT adapter: cloud BYOK when configured (and not locked to local),
+      // otherwise whisper.cpp with a model already on disk.
+      let stt: SttAdapter | null = null;
+      if (cfg.stt.provider === "cloud" && cloudStt.isReady()) {
+        stt = {
+          transcribe: (pcm, o) => cloudStt.transcribe(pcm, o),
+          modelPathFor: () => null,
+        };
+      } else if (sttProvider.findBinary() !== null) {
+        stt = {
+          transcribe: (pcm, o) => sttProvider.transcribe(pcm, o),
+          modelPathFor: (id) => {
+            const entry = manager.entry(id);
+            return entry && entry.role === "stt" && entry.format !== "binary" ? manager.localPath(entry) : null;
+          },
+        };
+      }
       return new DictationSession({
         config: structuredClone(cfg),
-        stt: sttReady
-          ? {
-              transcribe: (pcm, o) => sttProvider.transcribe(pcm, o),
-              modelPathFor: (id) => {
-                const entry = CATALOG.find((e) => e.id === id && e.role === "stt" && e.format !== "binary");
-                return entry ? manager.localPath(entry) : null;
-              },
-            }
-          : null,
+        stt,
         polish: activePolish(),
         history,
         app: sessionOpts.app,
+        audioPath: sessionOpts.audioPath,
+        appendMode: cfg.general.meetingMode,
         onEvent: sessionOpts.onEvent,
         logger,
       });
@@ -141,6 +162,11 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
       },
       async recommend(tier) {
         return manager.recommend(tier);
+      },
+    },
+    stt: {
+      async testCloud() {
+        return cloudStt.testConnection();
       },
     },
     async dispose() {

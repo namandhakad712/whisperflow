@@ -38,14 +38,80 @@ export const AudioConfigSchema = z.object({
 });
 export type AudioConfig = z.infer<typeof AudioConfigSchema>;
 
+/** Cloud STT provider presets for BYO-key transcription. */
+export const CLOUD_STT_PRESETS = {
+  groq: {
+    label: "Groq (generous free tier)",
+    baseUrl: "https://api.groq.com/openai/v1",
+    defaultModel: "whisper-large-v3-turbo",
+    models: [
+      "whisper-large-v3-turbo",
+      "whisper-large-v3",
+      "distil-whisper-large-v3-en",
+    ],
+    docs: "https://console.groq.com/docs/speech-to-text",
+  },
+  openai: {
+    label: "OpenAI",
+    baseUrl: "https://api.openai.com/v1",
+    defaultModel: "whisper-1",
+    models: ["whisper-1"],
+    docs: "https://platform.openai.com/docs/api-reference/audio",
+  },
+  custom: {
+    label: "Custom — OpenAI-compatible endpoint",
+    baseUrl: "",
+    defaultModel: "",
+    models: [],
+    docs: "",
+  },
+} as const;
+
+export type CloudSttProviderId = keyof typeof CLOUD_STT_PRESETS;
+
+/** BYO cloud STT endpoint (OpenAI /audio/transcriptions format). Blocked when `privacy.localOnly`. */
+export const CloudSttConfigSchema = z.object({
+  /** Preset decides the default base URL + model list. */
+  provider: z.enum(["groq", "openai", "custom"]).default("groq"),
+  /** Base URL. Empty = the preset's default. */
+  baseUrl: z.string().default(""),
+  /** API key. Stored locally in config.json only — never sent anywhere but the endpoint. */
+  apiKey: z.string().default(""),
+  /** Endpoint model id. Empty = the preset's default. */
+  model: z.string().default(""),
+});
+export type CloudSttConfig = z.infer<typeof CloudSttConfigSchema>;
+
 export const SttConfigSchema = z.object({
-  provider: z.literal("whispercpp-local").default("whispercpp-local"),
+  /** `"whispercpp-local"` runs on this machine; `"cloud"` uses your BYO key. */
+  provider: z.enum(["whispercpp-local", "cloud"]).default("whispercpp-local"),
   /** Catalog id, e.g. `"whisper-base-en" | "whisper-small" | "whisper-large-v3-turbo"`. */
   modelId: z.string().default("whisper-small"),
   /** BCP-47-ish tag or `"auto"`. */
   language: z.string().default("auto"),
+  cloud: CloudSttConfigSchema.prefault({}),
 });
 export type SttConfig = z.infer<typeof SttConfigSchema>;
+
+/** User-added model entries appended to the built-in catalog. */
+export const CustomModelEntrySchema = z.object({
+  id: z.string().min(1),
+  role: z.enum(["stt", "polish"]),
+  name: z.string().min(1),
+  repo: z.string().min(1),
+  file: z.string().min(1),
+  url: z.string().min(1),
+  format: z.enum(["ggml", "gguf"]),
+  sizeBytes: z.number().int().positive().optional(),
+  license: z.string().optional(),
+  notes: z.string().optional(),
+});
+export type CustomModelEntry = z.infer<typeof CustomModelEntrySchema>;
+
+export const ModelsConfigSchema = z.object({
+  custom: z.array(CustomModelEntrySchema).default([]),
+});
+export type ModelsConfig = z.infer<typeof ModelsConfigSchema>;
 
 /** BYO OpenAI-compatible endpoint for polish. Blocked when `privacy.localOnly`. */
 export const RemotePolishConfigSchema = z.object({
@@ -100,6 +166,17 @@ export const GeneralConfigSchema = z.object({
   overlayFollowsCursor: z.boolean().default(true),
     /** Custom overlay backdrop: path/URL to an image or GIF the user picked. */
     overlayBackdrop: z.string().default(""),
+    /** Overlay silhouette: pill | rect | blob */
+    overlayStyle: z.enum(["pill", "rect", "blob"]).default("pill"),
+    /** Overlay anchor: cursor | top | bottom */
+    overlayPosition: z.enum(["cursor", "top", "bottom"]).default("cursor"),
+    /** Meeting mode: keep the session open across pauses and insert each
+     *  utterance as soon as it's transcribed (meetings, lectures, interviews). */
+    meetingMode: z.boolean().default(false),
+    /** Save every dictation's audio (WAV) next to its transcript. */
+    saveAudio: z.boolean().default(false),
+    /** Recordings folder. Empty = `<userData>/recordings`. */
+    recordingsDir: z.string().default(""),
 });
 export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 
@@ -119,6 +196,7 @@ export const WhisperFlowConfigSchema = z.object({
   privacy: PrivacyConfigSchema.prefault({}),
   general: GeneralConfigSchema.prefault({}),
   updates: UpdatesConfigSchema.prefault({}),
+  models: ModelsConfigSchema.prefault({}),
 });
 export type WhisperFlowConfig = z.infer<typeof WhisperFlowConfigSchema>;
 

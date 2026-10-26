@@ -45,6 +45,16 @@ export function HistoryTab() {
                 {item.app && <span>· {item.app}</span>}
                 {item.durationMs !== undefined && <span>· {formatDuration(item.durationMs)}</span>}
                 <span className="ml-auto flex gap-1">
+                  {item.audioPath && (
+                    <button
+                      type="button"
+                      onClick={() => void window.whisperflow.app.openPath({ path: item.audioPath! })}
+                      className="rounded-md px-2 py-1 transition-colors hover:bg-surface-2 hover:text-ink"
+                      title={`Play recording — ${item.audioPath}`}
+                    >
+                      ▶ Play
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => void navigator.clipboard.writeText(item.finalText ?? item.rawText)}

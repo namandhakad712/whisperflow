@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DictationStateEvent } from "@whisperflow/shared";
 import { startCapture, type Capture } from "./capture";
 
@@ -12,20 +12,46 @@ const BAR_HISTORY_MS = 28;
 export function Overlay() {
   const [event, setEvent] = useState<DictationStateEvent>({ state: "idle" });
   const [backdrop, setBackdrop] = useState<string>("");
+  const [shape, setShape] = useState<"pill" | "rect" | "blob">("pill");
+  const [recording, setRecording] = useState(false);
+  const [hotkeyHint, setHotkeyHint] = useState("the hotkey");
   const captureRef = useRef<Capture | null>(null);
   const startingRef = useRef(false);
   const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
   const levelsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0.04));
 
+  const readConfig = useCallback(async () => {
+    const c = (await window.whisperflow.settings.get()) as {
+      general?: { overlayBackdrop?: string; overlayStyle?: "pill" | "rect" | "blob" };
+      hotkey?: { pushToTalk?: string };
+    };
+    setBackdrop(c.general?.overlayBackdrop ?? "");
+    setShape(c.general?.overlayStyle ?? "pill");
+    if (c.hotkey?.pushToTalk) {
+      setHotkeyHint(
+        c.hotkey.pushToTalk
+          .split("+")
+          .map((p) => (p === "Control" ? "Ctrl" : p === "Space" ? "Space" : p))
+          .join("+"),
+      );
+    }
+  }, []);
+
   useEffect(() => {
-    const unsub = window.whisperflow.dictation.onState((ev) => setEvent(ev));
-    void window.whisperflow.settings.get().then((c) => setBackdrop((c as { general?: { overlayBackdrop?: string } }).general?.overlayBackdrop ?? ""));
+    const unsub = window.whisperflow.dictation.onState((ev) => {
+      setEvent(ev);
+      setRecording(Boolean(ev.recording));
+    });
+    void readConfig();
+    // Live: re-read config the moment it changes in the settings window.
+    const unsubSettings = window.whisperflowExtras.settings.onChanged(() => void readConfig());
     return () => {
       unsub();
+      unsubSettings();
       captureRef.current?.stop();
       captureRef.current = null;
     };
-  }, []);
+  }, [readConfig]);
 
   // Start/stop the mic with the state stream.
   useEffect(() => {
@@ -70,9 +96,15 @@ export function Overlay() {
   if (event.state === "idle" || event.state === "cancelled") return null;
 
   return (
-    <div className="mx-auto mt-2 w-[500px] select-none rounded-2xl bg-gradient-to-r from-accent/40 via-line to-accent/25 p-[1px] shadow-[0_10px_44px_rgba(34,211,238,0.14)]">
+    <div
+      className={`mx-auto mt-2 w-[500px] select-none bg-gradient-to-r from-accent/40 via-line to-accent/25 p-[1px] shadow-[0_10px_44px_rgba(34,211,238,0.14)] ${
+        shape === "blob" ? "rounded-[38px_24px_42px_20px]" : shape === "rect" ? "rounded-md" : "rounded-2xl"
+      }`}
+    >
       <div
-        className="relative overflow-hidden rounded-[calc(1rem-1px)] border border-line/70 bg-surface/92 p-4 backdrop-blur-xl"
+        className={`relative overflow-hidden border border-line/70 bg-surface/92 p-4 backdrop-blur-xl ${
+        shape === "blob" ? "rounded-[36px_22px_40px_18px]" : shape === "rect" ? "rounded-[5px]" : "rounded-[calc(1rem-1px)]"
+      }`}
         style={backdrop ? { backgroundImage: `url(${backdrop})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
       >
         {backdrop && <div className="absolute inset-0 bg-bg/70" aria-hidden="true" />}
@@ -80,6 +112,12 @@ export function Overlay() {
         <div className="flex items-center gap-3">
           <StatusDot state={event.state} />
           <p className="text-xs font-medium uppercase tracking-widest text-ink-dim">{label(event.state)}</p>
+          {recording && (
+            <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> REC
+            </span>
+          )}
+          <p className="text-[11px] text-ink-dim/70">press {hotkeyHint} again to finish</p>
           <button
             type="button"
             aria-label="Cancel dictation"

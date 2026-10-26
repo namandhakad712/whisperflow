@@ -5,16 +5,38 @@ All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachan
 ## [Unreleased]
 
 ### Added
+- **Cloud STT (BYOK)** — Groq (generous free tier, ~2,000 req/day), OpenAI, or any
+  OpenAI-compatible `/audio/transcriptions` endpoint; onboarding offers it as an engine choice,
+  Models tab has provider/model/key config with a "Test key" probe. Blocked by the local-only
+  lock like every network provider.
+- **Meeting mode** — keeps the session open across pauses and pastes each utterance the moment
+  it's transcribed (meetings, lectures, interviews). Overlay → Overlay tab or Settings.
+- **Recorder** — "Start recorder…" in the tray runs meeting mode and saves the WAV next to the
+  transcript; `Save dictation audio` saves every turn. History entries get a ▶ Play button.
+- **Dedicated Overlay tab** — shape (pill/rect/blob), position (cursor/top/bottom), custom
+  backdrop, meeting mode, audio saving, with a live preview; overlay re-reads config the moment
+  it changes (no relaunch).
+- **Models tab rebuild** — PC hardware card (CPU/cores/RAM/GPU + tier), "Recommended for this
+  PC" set ranked by tier, one-click "Download recommended set", decluttered list with "Show all",
+  custom-model form (any HF GGML/GGUF), auto-set-active after the first download of each role.
+- **Setup checklist live-ticks** — bound to download progress events; engine and model are now
+  separate steps; switching to cloud STT satisfies both.
 - Desktop app: full dictation loop — global toggle hotkey, floating overlay (waveform, streaming partials, Esc cancel), clipboard-safe paste injection with snapshot/restore
-- Settings hub in the measured reference layout: collapsible 192px rail, cream top-bar pills, 11 sections (Dictation, Audio, Models, Dictionary, Snippets, Style, History, Insights, Scratchpad, Shortcuts, Privacy, Help)
+- Settings hub in the measured reference layout: collapsible 192px rail, cream top-bar pills, 12 sections (Dictation, Audio, Models, Overlay, Dictionary, Snippets, Style, History, Insights, Scratchpad, Shortcuts, Privacy, Help)
 - Three design systems: Nocturne (dark), Dawn (light), Classic (reference-measured) — switchable live
-- Engine (`@whisperflow/engine`, Electron-free): RMS VAD with adaptive noise floor, 48k→16k resampling, whisper.cpp sidecar STT, llama.cpp polish + BYO OpenAI-compatible endpoint + offline cleanup fallback, fuzzy personal dictionary, voice commands ("scratch that" built-in), HuggingFace model manager (resumable downloads, hardware tiering), local history store
-- Onboarding: skip-ahead card, mic test, full ASR configuration board (language, model w/ RAM suggestion, sensitivity, polish), guided downloads
+- Engine (`@whisperflow/engine`, Electron-free): RMS VAD with adaptive noise floor, 48k→16k resampling, whisper.cpp sidecar STT, llama.cpp polish + BYO OpenAI-compatible endpoint + offline cleanup fallback, fuzzy personal dictionary, voice commands ("scratch that" built-in), HuggingFace model manager (resumable downloads, hardware tiering, custom catalog), local history store with optional audio paths
+- Onboarding: skip-ahead card, mic test, full ASR configuration board (engine source, language, model w/ RAM suggestion, sensitivity, polish), guided downloads
 - Insights: local stats (counts, words today/all-time, 7-day bars)
 - Scratchpad: local quick notes
 - Website: Nocturne marketing site — home, features, download, pricing, sponsors, docs, 404; deployed to GitHub Pages
 - CI: typecheck + tests + website + desktop builds; Pages deploy workflow
-- Docs: architecture, parity matrix, reference-app analysis (live CDP evidence), model research brief
+- Docs: architecture, parity matrix, reference-app analysis (live CDP evidence), model research, free-tier census (polish + STT)
+
+### Fixed
+- Toggle switches: knob could escape the track and vanished on the Classic ink track —
+  repositioned with explicit offsets and a theme-proof knob.
+- Model downloads: aria2 fast-path reported progress correctly (pass totalBytes through);
+  first download of each role now auto-activates instead of requiring a manual "Set active".
 
 ### Security
-- Zero telemetry, local-only network lock enforced at the provider layer
+- Zero telemetry, local-only network lock enforced at the provider layer (now covers STT too)

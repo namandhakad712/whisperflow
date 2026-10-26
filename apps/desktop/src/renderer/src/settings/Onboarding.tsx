@@ -157,6 +157,46 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
         change any of this later in Settings.
       </p>
 
+      <p className="mt-6 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-dim">Engine</p>
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ["whispercpp-local", "On this machine — whisper.cpp (downloads ~500 MB)"],
+            ["cloud", "Cloud API — bring your own key (Groq free tier works)"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => void patch({ stt: { provider: value } })}
+            className={`rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+              config.stt.provider === value
+                ? "border-accent/70 bg-accent/10"
+                : "border-line bg-surface-2/50 hover:border-accent/40"
+            }`}
+          >
+            {value === "whispercpp-local" ? "Local" : "Cloud (BYOK)"}
+            <span className="mt-1 block text-xs leading-4 text-ink-dim">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {config.stt.provider === "cloud" && (
+        <div className="mt-3 space-y-2 rounded-xl border border-line bg-surface-2/50 p-4">
+          <p className="text-xs leading-5 text-ink-dim">
+            Paste a Groq API key (console.groq.com/keys — free tier is generous and fast). Your key is
+            stored on this machine only. You can fine-tune this later in Settings → Models.
+          </p>
+          <input
+            type="password"
+            value={config.stt.cloud.apiKey}
+            onChange={(e) => void patch({ stt: { cloud: { apiKey: e.target.value } } })}
+            placeholder="gsk_…"
+            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          />
+        </div>
+      )}
+
       <p className="mt-6 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-dim">Language</p>
       <div className="grid grid-cols-3 gap-2">
         {LANGUAGES.slice(0, 6).map(([value, label]) => (
@@ -282,17 +322,19 @@ function ModelsStep({ onDone }: { onDone: () => void }) {
     return bindProgress();
   }, [loadModels, bindProgress]);
 
-  const wanted = ["whisper-bin-x64", config?.stt.modelId ?? "whisper-small"];
+  const isCloud = config?.stt.provider === "cloud";
+  const wanted = isCloud ? [] : ["whisper-bin-x64", config?.stt.modelId ?? "whisper-small"];
   const required = catalog.filter((e) => wanted.includes(e.id));
-  const ready = required.length > 0 && required.every((e) => statuses.find((s) => s.entryId === e.id)?.state === "downloaded");
+  const ready = isCloud || (required.length > 0 && required.every((e) => statuses.find((s) => s.entryId === e.id)?.state === "downloaded"));
   const downloading = required.some((e) => progress[e.id]?.state === "downloading");
 
   return (
     <div>
-      <h1 className="text-xl font-bold">Download your engine</h1>
+      <h1 className="text-xl font-bold">{isCloud ? "Cloud engine ready" : "Download your engine"}</h1>
       <p className="mt-2 text-sm leading-6 text-ink-dim">
-        Straight from HuggingFace / whisper.cpp to this machine — resumable, cached, yours
-        offline forever.
+        {isCloud
+          ? "Transcription runs on your cloud key — nothing to download. Press continue when you're set."
+          : "Straight from HuggingFace / whisper.cpp to this machine — resumable, cached, yours offline forever."}
       </p>
       <div className="mt-5 space-y-3">
         {required.map((entry) => {

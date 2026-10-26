@@ -58,11 +58,16 @@ export class WindowManager {
   }
 
   /** Shows the frameless overlay pill near a point (defaults to cursor), without stealing focus. */
-  showOverlay(near?: { x: number; y: number }): void {
+  showOverlay(near?: { x: number; y: number }, position: "cursor" | "top" | "bottom" = "cursor"): void {
     const win = this.ensureOverlay();
     const [w = 520, h = 148] = win.getSize();
-    const point = near ?? screen.getCursorScreenPoint();
-    const display = screen.getDisplayNearestPoint(point);
+    const cursor = near ?? screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(cursor);
+    const point = position === "top"
+      ? { x: display.workArea.x + display.workArea.width / 2, y: display.workArea.y + 24 }
+      : position === "bottom"
+        ? { x: display.workArea.x + display.workArea.width / 2, y: display.workArea.y + display.workArea.height - 180 }
+        : cursor;
     const bx = Math.min(
       Math.max(point.x - w / 2, display.workArea.x + 8),
       display.workArea.x + display.workArea.width - w - 8,

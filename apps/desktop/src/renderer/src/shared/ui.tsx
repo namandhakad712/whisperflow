@@ -43,13 +43,15 @@ export function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${
-        checked ? "bg-accent" : "bg-line"
+      className={`relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors disabled:opacity-40 ${
+        checked ? "bg-accent" : "bg-ink/15"
       }`}
     >
+      {/* knob: explicit left + translate so it can never escape the track; white-on-accent
+          stays legible on every theme (blue Nocturne, ink Classic, light Dawn) */}
       <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-bg shadow transition-transform ${
-          checked ? "translate-x-[22px]" : "translate-x-0.5"
+        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow ring-1 ring-black/10 transition-transform ${
+          checked ? "translate-x-[20px]" : "translate-x-0"
         }`}
       />
     </button>

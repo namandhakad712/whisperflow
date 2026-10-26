@@ -68,6 +68,11 @@ async function bootstrap(): Promise<void> {
 
   const tray = createTray({
     toggleDictation: () => void controller.toggle(),
+    toggleRecorder: () => {
+      if (controller.active && controller.isRecording) void controller.finish();
+      else void controller.start({ recorder: true });
+    },
+    isRecording: () => controller.isRecording,
     openSettings: (route) => windows.createSettingsWindow(route ?? ""),
     setLaunchAtLogin: (enabled) => {
       applyLaunchAtLogin(enabled);
@@ -75,7 +80,7 @@ async function bootstrap(): Promise<void> {
     },
     checkForUpdates: () => log("updater: manual check requested"),
     quit: () => app.quit(),
-  }) as Electron.Tray & { refresh?: (v: boolean) => void };
+  }) as Electron.Tray & { refresh?: (v: boolean, r?: boolean) => void };
 
   registerIpc({ engine, controller, windows, hotkeys, tray, onQuit: () => app.quit() });
 

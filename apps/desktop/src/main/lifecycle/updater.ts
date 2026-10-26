@@ -17,7 +17,15 @@ export function initUpdater(log: (...args: unknown[]) => void): void {
       const { autoUpdater } = await import("electron-updater");
       autoUpdater.logger = null;
       autoUpdater.autoDownload = true;
-      autoUpdater.on("update-downloaded", () => log("updater: update downloaded, installs on quit"));
+      autoUpdater.on("update-downloaded", (info) => {
+          const nextMajor = parseInt(String(info?.version ?? "0").split(".")[0] || "0", 10);
+          const curMajor = parseInt(app.getVersion().split(".")[0] || "0", 10);
+          if (!isNaN(nextMajor) && nextMajor > curMajor) {
+            log(`updater: v${nextMajor} is a major (breaking) release — not auto-installing; get it manually`);
+            return;
+          }
+          log("updater: update downloaded, installs on quit");
+        });
       const check = async () => {
         try {
           const r = await autoUpdater.checkForUpdates();

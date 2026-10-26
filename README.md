@@ -35,9 +35,9 @@ No accounts. No telemetry.
 | --- | --- |
 | ![Home](docs/assets/hero.png) | ![Dawn](docs/assets/dawn.png) |
 
-| Snippets board | Pricing |
+| Snippets board | Free-AI polish guide |
 | --- | --- |
-| ![Snippets](docs/assets/snippets.png) | ![Pricing](docs/assets/pricing.png) |
+| ![Snippets](docs/assets/snippets.png) | [Live docs →](https://namandhakad712.github.io/whisperflow/docs/free-ai/) |
 
 **Live site:** <https://namandhakad712.github.io/whisperflow/>
 
@@ -94,7 +94,7 @@ verified feature scoreboard.
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [ADRs](docs/adr/)
-- [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md) ([web view](https://namandhakad712.github.io/whisperflow/changelog/)) · [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Live docs on the site](https://namandhakad712.github.io/whisperflow/docs/)
 
 ## Contributing

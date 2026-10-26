@@ -15,6 +15,7 @@ import type {
   ModelDownloadProgress,
   ModelRole,
   ModelStatus,
+  TierRecommendation,
 } from "./models.js";
 import type { DictationStateEvent } from "./events.js";
 
@@ -50,12 +51,21 @@ export const IPC = {
   ModelsProgress: "models/progress",
   ModelsDelete: "models/delete",
   ModelsSetActive: "models/setActive",
+  ModelsRecommend: "models/recommend",
+
+  /** emit (main → renderer) — fired after every settings/set so live windows re-read config */
+  SettingsChanged: "settings/changed",
 
   AudioDevices: "audio/devices",
+
+  /** Validates the cloud STT key against the endpoint (GET /models or equivalent). */
+  SttTest: "stt/test",
 
   AppOpenSettings: "app/openSettings",
   AppQuit: "app/quit",
   AppVersion: "app/version",
+  AppHardware: "app/hardware",
+  AppOpenPath: "app/openPath",
 
   /** emit (renderer → main, transferable Float32Array chunks) */
   CapturePcm: "capture/pcm",
@@ -68,6 +78,7 @@ export const IPC_EMIT_CHANNELS: readonly IpcChannel[] = [
   IPC.DictationState,
   IPC.ModelsProgress,
   IPC.CapturePcm,
+  IPC.SettingsChanged,
 ];
 
 /** Tabs of the settings window (used by `app/openSettings`). */
@@ -78,6 +89,7 @@ export type SettingsTab =
   | "models"
   | "dictionary"
   | "commands"
+  | "overlay"
   | "privacy"
   | "advanced"
   | "about";
@@ -185,6 +197,15 @@ export interface ModelsSetActiveRequest {
   id: string;
 }
 export type ModelsSetActiveResponse = void;
+export type ModelsRecommendRequest = void;
+export type ModelsRecommendResponse = TierRecommendation;
+
+export type SttTestRequest = void;
+export interface SttTestResponse {
+  ok: boolean;
+  /** Human-readable result for the settings UI. */
+  message: string;
+}
 
 export type AudioDevicesRequest = void;
 export type AudioDevicesResponse = AudioDevice[];
@@ -197,6 +218,19 @@ export type AppQuitRequest = void;
 export type AppQuitResponse = void;
 export type AppVersionRequest = void;
 export type AppVersionResponse = string;
+export type AppHardwareRequest = void;
+export interface AppHardwareResponse {
+  cpu: string;
+  cores: number;
+  totalMemGb: number;
+  tier: import("./models.js").HardwareTier;
+  gpu: string;
+}
+export interface AppOpenPathRequest {
+  path: string;
+}
+/** `error` is set when the OS refused to open the path (message for the UI). */
+export type AppOpenPathResponse = { error: string } | void;
 
 /** Renderer → main PCM chunk (16 kHz mono after AudioWorklet resample). */
 export interface CapturePcmRequest {
@@ -231,10 +265,14 @@ export interface IpcInvokeMap {
   [IPC.ModelsDownload]: { request: ModelsDownloadRequest; response: ModelsDownloadResponse };
   [IPC.ModelsDelete]: { request: ModelsDeleteRequest; response: ModelsDeleteResponse };
   [IPC.ModelsSetActive]: { request: ModelsSetActiveRequest; response: ModelsSetActiveResponse };
+  [IPC.ModelsRecommend]: { request: ModelsRecommendRequest; response: ModelsRecommendResponse };
+  [IPC.SttTest]: { request: SttTestRequest; response: SttTestResponse };
   [IPC.AudioDevices]: { request: AudioDevicesRequest; response: AudioDevicesResponse };
   [IPC.AppOpenSettings]: { request: AppOpenSettingsRequest; response: AppOpenSettingsResponse };
   [IPC.AppQuit]: { request: AppQuitRequest; response: AppQuitResponse };
   [IPC.AppVersion]: { request: AppVersionRequest; response: AppVersionResponse };
+  [IPC.AppHardware]: { request: AppHardwareRequest; response: AppHardwareResponse };
+  [IPC.AppOpenPath]: { request: AppOpenPathRequest; response: AppOpenPathResponse };
 }
 
 /** Handler signature for an invoke channel. */
@@ -291,15 +329,23 @@ export interface WhisperflowApi {
     download(request: ModelsDownloadRequest): Promise<ModelsDownloadResponse>;
     delete(request: ModelsDeleteRequest): Promise<ModelsDeleteResponse>;
     setActive(request: ModelsSetActiveRequest): Promise<ModelsSetActiveResponse>;
+    /** The engine's pick of catalog ids for THIS machine's hardware tier. */
+    recommend(): Promise<ModelsRecommendResponse>;
     onProgress(listener: (event: ModelsProgressEmit) => void): Unsubscribe;
   };
   audio: {
     devices(): Promise<AudioDevicesResponse>;
   };
+  stt: {
+    /** Validates the configured cloud STT key against its endpoint. */
+    test(): Promise<SttTestResponse>;
+  };
   app: {
     openSettings(request?: AppOpenSettingsRequest): Promise<AppOpenSettingsResponse>;
     quit(): Promise<AppQuitResponse>;
     version(): Promise<AppVersionResponse>;
+    hardware(): Promise<AppHardwareResponse>;
+    openPath(request: AppOpenPathRequest): Promise<AppOpenPathResponse>;
   };
   capture: {
     /** Sends one 16 kHz mono PCM chunk (renderer → main, transferable). */

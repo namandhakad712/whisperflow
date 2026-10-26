@@ -16,6 +16,7 @@ import {
   Palette,
   BarChart3,
   StickyNote,
+  AppWindow,
 } from "lucide-react";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
@@ -30,6 +31,7 @@ import { AdvancedTab } from "./tabs/AdvancedTab";
 import { AboutTab } from "./tabs/AboutTab";
 import { InsightsTab } from "./tabs/InsightsTab";
 import { ScratchpadTab } from "./tabs/ScratchpadTab";
+import { OverlayTab } from "./tabs/OverlayTab";
 import { Onboarding } from "./Onboarding";
 
 /** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius. */
@@ -37,6 +39,7 @@ const MAIN = [
   { id: "general", label: "Dictation", icon: Mic },
   { id: "audio", label: "Audio", icon: Volume2 },
   { id: "models", label: "Models", icon: Cpu },
+  { id: "overlay", label: "Overlay", icon: AppWindow },
   { id: "dictionary", label: "Dictionary", icon: Book },
   { id: "commands", label: "Snippets", icon: TextSelect },
   { id: "advanced", label: "Style", icon: Sparkles },
@@ -212,6 +215,7 @@ export function App() {
             {tab === "shortcuts" && <ShortcutsTab />}
             {tab === "audio" && <AudioTab />}
             {tab === "models" && <ModelsTab />}
+            {tab === "overlay" && <OverlayTab />}
             {tab === "dictionary" && <DictionaryTab />}
             {tab === "commands" && <CommandsTab />}
             {tab === "history" && <HistoryTab />}

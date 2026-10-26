@@ -1,6 +1,7 @@
-import { app, dialog, ipcMain, type Tray } from "electron";
+import { app, dialog, ipcMain, shell, type Tray } from "electron";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
+import os from "node:os";
 import { IPC, type DictionaryEntry, type VoiceCommand } from "@whisperflow/shared";
 import type { EnginePort } from "../engine/enginePort";
 import type { DictationController } from "../audio/dictationController";
@@ -49,7 +50,13 @@ export function registerIpc(deps: {
 
   // ---- settings --------------------------------------------------------------
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
-  ipcMain.handle(IPC.SettingsSet, (_e, patch) => engine.setConfig(patch ?? {}));
+  ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
+    const next = await engine.setConfig(patch ?? {});
+    // Live windows (overlay) re-read config so shape/position/backdrop changes
+    // apply without a relaunch.
+    windows.sendToOverlay(IPC.SettingsChanged, null);
+    return next;
+  });
 
   // ---- dictionary (id generation lives here; engine just persists config) ----
   ipcMain.handle(IPC.DictionaryList, () =>
@@ -129,6 +136,10 @@ export function registerIpc(deps: {
   );
   ipcMain.handle(IPC.ModelsDelete, (_e, req: { id: string }) => engine.deleteModel(req.id));
   ipcMain.handle(IPC.ModelsSetActive, (_e, req: { role: "stt" | "polish"; id: string }) => engine.setActiveModel(req.role, req.id));
+  ipcMain.handle(IPC.ModelsRecommend, () => engine.recommendModels());
+
+  // ---- cloud STT (BYOK) -----------------------------------------------------------
+  ipcMain.handle(IPC.SttTest, () => engine.testCloudStt());
 
   // ---- app lifecycle ----------------------------------------------------------------
   ipcMain.handle(IPC.AppVersion, () => app.getVersion());
@@ -165,6 +176,35 @@ export function registerIpc(deps: {
     const ok = hotkeys.bindMain(accelerator);
     if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator, toggleMode: true } });
     return { ok };
+  });
+  ipcMain.handle(IPC.AppHardware, async () => {
+    const cpus = os.cpus();
+    let gpu = "unknown";
+    try {
+      const info = (await app.getGPUInfo("basic")) as {
+        auxAttributes?: Record<string, unknown>;
+        gpuDevice?: Array<{ vendorString?: string }>;
+      };
+      gpu =
+        (info.auxAttributes?.["vendor-string"] as string | undefined) ||
+        info.gpuDevice?.[0]?.vendorString ||
+        "unknown";
+    } catch {
+      gpu = "unavailable";
+    }
+    const totalMemGb = os.totalmem() / 1024 ** 3;
+    const tier = totalMemGb < 8 ? "low" : totalMemGb < 17.2 ? "mid" : "high";
+    return {
+      cpu: cpus[0]?.model || "unknown",
+      cores: cpus.length,
+      totalMemGb: Math.round(totalMemGb * 10) / 10,
+      tier,
+      gpu,
+    };
+  });
+  ipcMain.handle(IPC.AppOpenPath, async (_e, req: { path: string }) => {
+    const result = await shell.openPath(req.path);
+    return result ? { error: result } : undefined;
   });
 
   log("ipc: registered");

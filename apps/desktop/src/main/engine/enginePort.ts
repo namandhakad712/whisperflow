@@ -7,6 +7,7 @@ import type {
   ModelCatalogEntry,
   ModelDownloadProgress,
   ModelStatus,
+  TierRecommendation,
   TranscriptItem,
   WhisperFlowConfig,
 } from "@whisperflow/shared";
@@ -27,7 +28,7 @@ export interface EngineSession {
 export interface EnginePort {
   startSession(
     onEvent: (ev: DictationStateEvent) => void,
-    opts?: { app?: string },
+    opts?: { app?: string; audioPath?: string },
   ): Promise<EngineSession>;
   getConfig(): Promise<WhisperFlowConfig>;
   setConfig(patch: Record<string, unknown>): Promise<WhisperFlowConfig>;
@@ -39,6 +40,8 @@ export interface EnginePort {
   downloadModel(id: string, onProgress: (p: ModelDownloadProgress) => void): Promise<void>;
   deleteModel(id: string): Promise<void>;
   setActiveModel(role: "stt" | "polish", id: string): Promise<void>;
+  recommendModels(): Promise<TierRecommendation>;
+  testCloudStt(): Promise<{ ok: boolean; message: string }>;
   dispose(): Promise<void>;
 }
 
@@ -67,7 +70,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
 
   return {
     startSession: async (onEvent, opts) => {
-      const session = await engine.startDictation({ onEvent, app: opts?.app });
+      const session = await engine.startDictation({ onEvent, app: opts?.app, audioPath: opts?.audioPath });
       return {
         feed: (pcm) => session.feed(pcm),
         stop: () => session.stop(),
@@ -84,6 +87,8 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
     downloadModel: (id, onProgress) => engine.models.download(id, onProgress),
     deleteModel: (id) => engine.models.delete(id),
     setActiveModel: (role, id) => engine.models.setActive(role, id),
+    recommendModels: () => engine.models.recommend(),
+    testCloudStt: () => engine.stt.testCloud(),
     dispose: () => engine.dispose(),
   };
 }

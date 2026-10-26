@@ -41,6 +41,14 @@ export interface DictationSessionDeps {
   history: HistoryStore | null;
   /** App the text will be typed into, when known. */
   app?: string;
+  /** Absolute path of the saved recording, when audio saving was on for this turn. */
+  audioPath?: string;
+  /**
+   * Meeting mode: each finished utterance is emitted as `appendText` for the
+   * host to insert immediately, and the session keeps listening. The final
+   * `stop()` result still carries everything said (for history).
+   */
+  appendMode?: boolean;
   onEvent: (ev: DictationStateEvent) => void;
   logger?: (msg: string) => void;
 }
@@ -54,6 +62,8 @@ export class DictationSession {
 
   private readonly vad: RmsVad;
   private sttQueue: Promise<void> = Promise.resolve();
+  /** Meeting mode: everything already emitted for live insertion. */
+  private appendedText = "";
 
   constructor(private readonly deps: DictationSessionDeps) {
     this.vad = new RmsVad({
@@ -85,6 +95,13 @@ export class DictationSession {
 
     const { corrected } = fuzzyCorrect(this.raw, this.deps.config.dictionary);
     const raw = this.raw;
+
+    // Meeting mode already inserted every utterance as it landed — nothing
+    // more to inject; history just archives what was said.
+    if (this.deps.appendMode && this.appendedText) {
+      const final = offlinePolish(fuzzyCorrect(this.appendedText, this.deps.config.dictionary).corrected);
+      return { raw, final: "", transcriptId: this.recordHistory(raw, final, this.deps.audioPath)?.id };
+    }
 
     // Command handling (whole utterance only).
     const outcome = detectCommand(corrected, this.deps.config.commands);
@@ -122,19 +139,25 @@ export class DictationSession {
 
     let transcriptId: string | undefined;
     if (this.deps.config.general.historyEnabled && this.deps.history) {
-      const item: TranscriptItem = this.deps.history.add({
-        app: this.deps.app,
-        rawText: raw,
-        finalText: final,
-        durationMs: Date.now() - this.startedAt,
-        sttModel: this.deps.config.stt.modelId,
-        polishModel:
-          this.deps.config.polish.provider === "none" ? undefined : this.deps.config.polish.modelId,
-      });
-      transcriptId = item.id;
+      transcriptId = this.recordHistory(raw, final, action === "undo" ? undefined : this.deps.audioPath)?.id;
     }
 
     return { raw, final, transcriptId, action };
+  }
+
+  /** Writes one history entry (raw + final + optional saved-audio path). */
+  private recordHistory(rawText: string, finalText: string, audioPath?: string): TranscriptItem | undefined {
+    if (!this.deps.config.general.historyEnabled || !this.deps.history) return undefined;
+    return this.deps.history.add({
+      app: this.deps.app,
+      rawText,
+      finalText,
+      durationMs: Date.now() - this.startedAt,
+      sttModel: this.deps.config.stt.provider === "cloud" ? `cloud:${this.deps.config.stt.cloud.model}` : this.deps.config.stt.modelId,
+      polishModel:
+        this.deps.config.polish.provider === "none" ? undefined : this.deps.config.polish.modelId,
+      ...(audioPath ? { audioPath } : {}),
+    });
   }
 
   /** Abandons the session; queued work is dropped, nothing is returned. */
@@ -158,6 +181,14 @@ export class DictationSession {
       if (this.cancelled) return;
       const text = await stt.transcribe(pcm, { modelPath, language: config.stt.language, prompt });
       if (this.cancelled || !text) return;
+      if (this.deps.appendMode) {
+        // Insert this utterance now; keep accumulating for the final transcript.
+        const clean = offlinePolish(fuzzyCorrect(text, config.dictionary).corrected);
+        this.raw = this.raw ? `${this.raw} ${text}` : text;
+        this.appendedText = this.appendedText ? `${this.appendedText} ${clean}` : clean;
+        this.emit("listening", this.raw, clean);
+        return;
+      }
       this.raw = this.raw ? `${this.raw} ${text}` : text;
       if (this.state === "listening") this.emit("listening", this.raw);
     }).catch((err) => this.deps.logger?.(`stt segment failed: ${String(err)}`));
@@ -173,8 +204,8 @@ export class DictationSession {
     this.emit(next);
   }
 
-  private emit(state: DictationState, partial?: string): void {
+  private emit(state: DictationState, partial?: string, appendText?: string): void {
     this.state = state;
-    this.deps.onEvent({ state, partial });
+    this.deps.onEvent({ state, partial, ...(appendText ? { appendText } : {}) });
   }
 }

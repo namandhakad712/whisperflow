@@ -42,3 +42,41 @@ Data-terms column is what matters most for a dictation app: users speak private 
 - Mistral: https://docs.mistral.ai/admin/billing-usage/usage-limits/ (fetched 2026-10-25).
 - Data-terms census across providers: https://www.digitalapplied.com/blog/free-and-promo-tier-data-terms-census
   (2026-08-26) — used for Google/Mistral/OpenRouter training & retention statements.
+
+---
+
+# Cloud STT (ASR) BYOK — verified 2026-10-26
+
+WhisperFlow supports BYO-key transcription via any OpenAI-compatible
+`POST {base}/audio/transcriptions` endpoint (multipart file + `model` + optional
+`language`/`prompt`, JSON `{ "text": ... }` response). Config: `stt.provider = "cloud"`,
+`stt.cloud.{provider, baseUrl, apiKey, model}` — same local-only lock as polish
+(`privacy.localOnly` blocks it hard).
+
+| Provider | Free tier | Models | Limits (dated) | Notes |
+| --- | --- | --- | --- | --- |
+| **Groq** | Permanent free tier, no credit card | `whisper-large-v3-turbo` (default), `whisper-large-v3`, `distil-whisper-large-v3-en` | ~**2,000 requests/day** and **7,200 audio seconds/hour** for the Whisper models (rate-limits page + GroqDocs speech-to-text, fetched **2026-10-26**) | Same key as polish. Same no-training terms (see polish table above). Fast — transcription typically returns before the segment ends |
+| **OpenAI** | Pay-as-you-go (no free tier) | `whisper-1` | — | Listed for completeness; Groq is the free default |
+
+Sources: https://console.groq.com/docs/speech-to-text and https://console.groq.com/docs/rate-limits
+(fetched 2026-10-26); free-tier press summary https://grizzlypeaksoftware.com/articles/p/groq-api-free-tier-limits-in-2026-what-you-actually-get (2026-03-27).
+
+## What is NOT a transcription API (honest notes)
+
+- **fish.audio S2.1 Pro** (fish.audio/blog/s2-1-pro-free-api, Jun 2026) is a **text-to-speech**
+  model — it synthesizes speech from text (83 languages, free tier, "fair use" unlimited).
+  It cannot transcribe. A future version could use it to *read dictation back* for proofing;
+  it is not part of the STT path.
+- **QwenAudio/SenseVoice** (github.com/QwenAudio/SenseVoice; FunAudioLLM/SenseVoiceSmall on HF)
+  — excellent small ASR (Mandarin, Cantonese, English, Japanese, Korean) with emotion + audio
+  event detection, but the released model needs funasr/sherpa-onnx runtimes, not whisper.cpp.
+  It is the **v0.2 local-STT upgrade** (together with NVIDIA Parakeet via transcribe.cpp — see
+  `model-recommender.md`), not a cloud API you can point a key at.
+
+## Why cloud STT is optional, not the default
+
+The whole point of this project is that the machine in front of you is enough. Cloud STT exists
+for (a) machines without the RAM/disk for local models, (b) users who already live in a generous
+free tier, and (c) multilingual accuracy testing. Everything — including the settings copy —
+keeps local-first as the default and never hides that cloud audio leaves the machine (except
+when blocked entirely by the local-only lock).

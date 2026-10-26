@@ -6,6 +6,7 @@
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type {
+  CustomModelEntry,
   HardwareTier,
   ModelCatalogEntry,
   ModelDownloadProgress,
@@ -17,6 +18,11 @@ import { downloadFile, extractZip } from "./download.js";
 import { detectTier, recommendFor } from "./tiering.js";
 import type { ConfigStore } from "../config/ConfigStore.js";
 
+/** Custom entries with the catalog's required fields filled in. */
+function mergedCatalog(custom: readonly CustomModelEntry[]): ModelCatalogEntry[] {
+  return custom.map((c) => ({ tiers: ["low", "mid", "high"] as const, custom: true, ...c }));
+}
+
 export class ModelManager {
   constructor(
     private readonly opts: {
@@ -27,7 +33,7 @@ export class ModelManager {
   ) {}
 
   catalog(): readonly ModelCatalogEntry[] {
-    return CATALOG;
+    return [...CATALOG, ...mergedCatalog(this.opts.config.get().models.custom)];
   }
 
   recommend(tier?: HardwareTier): TierRecommendation {
@@ -35,7 +41,7 @@ export class ModelManager {
   }
 
   entry(id: string): ModelCatalogEntry | undefined {
-    return catalogEntry(id);
+    return this.catalog().find((e) => e.id === id) ?? catalogEntry(id);
   }
 
   /** Local filesystem location for an entry (file for weights, dir for the extracted sidecar). */
@@ -46,7 +52,7 @@ export class ModelManager {
 
   async status(): Promise<ModelStatus[]> {
     const out: ModelStatus[] = [];
-    for (const entry of CATALOG) {
+    for (const entry of this.catalog()) {
       const finalPath = this.localPath(entry);
       let bytesOnDisk = 0;
       let present = false;
@@ -83,7 +89,7 @@ export class ModelManager {
   }
 
   async download(id: string, onProgress?: (p: ModelDownloadProgress) => void): Promise<void> {
-    const entry = catalogEntry(id);
+    const entry = this.entry(id);
     if (!entry) throw new Error(`unknown model id: ${id}`);
     const emit = (p: ModelDownloadProgress) => onProgress?.(p);
 
@@ -91,6 +97,7 @@ export class ModelManager {
       const zipPath = join(this.opts.binDir, entry.file);
       emit({ entryId: id, state: "downloading", receivedBytes: 0 });
       await downloadFile(entry.url, zipPath, {
+        totalBytes: entry.sizeBytes,
         onProgress: (p) =>
           emit({ entryId: id, state: "downloading", receivedBytes: p.receivedBytes, totalBytes: p.totalBytes }),
       });
@@ -104,14 +111,44 @@ export class ModelManager {
     emit({ entryId: id, state: "downloading", receivedBytes: 0, totalBytes: entry.sizeBytes });
     await downloadFile(entry.url, dest, {
       sha256: entry.sha256,
+      totalBytes: entry.sizeBytes,
       onProgress: (p) =>
         emit({ entryId: id, state: "downloading", receivedBytes: p.receivedBytes, totalBytes: p.totalBytes ?? entry.sizeBytes }),
     });
     emit({ entryId: id, state: "done", receivedBytes: entry.sizeBytes ?? 0, totalBytes: entry.sizeBytes });
+    this.autoActivate(entry);
+  }
+
+  /**
+   * After a successful download, point the config at this model when the
+   * currently-active one for that role is NOT on disk — so the very first
+   * download of each role immediately becomes the working model (the setup
+   * checklist then ticks itself, no extra "Set active" step required).
+   * Never overrides a model that is already present and selected.
+   */
+  private async autoActivate(entry: ModelCatalogEntry): Promise<void> {
+    // The whisper.cpp sidecar binary is role "stt" but is not a model — never select it.
+    if ((entry.role !== "stt" && entry.role !== "polish") || entry.format === "binary") return;
+    const cfg = this.opts.config.get();
+    const activeId = entry.role === "stt" ? cfg.stt.modelId : cfg.polish.modelId;
+    if (activeId === entry.id) return;
+    const active = this.entry(activeId);
+    if (!active) {
+      this.opts.config.set(entry.role === "stt" ? { stt: { modelId: entry.id } } : { polish: { modelId: entry.id } });
+      return;
+    }
+    try {
+      const s = await stat(this.localPath(active));
+      if (!s.isFile() || s.size === 0) {
+        this.opts.config.set(entry.role === "stt" ? { stt: { modelId: entry.id } } : { polish: { modelId: entry.id } });
+      }
+    } catch {
+      this.opts.config.set(entry.role === "stt" ? { stt: { modelId: entry.id } } : { polish: { modelId: entry.id } });
+    }
   }
 
   async delete(id: string): Promise<void> {
-    const entry = catalogEntry(id);
+    const entry = this.entry(id);
     if (!entry) return;
     await rm(this.localPath(entry), { recursive: true, force: true });
     await rm(this.localPath(entry) + ".part", { force: true });
@@ -122,9 +159,10 @@ export class ModelManager {
 
   /** Points the config's active model for a role at a catalog entry. */
   setActive(role: "stt" | "polish", id: string): void {
-    const entry = catalogEntry(id);
+    const entry = this.entry(id);
     if (!entry) throw new Error(`unknown model id: ${id}`);
     if (entry.role !== role) throw new Error(`model ${id} is a ${entry.role} model, not ${role}`);
+    if (entry.format === "binary") throw new Error(`model ${id} is an engine binary, not a ${role} model`);
     if (role === "stt") this.opts.config.set({ stt: { modelId: id } });
     else this.opts.config.set({ polish: { modelId: id } });
   }

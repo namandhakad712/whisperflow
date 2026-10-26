@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import type {
+  AppHardwareResponse,
   AudioDevice,
+  CustomModelEntry,
   DictionaryEntry,
   ModelCatalogEntry,
   ModelDownloadProgress,
   ModelStatus,
+  TierRecommendation,
   TranscriptItem,
   VoiceCommand,
   WhisperFlowConfig,
@@ -19,12 +22,15 @@ interface SettingsState {
   statuses: ModelStatus[];
   progress: Record<string, ModelDownloadProgress>;
   activeDictation: boolean;
+  hardware: AppHardwareResponse | null;
+  recommendation: TierRecommendation | null;
 
   loadConfig(): Promise<void>;
   patchConfig(patch: WhisperFlowConfigPatch): Promise<void>;
   loadDevices(): Promise<void>;
   loadHistory(query?: string): Promise<void>;
   loadModels(): Promise<void>;
+  loadHardware(): Promise<void>;
   bindProgress(): () => void;
 }
 
@@ -36,6 +42,8 @@ export const useSettings = create<SettingsState>((set, get) => ({
   statuses: [],
   progress: {},
   activeDictation: false,
+  hardware: null,
+  recommendation: null,
 
   async loadConfig() {
     const config = await window.whisperflow.settings.get();
@@ -62,18 +70,28 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   async loadModels() {
-    const [catalog, statuses] = await Promise.all([
+    const [catalog, statuses, recommendation] = await Promise.all([
       window.whisperflow.models.catalog(),
       window.whisperflow.models.status(),
+      window.whisperflow.models.recommend().catch(() => null),
     ]);
-    set({ catalog, statuses });
+    set({ catalog, statuses, recommendation });
+  },
+
+  async loadHardware() {
+    try {
+      const hardware = await window.whisperflow.app.hardware();
+      set({ hardware });
+    } catch {
+      /* non-fatal: the page works without it */
+    }
   },
 
   bindProgress() {
     return window.whisperflow.models.onProgress((p) => {
       set({ progress: { ...get().progress, [p.entryId]: p } });
       if (p.state === "done" || p.state === "error") {
-        void get().loadModels();
+        void get().loadModels().then(() => void get().loadConfig());
       }
     });
   },

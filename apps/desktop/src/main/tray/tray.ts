@@ -3,6 +3,9 @@ import { join } from "node:path";
 
 export interface TrayController {
   toggleDictation(): void;
+  toggleRecorder(): void;
+  /** True while the recorder session is running — labels the tray item. */
+  isRecording(): boolean;
   openSettings(route?: string): void;
   setLaunchAtLogin(enabled: boolean): void;
   checkForUpdates(): void;
@@ -15,19 +18,27 @@ export function createTray(controller: TrayController): Tray {
   const tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
   tray.setToolTip("WhisperFlow — hold nothing back");
 
-  const rebuild = (launchAtLogin: boolean) => {
-    tray.setContextMenu(Menu.buildFromTemplate(menuTemplate(launchAtLogin, controller)));
+  const rebuild = (launchAtLogin: boolean, recording: boolean) => {
+    tray.setContextMenu(Menu.buildFromTemplate(menuTemplate(launchAtLogin, recording, controller)));
   };
-  rebuild(false);
-  (tray as Tray & { refresh: (v: boolean) => void }).refresh = rebuild;
-
+  rebuild(false, false);
+  (tray as Tray & { refresh: (v: boolean, r?: boolean) => void }).refresh = (v, r) =>
+    rebuild(v, r ?? controller.isRecording());
   tray.on("click", () => controller.openSettings());
   return tray;
 }
 
-function menuTemplate(launchAtLogin: boolean, c: TrayController): Electron.MenuItemConstructorOptions[] {
+function menuTemplate(
+  launchAtLogin: boolean,
+  recording: boolean,
+  c: TrayController,
+): Electron.MenuItemConstructorOptions[] {
   return [
     { label: "Dictate now", click: () => c.toggleDictation() },
+    {
+      label: recording ? "Stop recorder" : "Start recorder…",
+      click: () => c.toggleRecorder(),
+    },
     { type: "separator" },
     { label: "Settings", click: () => c.openSettings() },
     { label: "History", click: () => c.openSettings("/history") },

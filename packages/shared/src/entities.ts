@@ -21,6 +21,8 @@ export interface TranscriptItem {
   sttModel?: string;
   /** Polish model id used, e.g. `"qwen2.5-3b-instruct-q4"` (absent when none). */
   polishModel?: string;
+  /** Absolute path of the saved WAV when audio saving is on. */
+  audioPath?: string;
 }
 
 /** A personal-dictionary term used for fuzzy post-STT correction. */

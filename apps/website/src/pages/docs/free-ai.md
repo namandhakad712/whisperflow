@@ -1,18 +1,34 @@
 ---
 layout: ../../layouts/Doc.astro
-title: Free AI for polish — your options
-description: Use free API tiers or a tiny local model for WhisperFlow's polish stage. Big models are not required.
+title: Free AI for polish and transcription — your options
+description: Use free API tiers or tiny local models for WhisperFlow's polish and STT stages. Big models are not required.
 ---
 
 **TL;DR: you do NOT need a large model.** The polish stage only fixes filler words,
 punctuation, and tone — a small, fast model does this *better* than a big one (faster, cheaper,
-less likely to rewrite your meaning). Any free tier below is more than enough.
+less likely to rewrite your meaning). Any free tier below is more than enough. The same free
+tiers can even power **transcription** itself.
 
 > **Disclaimer:** No affiliation with, sponsorship by, or endorsement from any company named
 > here. These are personal opinions for informational purposes — free tiers and terms change
 > constantly; verify on each provider's own site and use your own judgment and discretion.
 
-## Option 1 — free API tiers (zero setup on your machine)
+## Free transcription (STT) — cloud, BYO key
+
+Prefer not to download models? Point WhisperFlow at a cloud transcription endpoint:
+**Settings → Models → Transcription engine → Cloud (BYO API key)**.
+
+| Provider | Free tier (check their site — changes often) | Notes |
+| --- | --- | --- |
+| **Groq** | ~2,000 requests/day, ~7,200 audio seconds/hour | Runs `whisper-large-v3-turbo`; same key works for polish; no training on your data |
+| **OpenAI** | Paid only | `whisper-1` — listed for completeness |
+
+A couple of honest notes: **fish.audio S2.1 Pro** is a *text-to-speech* model (it makes speech
+from text — useful later for reading dictation back, not for transcription), and
+**QwenAudio SenseVoice** is a superb small ASR but needs its own runtime — it's on the roadmap
+as a local option, not a cloud API. Groq is the practical free default today.
+
+## Option 1 — free API tiers for polish (zero setup on your machine)
 
 Plug any OpenAI-compatible endpoint into **Settings → Style → Remote**:
 

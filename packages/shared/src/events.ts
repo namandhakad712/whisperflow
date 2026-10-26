@@ -65,4 +65,11 @@ export interface DictationStateEvent {
   partial?: string;
   /** Human-readable error message (present only in the `error` state). */
   error?: string;
+  /**
+   * Meeting mode only: a finished utterance the host should insert at the
+   * cursor immediately (the session keeps listening afterwards).
+   */
+  appendText?: string;
+  /** True while the recorder is running — the overlay shows a REC indicator. */
+  recording?: boolean;
 }

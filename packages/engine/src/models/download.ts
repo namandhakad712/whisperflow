@@ -20,12 +20,19 @@ export interface DownloadProgress {
 export interface DownloadOptions {
   onProgress?: (p: DownloadProgress) => void;
   sha256?: string;
+  /** Total size when known up-front (catalog) — lets aria2 report accurate progress. */
+  totalBytes?: number;
   /** Abort-like check; when it returns true the download stops cleanly. */
   shouldStop?: () => boolean;
 }
 
 export async function downloadFile(url: string, destPath: string, opts: DownloadOptions = {}): Promise<void> {
   await mkdir(dirname(destPath), { recursive: true });
+  // aria2 fast-path: if the user has aria2c on PATH, use 8 connections for big model files.
+  if (await aria2Available()) {
+    const okAria = await aria2Download(url, destPath, opts);
+    if (okAria) return;
+  }
   const partPath = destPath + ".part";
   let resumeFrom = 0;
   try {
@@ -88,12 +95,30 @@ export async function extractZip(zipPath: string, destDir: string): Promise<void
   if (!viaPs) throw new Error(`failed to extract ${zipPath} (tar and Expand-Archive both failed)`);
 }
 
-function run(cmd: string, args: string[]): Promise<boolean> {
+async function aria2Available(): Promise<boolean> {
+  return run("aria2c", ["--version"], 4000);
+}
+
+async function aria2Download(url: string, destPath: string, opts: DownloadOptions): Promise<boolean> {
+  const dir = dirname(destPath);
+  const file = destPath.split(/[\/]/).pop() ?? "model.bin";
+  const ok = await run(
+    "aria2c",
+    ["-x", "8", "-s", "8", "--dir", dir, "--out", file, "--allow-overwrite=true", "--console-log-level=warn", url],
+    0,
+  );
+  if (!ok) return false;
+  opts.onProgress?.({ receivedBytes: opts.totalBytes ?? 1, totalBytes: opts.totalBytes });
+  return true;
+}
+
+function run(cmd: string, args: string[], timeoutMs = 0): Promise<boolean> {
   return new Promise((resolve) => {
     try {
       const proc = spawn(cmd, args, { windowsHide: true, stdio: "ignore" });
       proc.on("error", () => resolve(false));
-      proc.on("exit", (code) => resolve(code === 0));
+      const timer = timeoutMs > 0 ? setTimeout(() => { proc.kill(); resolve(false); }, timeoutMs) : null;
+      proc.on("exit", (code) => { if (timer) clearTimeout(timer); resolve(code === 0); });
     } catch {
       resolve(false);
     }

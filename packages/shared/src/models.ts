@@ -44,6 +44,8 @@ export interface ModelCatalogEntry {
   license?: string;
   /** Short human note shown in the catalog UI. */
   notes?: string;
+  /** True for user-added entries (from the custom-model form). */
+  custom?: boolean;
 }
 
 /** Lifecycle of one download, mirrored into `models/progress` events. */

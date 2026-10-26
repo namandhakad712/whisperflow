@@ -1,0 +1,36 @@
+---
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import Base from "../../layouts/Base.astro";
+
+const raw = readFileSync(resolve(process.cwd(), "../../CHANGELOG.md"), "utf-8");
+
+// minimal md → html (headings, lists, bold, links)
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const html = esc(raw)
+  .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+  .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+  .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+  .replace(/^> (.*)$/gm, "<blockquote>$1</blockquote>")
+  .replace(/^\- \[ \] (.*)$/gm, "<li>☐ $1</li>")
+  .replace(/^\- \[x\] (.*)$/gim, "<li>☑ $1</li>")
+  .replace(/^\- (.*)$/gm, "<li>$1</li>")
+  .replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, "<ul>$1</ul>")
+  .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  .replace(/`([^`]+)`/g, "<code>$1</code>")
+  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+---
+<Base title="Changelog — WhisperFlow" description="Every notable WhisperFlow change, newest first.">
+  <section class="void-glow relative overflow-hidden">
+    <div class="relative mx-auto max-w-6xl px-4 pt-24 text-center sm:px-6 sm:pt-32">
+      <h1 class="font-display text-5xl sm:text-7xl">Changelog</h1>
+      <p class="mx-auto mt-4 max-w-md text-ink-dim">
+        Every notable change, newest first. Also on
+        <a class="text-[#8FB0FF] hover:underline" href="https://github.com/namandhakad712/whisperflow/blob/main/CHANGELOG.md">GitHub</a>.
+      </p>
+    </div>
+  </section>
+  <section class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+    <div class="glass-panel changelog-body prose prose-invert max-w-none p-8 sm:p-10" set:html={html} />
+  </section>
+</Base>

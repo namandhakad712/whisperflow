@@ -6,15 +6,22 @@ directories:
   output: release
   buildResources: resources
 
-files:
-  - out/**
-  - resources/**
-
 # Workspace deps + native modules (better-sqlite3) are resolved from node_modules
 # automatically; electron-builder rebuilds natives for Electron's ABI.
 
+compression: maximum
 asarUnpack:
   - "**/*.node"
+
+# Slim the installer: these are lazy-loaded optional runtimes (energy VAD + pi-ai
+# adapter cover the defaults); power users can npm i them into the app folder.
+files:
+  - out/**
+  - resources/**
+  - "!**/*.map"
+  - "!node_modules/onnxruntime-node/**"
+  - "!node_modules/@earendil-works/pi-ai/**"
+  - "!node_modules/@napi-rs/**"
 
 win:
   icon: resources/icon.png

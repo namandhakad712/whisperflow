@@ -45,6 +45,7 @@ const api: WhisperflowApi = {
     download: (request) => ipcRenderer.invoke(IPC.ModelsDownload, request),
     delete: (request) => ipcRenderer.invoke(IPC.ModelsDelete, request),
     setActive: (request) => ipcRenderer.invoke(IPC.ModelsSetActive, request),
+    recommend: () => ipcRenderer.invoke(IPC.ModelsRecommend),
     onProgress: (listener) => subscribe(IPC.ModelsProgress, listener),
   },
   audio: {
@@ -56,10 +57,15 @@ const api: WhisperflowApi = {
         .map((d) => ({ deviceId: d.deviceId, label: d.label || d.deviceId }));
     },
   },
+  stt: {
+    test: () => ipcRenderer.invoke(IPC.SttTest),
+  },
   app: {
     openSettings: (request) => ipcRenderer.invoke(IPC.AppOpenSettings, request),
     quit: () => ipcRenderer.invoke(IPC.AppQuit),
     version: () => ipcRenderer.invoke(IPC.AppVersion),
+    hardware: () => ipcRenderer.invoke(IPC.AppHardware),
+    openPath: (request) => ipcRenderer.invoke(IPC.AppOpenPath, request),
   },
   capture: {
     /** 16 kHz mono Float32 PCM chunk from the overlay's AudioWorklet. */
@@ -80,6 +86,10 @@ const extras = {
     checkForUpdates: () => ipcRenderer.invoke("app/checkForUpdates") as Promise<{ message: string }>,
     exportBackup: () => ipcRenderer.invoke("app/exportBackup") as Promise<{ exported: boolean; path?: string }>,
     onNavigate: (cb: (route: string) => void) => subscribe<string>("app/navigate", cb),
+  },
+  settings: {
+    /** Fired after every settings/set — lets live windows re-read config. */
+    onChanged: (cb: () => void) => subscribe(IPC.SettingsChanged, cb),
   },
 };
 contextBridge.exposeInMainWorld("whisperflowExtras", extras);

@@ -55,7 +55,7 @@ Source of truth: live CDP captures of app-1.6.1264 (`docs/analysis/app-ui/text-*
 
 | Reference | Ours | Status |
 | --- | --- | --- |
-| Cloud WSS streaming STT | local whisper.cpp sidecar | ⛔ different by design |
+| Cloud WSS streaming STT | local whisper.cpp sidecar **+ BYOK cloud STT (Groq/OpenAI-compat)** | 🟡 local-first by design; cloud is opt-in BYOK |
 | Opus audio encode | raw PCM 16k | 🟡 |
 | Tone/style per app | per-context tones | 🟡 |
 | Voice profile training | — | ❌ v0.2+ |
@@ -64,3 +64,7 @@ Source of truth: live CDP captures of app-1.6.1264 (`docs/analysis/app-ui/text-*
 | Word caps / billing | — | ⛔ unlimited by design |
 | MCP connector | BYO OpenAI-compatible endpoint | 🟡 |
 | Telemetry (Sentry/PostHog) | none | ⛔ by design |
+| Hold-to-talk (keyboard) | toggle only (Electron has no global key-up) | 🟡 needs a native helper (v0.2, documented in ARCHITECTURE) |
+| Notetaker/meeting capture | **Meeting mode** (continuous append dictation) + **recorder** (tray → WAV + transcript) | 🟡 ours is live-append + local recording, not a cloud notetaker |
+| Context menu / popup overlay helper | overlay pill only | 🟡 add right-click quick actions (v0.2) |
+| Typing detection mid-dictation | — | ❌ needs the same native hook as hold-to-talk (v0.2) |
