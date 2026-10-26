@@ -52,6 +52,8 @@ export interface WhisperFlowEngine {
     list(query?: HistoryQuery): Promise<TranscriptItem[]>;
     delete(id: string): Promise<{ deleted: boolean }>;
     clear(): Promise<{ cleared: boolean }>;
+    /** Merges backup entries (existing ids skipped). Returns how many were added. */
+    importMany(items: readonly TranscriptItem[]): Promise<{ added: number }>;
   };
   models: {
     catalog(): Promise<readonly ModelCatalogEntry[]>;
@@ -180,6 +182,9 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
       },
       async clear() {
         return { cleared: history.clear() };
+      },
+      async importMany(items) {
+        return { added: history.importMany(items) };
       },
     },
     models: {

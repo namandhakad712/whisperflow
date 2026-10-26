@@ -35,6 +35,7 @@ export interface EnginePort {
   listHistory(query?: HistoryQuery): Promise<TranscriptItem[]>;
   deleteHistory(id: string): Promise<boolean>;
   clearHistory(): Promise<boolean>;
+  importHistory(items: readonly TranscriptItem[]): Promise<{ added: number }>;
   modelCatalog(): Promise<readonly ModelCatalogEntry[]>;
   modelStatus(): Promise<ModelStatus[]>;
   downloadModel(id: string, onProgress: (p: ModelDownloadProgress) => void): Promise<void>;
@@ -83,6 +84,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
     listHistory: (query) => engine.history.list(query),
     deleteHistory: async (id) => (await engine.history.delete(id)).deleted,
     clearHistory: async () => (await engine.history.clear()).cleared,
+    importHistory: (items) => engine.history.importMany(items),
     modelCatalog: () => engine.models.catalog(),
     modelStatus: () => engine.models.status(),
     downloadModel: (id, onProgress) => engine.models.download(id, onProgress),

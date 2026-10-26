@@ -56,6 +56,42 @@ export function PrivacyTab() {
             </Button>
           </Row>
           <Row
+            label="Import backup"
+            hint="Restores config and merges history — existing entries are never duplicated."
+          >
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                const picked = await window.whisperflow.app.pickFile({
+                  title: "Choose a WhisperFlow backup",
+                  filters: [{ name: "WhisperFlow backup", extensions: ["json"] }],
+                });
+                if (picked.canceled || !picked.path) return;
+                const r = await window.whisperflow.app.importBackup({ path: picked.path });
+                window.alert(
+                  r.ok
+                    ? `Import complete — ${r.addedHistory ?? 0} history entries merged.`
+                    : `Import failed: ${r.message ?? "unknown error"}`,
+                );
+              }}
+            >
+              Import…
+            </Button>
+          </Row>
+          <Row
+            label="Update channel"
+            hint="Stable is everyone's default. Beta gets fixes sooner and may be rougher."
+          >
+            <select
+              value={config.updates.channel}
+              onChange={(e) => void patch({ updates: { channel: e.target.value as "stable" | "beta" } })}
+              className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            >
+              <option value="stable">Stable</option>
+              <option value="beta">Beta</option>
+            </select>
+          </Row>
+          <Row
             label="App updates"
             hint="Checks GitHub Releases at launch and every 6 hours; installs on quit. Settings are preserved."
           >

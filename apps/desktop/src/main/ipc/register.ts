@@ -1,14 +1,15 @@
 import { app, dialog, ipcMain, shell, type Tray } from "electron";
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import os from "node:os";
-import { IPC, type DictionaryEntry, type VoiceCommand } from "@whisperflow/shared";
+import { IPC, type DictionaryEntry, type TranscriptItem, type VoiceCommand } from "@whisperflow/shared";
 import type { EnginePort } from "../engine/enginePort";
 import type { DictationController } from "../audio/dictationController";
 import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { applyLaunchAtLogin } from "../lifecycle/autostart";
-import { checkForUpdatesNow } from "../lifecycle/updater";
+import { checkForUpdatesNow, installDownloadedUpdate } from "../lifecycle/updater";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
@@ -206,6 +207,59 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.AppOpenPath, async (_e, req: { path: string }) => {
     const result = await shell.openPath(req.path);
     return result ? { error: result } : undefined;
+  });
+
+  // ---- updates --------------------------------------------------------------------
+  ipcMain.handle(IPC.AppQuitAndInstall, () => {
+    installDownloadedUpdate();
+  });
+
+  // ---- diagnostics + file pickers + backup import ----------------------------------
+  ipcMain.handle(IPC.AppOpenLogsFolder, () => {
+    void shell.openPath(join(app.getPath("userData"), "logs"));
+  });
+  ipcMain.handle(IPC.AppOpenConfigFolder, () => {
+    void shell.openPath(app.getPath("userData"));
+  });
+  ipcMain.handle(IPC.AppPickFile, async (_e, req: { title?: string; filters?: Array<{ name: string; extensions: string[] }> }) => {
+    const result = await dialog.showOpenDialog({
+      title: req?.title ?? "Choose a file",
+      properties: ["openFile"],
+      ...(req?.filters?.length ? { filters: req.filters } : {}),
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    return { canceled: false, path: result.filePaths[0] };
+  });
+  ipcMain.handle(IPC.AppPickFolder, async (_e, req: { title?: string }) => {
+    const result = await dialog.showOpenDialog({
+      title: req?.title ?? "Choose a folder",
+      properties: ["openDirectory"],
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    return { canceled: false, path: result.filePaths[0] };
+  });
+  ipcMain.handle(IPC.AppImportBackup, async (_e, req: { path: string }) => {
+    try {
+      const raw = JSON.parse(readFileSync(req.path, "utf-8")) as {
+        app?: string;
+        config?: unknown;
+        history?: unknown;
+      };
+      if (raw.app !== "WhisperFlow" || !Array.isArray(raw.history)) {
+        return { ok: false, message: "Not a WhisperFlow backup file." };
+      }
+      const items = raw.history.filter(
+        (t): t is TranscriptItem => !!t && typeof (t as TranscriptItem).id === "string",
+      );
+      const { added } = await engine.importHistory(items);
+      if (raw.config && typeof raw.config === "object") {
+        await engine.setConfig(raw.config as Record<string, unknown>);
+      }
+      log(`backup imported: ${added} history entries from ${req.path}`);
+      return { ok: true, addedHistory: added };
+    } catch (err) {
+      return { ok: false, message: String(err).slice(0, 140) };
+    }
   });
 
   log("ipc: registered");

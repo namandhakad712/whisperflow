@@ -7,6 +7,7 @@ export function DictionaryTab() {
   const loadConfig = useSettings((s) => s.loadConfig);
   const [term, setTerm] = useState("");
   const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
   if (!config) return null;
 
   const add = () => {
@@ -16,9 +17,10 @@ export function DictionaryTab() {
     void addDictionaryEntry(clean).then(loadConfig);
   };
 
-  const entries = config.dictionary.filter((e) =>
-    filter === "All" ? true : filter === "Personal" ? !e.hint?.includes("team") : true,
-  );
+  const entries = config.dictionary.filter((e) => {
+    if (filter === "Personal" && e.hint?.includes("team")) return false;
+    return !search || e.term.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <section>
@@ -38,12 +40,22 @@ export function DictionaryTab() {
           placeholder="Add new word — a name, acronym, or correction (word → replacement)"
           onKeyDown={(e) => e.key === "Enter" && add()}
         />
+        <TextInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search…"
+          className="w-40 shrink-0"
+        />
       </div>
       {entries.length === 0 ? (
         <EmptyState
           icon="📖"
-          title="No words yet"
-          body="Add the words you say often that models keep misspelling — people's names are the classic case."
+          title={search ? "No matches" : "No words yet"}
+          body={
+            search
+              ? `Nothing in the dictionary matches “${search}”.`
+              : "Add the words you say often that models keep misspelling — people's names are the classic case."
+          }
         />
       ) : (
         <div className="flex flex-wrap gap-2">

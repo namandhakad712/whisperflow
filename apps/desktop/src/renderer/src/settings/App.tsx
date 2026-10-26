@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AppUpdateStatus } from "@whisperflow/shared";
 import {
   Mic,
   Volume2,
@@ -122,7 +123,6 @@ export function App() {
   }, [loadConfig]);
 
   if (route === "onboarding") return <Onboarding />;
-
   const allTabs: Array<{ id: string }> = [...MAIN, ...SECONDARY];
   const tab = (allTabs.find((t) => t.id === route)?.id ?? "general") as TabId;
 
@@ -167,6 +167,8 @@ export function App() {
           </button>
         </div>
       </div>
+
+      <UpdateBanner />
 
       <div className="flex min-h-0 flex-1">
         {/* rail — measured: 192px, items 36px, 6px radius, icon+label */}
@@ -231,8 +233,57 @@ export function App() {
   );
 }
 
-function RailItem({
-  active,
+/**
+ * The auto-update banner. Shows only when something actionable is happening:
+ * a release is downloading, or one is staged and waiting for a restart.
+ * Settings and history live outside the app folder, so installing never
+ * touches the user's data.
+ */
+function UpdateBanner() {
+  const [status, setStatus] = useState<AppUpdateStatus | null>(null);
+
+  useEffect(() => {
+    const unsub = window.whisperflow.updates.onStatus((s) => {
+      // Errors are logged in main; the banner is for actionable states only.
+      if (s.state === "error") return;
+      setStatus(s);
+    });
+    return unsub;
+  }, []);
+
+  if (!status || status.state === "not-available" || status.state === "checking") return null;
+
+  if (status.state === "downloaded") {
+    return (
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-4 py-2.5">
+        <p className="text-[13px] font-medium">
+          WhisperFlow v{status.version} is ready — restart to finish installing.
+        </p>
+        <button
+          type="button"
+          onClick={() => void window.whisperflow.app.quitAndInstall()}
+          className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink transition-opacity hover:opacity-90"
+        >
+          Restart now
+        </button>
+      </div>
+    );
+  }
+
+  // available — downloading in the background
+  if (status.state !== "available") return null;
+  return (
+    <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2/50 px-4 py-2.5">
+      <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-accent" />
+      <p className="text-[13px] text-ink-dim">
+        WhisperFlow v{status.version} is downloading… it installs when you quit.
+        {status.releaseNotes ? ` ${status.releaseNotes}` : ""}
+      </p>
+    </div>
+  );
+}
+
+function RailItem({  active,
   collapsed,
   label,
   href,

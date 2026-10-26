@@ -67,6 +67,15 @@ const api: WhisperflowApi = {
     version: () => ipcRenderer.invoke(IPC.AppVersion),
     hardware: () => ipcRenderer.invoke(IPC.AppHardware),
     openPath: (request) => ipcRenderer.invoke(IPC.AppOpenPath, request),
+    quitAndInstall: () => ipcRenderer.invoke(IPC.AppQuitAndInstall),
+    openLogsFolder: () => ipcRenderer.invoke(IPC.AppOpenLogsFolder),
+    openConfigFolder: () => ipcRenderer.invoke(IPC.AppOpenConfigFolder),
+    pickFile: (request) => ipcRenderer.invoke(IPC.AppPickFile, request ?? {}),
+    pickFolder: (request) => ipcRenderer.invoke(IPC.AppPickFolder, request ?? {}),
+    importBackup: (request) => ipcRenderer.invoke(IPC.AppImportBackup, request),
+  },
+  updates: {
+    onStatus: (listener) => subscribe(IPC.UpdateStatus, listener),
   },
   capture: {
     /** 16 kHz mono Float32 PCM chunk from the overlay's AudioWorklet. */

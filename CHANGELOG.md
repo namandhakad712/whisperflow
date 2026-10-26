@@ -2,6 +2,31 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.1] — 2026-10-26
+
+### Added — release pipeline & auto-update
+- **Auto-update actually works now.** Releases publish as non-draft GitHub Releases with
+  `latest.yml` + `.blockmap`, so installed apps check at launch + every 6 hours and download
+  **only the changed blocks** between versions (differential updates), then install on quit.
+- **Update banner**: "vX is ready — restart to finish installing" with a one-click restart.
+- **Update channel** setting (Stable / Beta) in Privacy — the updater follows it.
+- **Release workflow** (`release.yml`): pushing a `v*` tag builds the Windows installer on CI and
+  publishes the release + update feed automatically.
+
+### Added — production maturity
+- **Backup import** — restore config and merge history from an exported backup (existing entries
+  are never duplicated).
+- **Native pickers** — Browse… buttons for the overlay backdrop and the recordings folder.
+- **Diagnostics** in Help — open the log folder or the whole data folder.
+- **Search** on Dictionary and Snippets (parity gap closed).
+
+### Fixed
+- Docs pages were unreadable in dark mode (Tailwind prose grays on the near-black Nocturne page).
+- Two licence bugs in the shipped catalog: `whisper-base.en` / `whisper-small` said Apache-2.0;
+  Whisper is MIT.
+- Cloud STT transcribed nothing (the session gated segments on a local model path, which cloud
+  adapters never have).
+
 ## [Unreleased]
 
 ### Added

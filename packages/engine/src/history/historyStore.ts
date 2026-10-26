@@ -15,6 +15,8 @@ export interface HistoryStore {
   list(query?: HistoryQuery): TranscriptItem[];
   delete(id: string): boolean;
   clear(): boolean;
+  /** Merges backup items (existing ids are skipped). Returns how many were added. */
+  importMany(items: readonly TranscriptItem[]): number;
 }
 
 export function createHistoryStore(path: string): HistoryStore {
@@ -65,6 +67,21 @@ export function createHistoryStore(path: string): HistoryStore {
       items = [];
       if (changed) persist();
       return changed;
+    },
+    importMany(incoming) {
+      const known = new Set(items.map((t) => t.id));
+      let added = 0;
+      for (const t of incoming) {
+        if (!t?.id || known.has(t.id)) continue;
+        known.add(t.id);
+        items.push(t);
+        added += 1;
+      }
+      // Keep newest-first like the rest of the store.
+      items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+      if (items.length > MAX_ITEMS) items = items.slice(0, MAX_ITEMS);
+      if (added > 0) persist();
+      return added;
     },
   };
 }
