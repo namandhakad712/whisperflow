@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, SectionTitle } from "../../shared/ui";
+import { Button, Card, SectionTitle } from "../../shared/ui";
 
 export function AboutTab() {
   const [version, setVersion] = useState("");
@@ -52,6 +52,30 @@ export function AboutTab() {
         <p className="mt-5 border-t border-line/60 pt-4 text-xs leading-5 text-ink-dim">
           Not affiliated with Wispr Inc., OpenAI, Meta, or the Qwen team. Independent clean-room
           project; all code, art, and copy are original.
+        </p>
+      </Card>
+
+      <Card className="mt-6">
+        <SectionTitle title="Diagnostics" hint="Everything WhisperFlow writes stays in one folder you can inspect." />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" onClick={() => void window.whisperflow.app.openLogsFolder()}>
+            Open logs
+          </Button>
+          <Button variant="ghost" onClick={() => void window.whisperflow.app.openConfigFolder()}>
+            Open config &amp; data folder
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() =>
+              void window.whisperflowExtras.app.checkForUpdates().then((r) => window.alert(r.message))
+            }
+          >
+            Check for updates
+          </Button>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-ink-dim">
+          The log file is plain text and rotates daily — attach it to a GitHub issue when something
+          misbehaves. No identifiers are written.
         </p>
       </Card>
     </section>

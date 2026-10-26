@@ -20,6 +20,7 @@ export function CommandsTab() {
   const loadConfig = useSettings((s) => s.loadConfig);
   const [filter, setFilter] = useState("All");
   const [phrase, setPhrase] = useState("");
+  const [search, setSearch] = useState("");
   const [action, setAction] = useState<VoiceCommand["action"]>("insert");
   const [payload, setPayload] = useState("");
   if (!config) return null;
@@ -32,7 +33,14 @@ export function CommandsTab() {
     void addCommand(clean, action, payload.trim() || undefined).then(loadConfig);
   };
 
-  const commands = config.commands;
+  const commands = config.commands.filter((c) => {
+    if (filter === "Personal" && c.phrase.startsWith("team:")) return false;
+    return (
+      !search ||
+      c.phrase.toLowerCase().includes(search.toLowerCase()) ||
+      (c.payload ?? "").toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   return (
     <section>
@@ -65,13 +73,18 @@ export function CommandsTab() {
             <TextInput value={payload} onChange={setPayload} placeholder="Text to insert / replace with" />
           )}
         </div>
+        <TextInput value={search} onChange={setSearch} placeholder="Search snippets…" className="w-56" />
       </div>
 
       {commands.length === 0 ? (
         <EmptyState
           icon="🎙️"
-          title="No snippets yet"
-          body='Try your email signature: phrase “sign off”, action Insert. Built-in "scratch that" (undo) always works.'
+          title={search ? "No matches" : "No snippets yet"}
+          body={
+            search
+              ? `Nothing matches “${search}”.`
+              : 'Try your email signature: phrase “sign off”, action Insert. Built-in "scratch that" (undo) always works.'
+          }
         />
       ) : (
         <div className="space-y-2.5">

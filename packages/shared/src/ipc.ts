@@ -67,9 +67,18 @@ export const IPC = {
   AppVersion: "app/version",
   AppHardware: "app/hardware",
   AppOpenPath: "app/openPath",
+  AppQuitAndInstall: "app/quitAndInstall",
+  AppOpenLogsFolder: "app/openLogsFolder",
+  AppOpenConfigFolder: "app/openConfigFolder",
+  AppPickFile: "app/pickFile",
+  AppPickFolder: "app/pickFolder",
+  AppImportBackup: "app/importBackup",
 
   /** emit (renderer → main, transferable Float32Array chunks) */
   CapturePcm: "capture/pcm",
+
+  /** emit (main → renderer) — update banner status */
+  UpdateStatus: "update/status",
 } as const;
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC];
@@ -80,6 +89,7 @@ export const IPC_EMIT_CHANNELS: readonly IpcChannel[] = [
   IPC.ModelsProgress,
   IPC.CapturePcm,
   IPC.SettingsChanged,
+  IPC.UpdateStatus,
 ];
 
 /** Tabs of the settings window (used by `app/openSettings`). */
@@ -237,6 +247,41 @@ export interface AppOpenPathRequest {
 /** `error` is set when the OS refused to open the path (message for the UI). */
 export type AppOpenPathResponse = { error: string } | void;
 
+/** Auto-update status pushed to the settings window for the update banner. */
+export type AppUpdateStatus =
+  | { state: "checking" }
+  | { state: "available"; version: string; releaseNotes?: string }
+  | { state: "not-available"; version: string }
+  | { state: "downloaded"; version: string }
+  | { state: "error"; message: string };
+export type UpdateStatusEmit = AppUpdateStatus;
+
+export type AppQuitAndInstallRequest = void;
+export type AppQuitAndInstallResponse = void;
+export type AppOpenLogsFolderRequest = void;
+export type AppOpenLogsFolderResponse = void;
+export type AppOpenConfigFolderRequest = void;
+export type AppOpenConfigFolderResponse = void;
+export interface AppPickFileRequest {
+  title?: string;
+  /** e.g. [{ name: "Images", extensions: ["png", "jpg", "gif", "webp"] }] */
+  filters?: Array<{ name: string; extensions: string[] }>;
+}
+export type AppPickFileResponse = { canceled: boolean; path?: string };
+export interface AppPickFolderRequest {
+  title?: string;
+}
+export type AppPickFolderResponse = { canceled: boolean; path?: string };
+export interface AppImportBackupRequest {
+  path: string;
+}
+export interface AppImportBackupResponse {
+  ok: boolean;
+  /** History entries merged in (existing ids are skipped). */
+  addedHistory?: number;
+  message?: string;
+}
+
 /** Renderer → main PCM chunk (16 kHz mono after AudioWorklet resample). */
 export interface CapturePcmRequest {
   chunk: Float32Array;
@@ -279,6 +324,12 @@ export interface IpcInvokeMap {
   [IPC.AppVersion]: { request: AppVersionRequest; response: AppVersionResponse };
   [IPC.AppHardware]: { request: AppHardwareRequest; response: AppHardwareResponse };
   [IPC.AppOpenPath]: { request: AppOpenPathRequest; response: AppOpenPathResponse };
+  [IPC.AppQuitAndInstall]: { request: AppQuitAndInstallRequest; response: AppQuitAndInstallResponse };
+  [IPC.AppOpenLogsFolder]: { request: AppOpenLogsFolderRequest; response: AppOpenLogsFolderResponse };
+  [IPC.AppOpenConfigFolder]: { request: AppOpenConfigFolderRequest; response: AppOpenConfigFolderResponse };
+  [IPC.AppPickFile]: { request: AppPickFileRequest; response: AppPickFileResponse };
+  [IPC.AppPickFolder]: { request: AppPickFolderRequest; response: AppPickFolderResponse };
+  [IPC.AppImportBackup]: { request: AppImportBackupRequest; response: AppImportBackupResponse };
 }
 
 /** Handler signature for an invoke channel. */
@@ -354,6 +405,17 @@ export interface WhisperflowApi {
     version(): Promise<AppVersionResponse>;
     hardware(): Promise<AppHardwareResponse>;
     openPath(request: AppOpenPathRequest): Promise<AppOpenPathResponse>;
+    /** Installs a downloaded update and relaunches (no-op if none staged). */
+    quitAndInstall(): Promise<AppQuitAndInstallResponse>;
+    openLogsFolder(): Promise<AppOpenLogsFolderResponse>;
+    openConfigFolder(): Promise<AppOpenConfigFolderResponse>;
+    pickFile(request?: AppPickFileRequest): Promise<AppPickFileResponse>;
+    pickFolder(request?: AppPickFolderRequest): Promise<AppPickFolderResponse>;
+    importBackup(request: AppImportBackupRequest): Promise<AppImportBackupResponse>;
+  };
+  updates: {
+    /** Update banner status: available / downloaded / error / up-to-date. */
+    onStatus(listener: (event: UpdateStatusEmit) => void): Unsubscribe;
   };
   capture: {
     /** Sends one 16 kHz mono PCM chunk (renderer → main, transferable). */

@@ -77,6 +77,18 @@ npm run dev:website
 First launch: allow the mic → configure your speech engine → download models
 (≈500 MB, resumable) → hold the hotkey and speak. `Esc` always cancels.
 
+## Installing & updating
+
+Grab `WhisperFlow-Setup-x.y.z.exe` from [Releases](https://github.com/namandhakad712/whisperflow/releases).
+The installer is unsigned, so Windows SmartScreen will ask you to confirm ("More info →
+Run anyway") — a code-signing certificate is on the roadmap.
+
+**Updates are automatic:** the app checks GitHub Releases at launch and every 6 hours,
+downloads only the changed blocks (delta updates via blockmap), and installs on quit —
+your settings, history, and models are untouched. A banner in Settings offers
+"Restart now". A *major* version (1.x → 2.x) is never auto-installed: breaking changes
+go through the release notes. Pick **Beta** in Settings → Privacy to live on the edge.
+
 ## Monorepo layout
 
 | Path | What |

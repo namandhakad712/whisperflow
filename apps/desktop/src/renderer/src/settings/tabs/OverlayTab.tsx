@@ -89,10 +89,19 @@ export function OverlayTab() {
             />
             <button
               type="button"
-              onClick={() => void patch({ general: { overlayBackdrop: backdropLocal } })}
+              onClick={async () => {
+                const picked = await window.whisperflow.app.pickFile({
+                  title: "Choose a backdrop image or GIF",
+                  filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "bmp"] }],
+                });
+                if (!picked.canceled && picked.path) {
+                  setBackdropLocal(picked.path);
+                  void patch({ general: { overlayBackdrop: picked.path } });
+                }
+              }}
               className="shrink-0 rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent/50"
             >
-              Apply
+              Browse…
             </button>
             {g.overlayBackdrop && (
               <button
@@ -153,12 +162,28 @@ export function OverlayTab() {
           <Toggle checked={g.saveAudio} onChange={(v) => void patch({ general: { saveAudio: v } })} />
         </Row>
         <Row label="Recordings folder" hint="Blank = %APPDATA%/WhisperFlow/recordings.">
-          <TextInput
-            value={g.recordingsDir}
-            onChange={(v) => void patch({ general: { recordingsDir: v } })}
-            placeholder="C:\Users\you\Music\WhisperFlow recordings"
-            className="w-64"
-          />
+          <div className="flex gap-2">
+            <TextInput
+              value={g.recordingsDir}
+              onChange={(v) => void patch({ general: { recordingsDir: v } })}
+              placeholder="C:\Users\you\Music\WhisperFlow recordings"
+              className="w-64"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                const picked = await window.whisperflow.app.pickFolder({
+                  title: "Choose the recordings folder",
+                });
+                if (!picked.canceled && picked.path) {
+                  void patch({ general: { recordingsDir: picked.path } });
+                }
+              }}
+              className="shrink-0 rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent/50"
+            >
+              Browse…
+            </button>
+          </div>
         </Row>
       </Card>
 

@@ -38,10 +38,15 @@ nsis:
   artifactName: WhisperFlow-Setup-${version}.exe
   shortcutName: WhisperFlow
 
-# Auto-update activates when the public GitHub repo exists. Until then
-# electron-updater no-ops safely at runtime.
+# Auto-update: published (non-draft) releases only — electron-updater cannot see
+# drafts, so a draft releaseType would silently disable updates for everyone.
+# Blockmap files are generated alongside the exe, which is what makes
+# electron-updater's differential (delta) downloads work: a v0.1.1 install only
+# downloads the changed blocks of v0.1.2, not the whole installer. Beta-channel
+# feeds (latest-beta.yml) come for free from prerelease version tags like
+# 0.2.0-beta.1.
 publish:
   provider: github
   owner: namandhakad712
   repo: whisperflow
-  releaseType: draft
+  releaseType: release

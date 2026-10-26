@@ -84,7 +84,10 @@ async function bootstrap(): Promise<void> {
 
   registerIpc({ engine, controller, windows, hotkeys, tray, onQuit: () => app.quit() });
 
-  initUpdater(log);
+  initUpdater(log, {
+    getConfig: () => engine.getConfig(),
+    send: (status) => windows.sendToSettings("update/status", status),
+  });
 
   if (!process.argv.includes("--hidden")) {
     windows.createSettingsWindow();
