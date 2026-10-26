@@ -34,6 +34,7 @@ interface ElectronUpdater {
   logger: unknown;
   autoDownload: boolean;
   channel: string;
+  setFeedURL(url: unknown): void;
   on(event: "update-available" | "update-not-available" | "update-downloaded", handler: (info: UpdateInfo) => void): unknown;
   on(event: "error", handler: (err: unknown) => void): unknown;
   checkForUpdates(): Promise<{ updateInfo?: { version?: string } } | null>;
@@ -76,6 +77,15 @@ export function initUpdater(log: (...args: unknown[]) => void, deps?: UpdaterDep
         );
       }
       autoUpdater.logger = null;
+      // electron-builder only writes resources/app-update.yml when it PUBLISHES
+      // (our releases are uploaded separately), so point electron-updater at the
+      // repo ourselves. Keep in sync with the `publish` block in
+      // electron-builder.yml — the repo is public, so no token is needed.
+      try {
+        autoUpdater.setFeedURL({ provider: "github", owner: "namandhakad712", repo: "whisperflow" });
+      } catch (err) {
+        log("updater: setFeedURL failed (app-update.yml will be used if present):", String(err).slice(0, 100));
+      }
       autoUpdater.autoDownload = true;
 
       // Channel follows the user's preference (stable default).
@@ -93,6 +103,7 @@ export function initUpdater(log: (...args: unknown[]) => void, deps?: UpdaterDep
       });
       autoUpdater.on("update-not-available", (info) => {
         deps?.send({ state: "not-available", version: info?.version ?? app.getVersion() });
+        log("updater: up to date —", info?.version ?? app.getVersion());
       });
       autoUpdater.on("error", (err) => {
         const message = String(err).slice(0, 140);

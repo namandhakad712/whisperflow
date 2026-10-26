@@ -23,6 +23,16 @@ All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachan
   output). Now ranked by preference; caught by the new end-to-end STT verification script, which
   drives the real production path (download sidecar → extract → download model → transcribe the
   jfk.wav sample) and passes.
+- **Auto-update was broken in every packaged build**, twice over:
+  1. electron-updater exports `autoUpdater` as an `Object.defineProperty` *getter*, invisible to
+     Node's ESM named exports — `const { autoUpdater } = await import(...)` destructured `undefined`
+     and the updater threw before the first check. Dev builds skip the updater entirely, so only a
+     *packaged* run revealed it. Resolved through the CJS default export, with a descriptive error
+     if the shape ever changes.
+  2. electron-builder writes `resources/app-update.yml` only when it publishes; the releases are
+     uploaded separately, so the packaged app had no provider config and the *download* step
+     crashed. The release workflow now injects it (two-phase build), and the updater also calls
+     `setFeedURL` at runtime as a belt-and-braces fallback.
 - **Release pipeline.** The workflow was missing the `electron-vite build` step (empty asar), and
   electron-builder silently dropped the 400 MB installer upload — releases now build with
   `--publish never` and upload assets explicitly with `fail_on_unmatched_files`.
