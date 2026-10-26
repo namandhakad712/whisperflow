@@ -1,3 +1,0 @@
-
-boot
-REJECT: Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, node, and electron are supported by the default ESM loader. 
