@@ -30,8 +30,10 @@ export class ConfigStore {
 
   private load(): WhisperFlowConfig {
     try {
-      const raw = JSON.parse(readFileSync(this.path, "utf-8")) as unknown;
-      return WhisperFlowConfigSchema.parse(raw);
+      // Strip a UTF-8 BOM: editors and sync tools sometimes add one, and a raw
+      // JSON.parse would throw — silently resetting the user's settings.
+      const raw = readFileSync(this.path, "utf-8").replace(/^\uFEFF/, "");
+      return WhisperFlowConfigSchema.parse(JSON.parse(raw));
     } catch {
       return structuredClone(DEFAULT_CONFIG);
     }

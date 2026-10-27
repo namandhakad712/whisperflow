@@ -88,7 +88,9 @@ export function createHistoryStore(path: string): HistoryStore {
 
 function load(path: string): TranscriptItem[] {
   try {
-    const raw = JSON.parse(readFileSync(path, "utf-8")) as unknown;
+    // BOM-tolerant read: silently dropping history on a BOM'd file would be a
+    // data-loss bug.
+    const raw = JSON.parse(readFileSync(path, "utf-8").replace(/^\uFEFF/, "")) as unknown;
     if (!Array.isArray(raw)) return [];
     return raw.filter((t): t is TranscriptItem => !!t && typeof (t as TranscriptItem).id === "string");
   } catch {

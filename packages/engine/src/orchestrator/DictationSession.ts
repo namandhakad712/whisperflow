@@ -96,6 +96,11 @@ export class DictationSession {
     const tail = this.vad.flush();
     if (tail) this.enqueueSegment(tail.pcm);
 
+    // Test affordance: WF_STT_MOCK produces the canned text, but headless runs
+    // have no microphone — VAD never fires, so there'd be nothing to transcribe.
+    // Synthesize a 1 s segment so the full pipeline is exercised anyway.
+    if (process.env["WF_STT_MOCK"]) this.enqueueSegment(new Float32Array(16000));
+
     this.setState("transcribing");
     await this.sttQueue;
 

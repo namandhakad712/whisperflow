@@ -227,8 +227,14 @@ export const GeneralConfigSchema = z.object({
     overlayBackdrop: z.string().default(""),
     /** Overlay silhouette: pill | rect | blob */
     overlayStyle: z.enum(["pill", "rect", "blob"]).default("pill"),
-    /** Overlay anchor: cursor | top | bottom */
-    overlayPosition: z.enum(["cursor", "top", "bottom"]).default("cursor"),
+    /**
+     * Overlay anchor. `floating` parks it in the bottom-right corner of the
+     * active display's work area (14 px inset, like the app this mirrors);
+     * `top-left`/`top-right` pin it to a corner and re-clamp on monitor changes.
+     */
+    overlayPosition: z
+      .enum(["cursor", "floating", "top-left", "top-right", "top", "bottom"])
+      .default("cursor"),
     /** Meeting mode: keep the session open across pauses and insert each
      *  utterance as soon as it's transcribed (meetings, lectures, interviews). */
     meetingMode: z.boolean().default(false),

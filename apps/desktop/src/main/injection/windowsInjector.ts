@@ -1,4 +1,4 @@
-import { clipboard } from "electron";
+import { clipboard, ClipboardItem } from "electron";
 import { spawn } from "node:child_process";
 
 /**
@@ -6,19 +6,17 @@ import { spawn } from "node:child_process";
  * snapshot the clipboard (as items) → write our text → send Ctrl+V via
  * PowerShell SendKeys → restore the snapshot.
  *
- * Electron 45's clipboard API is async and item-based; snapshotting whole
- * ClipboardItems preserves whatever formats were there (text, images, files).
+ * The restore matters more than it looks: without it every dictation would
+ * replace the user's clipboard with its own transcript (a classic
+ * clipboard-stealing bug). Electron 45 also refuses to write back a
+ * `ClipboardItem` obtained from `clipboard.read()` — items must be rebuilt with
+ * `getType` + a fresh `ClipboardItem`, so that is what happens below, with a
+ * plain-text fallback.
  */
 export async function injectText(text: string): Promise<boolean> {
   if (!text) return false;
 
-  let snapshot: Electron.ClipboardItem[] = [];
-  try {
-    snapshot = await clipboard.read();
-  } catch {
-    snapshot = [];
-  }
-
+  const snapshot = await snapshotClipboard();
   await clipboard.writeText(text);
   try {
     await sendPaste();
@@ -26,12 +24,59 @@ export async function injectText(text: string): Promise<boolean> {
     await delay(160);
     return true;
   } finally {
+    await restoreClipboard(snapshot).catch(() => {
+      /* restoring is best-effort, never fatal */
+    });
+  }
+}
+
+/** Everything needed to put the clipboard back the way we found it. */
+interface ClipboardSnapshot {
+  items: Electron.ClipboardItem[] | null;
+  text: string | null;
+}
+
+async function snapshotClipboard(): Promise<ClipboardSnapshot> {
+  try {
+    const items = await clipboard.read();
+    const text = await clipboard.readText().catch(() => null);
+    return { items, text };
+  } catch {
+    return { items: null, text: null };
+  }
+}
+
+async function restoreClipboard(snapshot: ClipboardSnapshot): Promise<void> {
+  // Full fidelity first: rebuild each item from its formats (text, html,
+  // image, files). Electron rejects items returned by clipboard.read().
+  if (snapshot.items && snapshot.items.length > 0) {
     try {
-      if (snapshot.length > 0) await clipboard.write(snapshot);
-      else clipboard.clear();
+      const rebuilt: Electron.ClipboardItem[] = [];
+      for (const item of snapshot.items) {
+        const data: Record<string, string | Blob> = {};
+        for (const type of item.types) {
+          try {
+            const payload = await item.getType(type);
+            if (payload instanceof Blob) data[type] = payload;
+          } catch {
+            /* a format we cannot round-trip; keep the rest */
+          }
+        }
+        if (Object.keys(data).length > 0) rebuilt.push(new ClipboardItem(data));
+      }
+      if (rebuilt.length > 0) {
+        await clipboard.write(rebuilt);
+        return;
+      }
     } catch {
-      /* restoring is best-effort */
+      /* fall through to the text restore */
     }
+  }
+  // Text-only fallback (the common case) — or clear if it was empty.
+  if (snapshot.text !== null && snapshot.text !== "") {
+    await clipboard.writeText(snapshot.text).catch(() => {});
+  } else {
+    clipboard.clear();
   }
 }
 

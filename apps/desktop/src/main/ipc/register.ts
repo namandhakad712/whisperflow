@@ -223,6 +223,11 @@ export function registerIpc(deps: {
   });
 
   // ---- diagnostics + file pickers + backup import ----------------------------------
+  // The overlay renderer reports when the pointer is over a real control, so the
+  // panel can stay click-through (never blocking the app underneath) otherwise.
+  ipcMain.on("overlay/setInteractive", (_e, interactive: boolean) => {
+    windows.setOverlayInteractive(Boolean(interactive));
+  });
   ipcMain.handle(IPC.AppOpenLogsFolder, () => {
     void shell.openPath(join(app.getPath("userData"), "logs"));
   });

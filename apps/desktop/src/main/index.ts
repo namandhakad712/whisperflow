@@ -3,7 +3,7 @@ import type { WhisperFlowConfig } from "@whisperflow/shared";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { WindowManager } from "./windows/WindowManager";
-import { createTray } from "./tray/tray";
+import { createTray, trayUsable } from "./tray/tray";
 import { HotkeyManager } from "./hotkeys/hotkeys";
 import { DictationController } from "./audio/dictationController";
 import { registerIpc } from "./ipc/register";
@@ -18,8 +18,11 @@ app.setName("WhisperFlow");
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
+  // Another instance owns the app: quit immediately and do NOT bootstrap.
   app.quit();
 }
+/** A second launch that arrived before bootstrap finished. */
+let pendingShow = false;
 
 let windowsRef: WindowManager | null = null;
 
@@ -162,20 +165,36 @@ async function bootstrap(): Promise<void> {
 }
 
 app.whenReady().then(() => {
-  bootstrap().catch((err) => {
-    log("fatal:", err);
-    if (!app.isPackaged) console.error(err);
-  });
+  if (!gotLock) return; // the second instance must never bootstrap
+  bootstrap()
+    .then(() => {
+      if (pendingShow) {
+        pendingShow = false;
+        windowsRef?.createSettingsWindow();
+      }
+    })
+    .catch((err) => {
+      log("fatal:", err);
+      if (!app.isPackaged) console.error(err);
+    });
 
   app.on("second-instance", () => {
-    // A second launch focuses the settings window instead of starting a new process.
-    windowsRef?.createSettingsWindow();
+    // Opening the app again must always surface a window — even if it is
+    // still booting, or the user closed the window and the app is tray-only.
+    if (windowsRef) windowsRef.createSettingsWindow();
+    else pendingShow = true;
   });
 });
 
 app.on("window-all-closed", () => {
-  // Tray-resident app: closing the settings window does not quit.
+  // Tray-resident app: closing the settings window does not quit — unless the
+  // tray is unusable, in which case quitting is the only way the user can tell
+  // the app is gone instead of invisible.
+  if (!trayUsable) app.quit();
 });
+
+// Clicking the task-bar / dock icon while the window is hidden re-opens it.
+app.on("activate", () => windowsRef?.createSettingsWindow());
 
 app.on("before-quit", () => {
   // best-effort cleanup; globalShortcut auto-unregisters on exit

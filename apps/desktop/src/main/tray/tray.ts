@@ -1,5 +1,6 @@
 import { Menu, nativeImage, Tray } from "electron";
 import { join } from "node:path";
+import { log } from "../lib/log";
 
 export interface TrayController {
   toggleDictation(): void;
@@ -12,10 +13,25 @@ export interface TrayController {
   quit(): void;
 }
 
+/** True when the tray icon could be created with a real (non-empty) image. */
+export let trayUsable = false;
+
 export function createTray(controller: TrayController): Tray {
   const iconPath = join(__dirname, "../../resources/tray.png");
-  const image = nativeImage.createFromPath(iconPath);
+  const fallbackPath = join(__dirname, "../../resources/icon.png");
+  let image = nativeImage.createFromPath(iconPath);
+  if (image.isEmpty()) {
+    log(`tray: tray.png not found or unreadable at ${iconPath} — trying icon.png`);
+    image = nativeImage.createFromPath(fallbackPath);
+  }
+  if (image.isEmpty()) log("tray: no usable icon image — the tray icon will be invisible");
   const tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
+  trayUsable = !image.isEmpty();
+  log(
+    trayUsable
+      ? "tray: created (right-click for the menu, click to open Settings)"
+      : "tray: created with an EMPTY image — icon will not be visible",
+  );
 
   let launchAtLogin = false;
   let active = false;

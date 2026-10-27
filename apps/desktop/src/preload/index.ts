@@ -103,6 +103,10 @@ const extras = {
     /** Fired after every settings/set — lets live windows re-read config. */
     onChanged: (cb: () => void) => subscribe(IPC.SettingsChanged, cb),
   },
+  overlay: {
+    /** Tell main whether the pointer is over a control (drives click-through). */
+    setInteractive: (interactive: boolean) => ipcRenderer.send("overlay/setInteractive", interactive),
+  },
 };
 contextBridge.exposeInMainWorld("whisperflowExtras", extras);
 export type Extras = typeof extras;

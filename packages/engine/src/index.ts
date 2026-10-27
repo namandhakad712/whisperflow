@@ -116,6 +116,22 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     };
   };
 
+  /**
+   * Test affordance: set `WF_STT_MOCK=<text>` and every transcription returns
+   * that text, so automated end-to-end runs can drive the whole pipeline
+   * (session → polish → injection) with no model download, no network key, and
+   * no microphone. Never active unless the variable is set.
+   */
+  const mockStt = (): SttAdapter | null => {
+    const mock = process.env["WF_STT_MOCK"];
+    if (!mock) return null;
+    return {
+      transcribe: async () => mock,
+      modelPathFor: () => "mock",
+      ready: () => true,
+    };
+  };
+
   /** Local whisper.cpp adapter, when the sidecar binary exists. */
   const localStt = (): SttAdapter | null =>
     sttProvider.findBinary() === null
@@ -155,12 +171,14 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     },
     async startDictation(sessionOpts) {
       const cfg = config.get();
+      const mock = mockStt();
       const local = localStt();
       const cloud = cloudSttAdapter();
-      const primary = cfg.stt.provider === "cloud" ? cloud : local;
+      const primary = mock ?? (cfg.stt.provider === "cloud" ? cloud : local);
       const backup =
         cfg.stt.fallback === "local" ? local : cfg.stt.fallback === "cloud" ? cloud : null;
-      const stt = pickStt(primary, backup);
+      const stt = mock ?? pickStt(primary, backup);
+      if (mock) logger("stt: WF_STT_MOCK is set — transcriptions are the canned test text");
       return new DictationSession({
         config: structuredClone(cfg),
         stt,

@@ -19,6 +19,7 @@ declare global {
         }): Promise<{ canceled: boolean; path?: string; content?: string }>;
       };
       settings: { onChanged(cb: () => void): () => void };
+      overlay: { setInteractive(interactive: boolean): void };
     };
   }
 }

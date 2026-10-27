@@ -39,6 +39,27 @@ export function Overlay() {
     }
   }, []);
 
+  // Click-through by default (like the reference overlay): the window ignores the
+  // mouse so it never blocks the app underneath; we only make it interactive
+  // while the pointer is over a real control.
+  useEffect(() => {
+    let interactive = false;
+    const report = (next: boolean) => {
+      if (next === interactive) return;
+      interactive = next;
+      window.whisperflowExtras.overlay.setInteractive(next);
+    };
+    const onMove = (e: MouseEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      report(Boolean(el?.closest("[data-interactive='true']")));
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      report(false);
+    };
+  }, []);
+
   useEffect(() => {
     const unsub = window.whisperflow.dictation.onState((ev) => {
       setEvent(ev);
@@ -135,6 +156,7 @@ export function Overlay() {
           <button
             type="button"
             aria-label="Cancel dictation"
+            data-interactive="true"
             onClick={() => void window.whisperflowExtras.dictation.cancel()}
             className="ml-auto rounded-md px-2 py-0.5 text-xs text-ink-dim transition-colors hover:bg-surface-2 hover:text-ink"
           >

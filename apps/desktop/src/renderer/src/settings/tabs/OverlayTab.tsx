@@ -3,7 +3,7 @@ import { useSettings } from "../store";
 import { Card, PageHeader, Row, TextInput, Toggle } from "../../shared/ui";
 
 type Shape = "pill" | "rect" | "blob";
-type Position = "cursor" | "top" | "bottom";
+type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom";
 
 const SHAPES: Array<{ id: Shape; label: string; className: string }> = [
   { id: "pill", label: "Pill", className: "rounded-2xl" },
@@ -13,8 +13,15 @@ const SHAPES: Array<{ id: Shape; label: string; className: string }> = [
 
 const POSITIONS: Array<{ id: Position; label: string; hint: string }> = [
   { id: "cursor", label: "Near cursor", hint: "Pops up where you're already typing" },
-  { id: "top", label: "Top of screen", hint: "Fixed to the top center of your display" },
-  { id: "bottom", label: "Bottom of screen", hint: "Fixed to the bottom center — out of the way" },
+  {
+    id: "floating",
+    label: "Floating",
+    hint: "Parked bottom-right of the active display — never under the taskbar",
+  },
+  { id: "top-left", label: "Top left", hint: "Pinned to the corner; re-clamped when monitors change" },
+  { id: "top-right", label: "Top right", hint: "Pinned to the corner; re-clamped when monitors change" },
+  { id: "top", label: "Top center", hint: "Fixed to the top center of your display" },
+  { id: "bottom", label: "Bottom center", hint: "Fixed to the bottom center — out of the way" },
 ];
 
 export function OverlayTab() {
