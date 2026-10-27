@@ -101,7 +101,9 @@ export class WindowManager {
       cursor,
     );
     win.setBounds(bounds, false);
-    log(`overlay: anchor=${position} bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`);
+    log(
+      `overlay: anchor=${position} size=${size[0]}x${size[1]} → bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`,
+    );
     if (process.platform === "darwin") {
       win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     }

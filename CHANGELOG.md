@@ -2,6 +2,30 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.3] — 2026-10-27
+
+### Fixed — the shipped overlay had no styling at all
+- **The dictation overlay rendered unstyled in every released build.** The overlay entry never
+  imported `styles.css`, so the built `overlay.html` linked no stylesheet — every class was inert.
+  Found by screenshotting the actual built page (new `scripts/overlay-shots.cjs` harness that
+  captures every state); fixed by importing the stylesheet.
+
+### Changed — overlay redesigned to the reference app's design language
+- Extracted from the shipped Wispr Flow bundle: panel geometry **500×420** (min 300×200,
+  expandable to 920×660), palette `vast-950 #1a1a1a` / `sand-50 #fcfcfb` with a white accent, and
+  the **transcript as the hero element** (19 px, large waveform, status header, footer hint).
+  Verified visually in all five states (listening, transcribing, done, error, recording+typing).
+- Replicated their settings surface: AI-formatting master toggle + cleanup strength
+  (`polish.enabled` / `polish.cleanup` off-light-strong driving the model prompt), a hard
+  `audio.maxRecordingLengthMs` dictation cap, and the overlay now actually uses the mic chosen in
+  Audio settings (previously silently ignored).
+- Per-dictation **app attribution** (`system/foreground.ts`) and **daily config/history backups**
+  with 7-day rotation, matching the reference app's data-safety pattern.
+- Injection hardened: paste failures surface their stderr (e.g. UIPI "Access is denied"), and when
+  a paste cannot be delivered the text stays on the clipboard with an actionable message instead
+  of being restored away and lost. The uiohook-based Ctrl+V was tried, verified to deliver nothing,
+  and dropped — documented in code.
+
 ## [0.1.2] — 2026-10-26
 
 ### Added — real hold-to-talk
