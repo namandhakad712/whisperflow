@@ -8,6 +8,36 @@ These are **observations from a shipped artifact**, not documentation the vendor
 publishes. They exist to keep our parity work grounded. Nothing here is copied
 code — only behaviour, options and geometry were reproduced.
 
+## Settings surface (their store keys → what we implemented)
+
+Their renderer default state enumerates the whole settings store. Settings that
+mapped onto real features and are now in WhisperFlow:
+
+| Their key / label | Ours |
+| --- | --- |
+| `aiFormatting`, `polishEnabled`, `polishAutoPaste`, `autoPolishAfterDictation` | `polish.enabled` (master toggle) — also already had provider/tone |
+| `autoCleanup.level` | `polish.cleanup` — `off` / `light` / `strong`, drives the polish prompt |
+| `internal.maxRecordingLengthMs` | `audio.maxRecordingLengthMs` — hard cap, 0 = unlimited |
+| `overrideAudioDeviceId`, `rankedAudioDevices` | `audio.deviceId` picker (Audio tab) — **now actually used** by the overlay capture (it was silently ignored) |
+| `usedLanguages` / `selectedLanguages`, "Automatic language detection" | `stt.language` already defaults to `"auto"` |
+
+Not implemented (and why): `App Language`/`uiLocale` (full i18n), per-app
+**Styles** (`styleDetectionEnabled`, styles per app — a big subsystem), the
+**Flow Bar** resting state pill + scratchpad in the bar, **mouse-flow** (hold a
+mouse button to dictate — needs the OS hook listening for mouse buttons, doable
+on top of uiohook-napi), `emailAutoSignature`, BLE device pairing, granola/otter
+imports, cloud sync, telemetry.
+
+## Data model (from their migration filenames)
+
+Their SQLite schema (`flow.sqlite`, `node:sqlite`, daily 12:00 backup cron into
+`backups/`) keeps per-dictation: app, language, mic device, speech duration,
+e2e + network latency, pasted text + divergence score, edit distance, edited
+text, tone-matched text, axText/axHtml, opus chunks, logprobs, feedback. We
+adopted the **daily backup** (`lifecycle/backup.ts`, 7-day rotation) and the
+per-dictation **app attribution** (`system/foreground.ts`). SQLite history and
+edit-distance learning remain on the roadmap.
+
 ## Overlay panel window (what we replicated)
 
 `createPanelWindow` builds the pill panel with:
