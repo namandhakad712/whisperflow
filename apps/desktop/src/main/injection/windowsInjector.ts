@@ -1,5 +1,6 @@
-import { clipboard, ClipboardItem } from "electron";
+import { clipboard } from "electron";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 
 /**
  * Pastes text into the focused window on Windows:
@@ -18,16 +19,28 @@ export async function injectText(text: string): Promise<boolean> {
 
   const snapshot = await snapshotClipboard();
   await clipboard.writeText(text);
+  let pasted = false;
   try {
     await sendPaste();
-    // Give the target app a beat to read the clipboard before we restore it.
-    await delay(160);
-    return true;
+    pasted = true;
   } finally {
-    await restoreClipboard(snapshot).catch(() => {
-      /* restoring is best-effort, never fatal */
-    });
+    if (pasted) {
+      // Give the target app a beat to read the clipboard before we restore it.
+      await delay(160);
+      await restoreClipboard(snapshot).catch(() => {
+        /* restoring is best-effort, never fatal */
+      });
+    } else {
+      // Paste failed (Windows UIPI can block input injection from a process that
+      // isn't attached to the interactive desktop). Leave the dictated text on
+      // the clipboard and say so — the user can press Ctrl+V themselves instead
+      // of losing what they just said.
+      throw new Error(
+        "couldn't paste into the focused window — the text is on your clipboard, press Ctrl+V",
+      );
+    }
   }
+  return true;
 }
 
 /** Everything needed to put the clipboard back the way we found it. */
@@ -48,8 +61,10 @@ async function snapshotClipboard(): Promise<ClipboardSnapshot> {
 
 async function restoreClipboard(snapshot: ClipboardSnapshot): Promise<void> {
   // Full fidelity first: rebuild each item from its formats (text, html,
-  // image, files). Electron rejects items returned by clipboard.read().
-  if (snapshot.items && snapshot.items.length > 0) {
+  // image, files). Electron rejects items returned by clipboard.read(), so new
+  // ones are constructed — but only if the constructor is actually reachable.
+  const Ctor = clipboardItemCtor();
+  if (Ctor && snapshot.items && snapshot.items.length > 0) {
     try {
       const rebuilt: Electron.ClipboardItem[] = [];
       for (const item of snapshot.items) {
@@ -62,7 +77,7 @@ async function restoreClipboard(snapshot: ClipboardSnapshot): Promise<void> {
             /* a format we cannot round-trip; keep the rest */
           }
         }
-        if (Object.keys(data).length > 0) rebuilt.push(new ClipboardItem(data));
+        if (Object.keys(data).length > 0) rebuilt.push(new Ctor(data));
       }
       if (rebuilt.length > 0) {
         await clipboard.write(rebuilt);
@@ -81,6 +96,10 @@ async function restoreClipboard(snapshot: ClipboardSnapshot): Promise<void> {
 }
 
 function sendPaste(): Promise<void> {
+  // NOTE: synthesising Ctrl+V through uiohook-napi was tried and dropped — the
+  // synthetic keystroke returned success but the target never pasted (verified
+  // in a harness against our own focused textarea). SendKeys actually delivers,
+  // so it stays the only path.
   return new Promise((resolve, reject) => {
     const proc = spawn(
       "powershell.exe",
@@ -90,12 +109,37 @@ function sendPaste(): Promise<void> {
         "-Command",
         "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')",
       ],
-      { windowsHide: true, stdio: "ignore" },
+      { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] },
     );
-    proc.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`SendKeys exit ${code}`))));
+    // Windows reports UIPI/interactivity problems on stderr, not in the exit
+    // code alone — keep it so the log says *why* a paste failed.
+    let stderr = "";
+    proc.stderr?.on("data", (d: Buffer) => {
+      stderr += d.toString();
+    });
+    proc.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`SendKeys exit ${code}${stderr ? `: ${stderr.trim().slice(0, 160)}` : ""}`));
+    });
     proc.on("error", reject);
-    setTimeout(resolve, 1000); // never hang the pipeline on a stuck shell
+    setTimeout(() => reject(new Error("SendKeys timed out")), 1500); // never hang
   });
 }
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * ClipboardItem is a class on the CJS electron module. A static ESM named
+ * import of it is `undefined` at runtime (verified), so resolve it through a
+ * runtime require and fall back gracefully when it is unavailable.
+ */
+function clipboardItemCtor(): (new (data: Record<string, string | Blob>) => Electron.ClipboardItem) | null {
+  try {
+    const electron = createRequire(import.meta.url)("electron") as {
+      ClipboardItem?: new (data: Record<string, string | Blob>) => Electron.ClipboardItem;
+    };
+    return typeof electron.ClipboardItem === "function" ? electron.ClipboardItem : null;
+  } catch {
+    return null;
+  }
+}

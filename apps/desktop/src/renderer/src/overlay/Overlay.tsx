@@ -16,6 +16,7 @@ export function Overlay() {
   const [recording, setRecording] = useState(false);
   const [typing, setTyping] = useState(false);
   const typingTimer = useRef<number | null>(null);
+  const micIdRef = useRef<string | undefined>(undefined);
   const [hotkeyHint, setHotkeyHint] = useState("the hotkey");
   const captureRef = useRef<Capture | null>(null);
   const startingRef = useRef(false);
@@ -26,9 +27,13 @@ export function Overlay() {
     const c = (await window.whisperflow.settings.get()) as {
       general?: { overlayBackdrop?: string; overlayStyle?: "pill" | "rect" | "blob" };
       hotkey?: { pushToTalk?: string };
+      audio?: { deviceId?: string };
     };
     setBackdrop(c.general?.overlayBackdrop ?? "");
     setShape(c.general?.overlayStyle ?? "pill");
+    // The mic the user picked in Audio settings (ref so capture reads the
+    // freshest value without re-running this effect).
+    micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
     if (c.hotkey?.pushToTalk) {
       setHotkeyHint(
         c.hotkey.pushToTalk
@@ -89,6 +94,7 @@ export function Overlay() {
     if (listening && !captureRef.current && !startingRef.current) {
       startingRef.current = true;
       startCapture({
+        deviceId: micIdRef.current,
         onChunk: (pcm) => window.whisperflow.capture.sendPcm(pcm),
         onLevel: (rms) => {
           levelsRef.current.push(Math.min(1, rms * 6));

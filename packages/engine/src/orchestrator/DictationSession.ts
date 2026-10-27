@@ -124,8 +124,15 @@ export class DictationSession {
       action = applied.action;
     }
 
-    // Polish (skipped when a deterministic command already decided the text).
-    if (!action && final && this.deps.polish && this.deps.config.polish.provider !== "none") {
+    // Polish (skipped when a deterministic command already decided the text, or
+    // when the user turned AI formatting off).
+    const polish =
+      this.deps.polish &&
+      this.deps.config.polish.provider !== "none" &&
+      this.deps.config.polish.enabled !== false
+        ? this.deps.polish
+        : null;
+    if (!action && final && polish) {
       this.setState("polishing");
       const input: PolishInput = {
         raw: final,
@@ -135,10 +142,11 @@ export class DictationSession {
         language: this.deps.config.stt.language,
         dictionary: this.deps.config.dictionary.map((d) => d.term),
         instructions: this.deps.config.polish.customInstructions,
+        cleanup: this.deps.config.polish.cleanup,
       };
       try {
         let text = "";
-        for await (const chunk of this.deps.polish.polish(input)) text += chunk;
+        for await (const chunk of polish.polish(input)) text += chunk;
         if (text.trim()) final = text.trim();
       } catch (err) {
         this.deps.logger?.(`polish failed, using offline cleanup: ${String(err)}`);

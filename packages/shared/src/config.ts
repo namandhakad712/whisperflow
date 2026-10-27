@@ -41,6 +41,12 @@ export const AudioConfigSchema = z.object({
   /** Media device id, `"default"` = system default input. */
   deviceId: z.string().default("default"),
   vad: VadConfigSchema.prefault({}),
+  /**
+   * Hard cap on a single dictation, in milliseconds (0 = unlimited). The
+   * reference app ships the same guard so a hotkey held down by accident (or
+   * a stuck key) cannot fill the disk with a 6-hour recording.
+   */
+  maxRecordingLengthMs: z.number().int().nonnegative().default(0),
 });
 export type AudioConfig = z.infer<typeof AudioConfigSchema>;
 
@@ -182,6 +188,8 @@ export const PolishConfigSchema = z.object({
   provider: z
     .enum(["llama-local", "openai-compat", "none"])
     .default("llama-local"),
+  /** Master switch — "Apply AI formatting" in the reference app's settings. */
+  enabled: z.boolean().default(true),
   /** Catalog id of the local GGUF model. */
   modelId: z.string().default("qwen3.5-4b-q4"),
   /** LLM sampling temperature — low keeps dictation faithful. */
@@ -189,6 +197,12 @@ export const PolishConfigSchema = z.object({
   tone: z.enum(["neutral", "casual", "professional", "custom"]).default("neutral"),
   /** Free-form extra instructions used when `tone === "custom"`. */
   customInstructions: z.string().default(""),
+  /**
+   * Filler-word cleanup strength ("Auto cleanup" in the reference app): off
+   * leaves every word; light drops "um/uh/like"; strong also removes
+   * repetitions and false starts.
+   */
+  cleanup: z.enum(["off", "light", "strong"]).default("light"),
   remote: RemotePolishConfigSchema.prefault({}),
   /**
    * When the remote polish endpoint fails (quota, network, 5xx), retry on the

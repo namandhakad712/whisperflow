@@ -11,6 +11,7 @@ import { createEnginePort, resolveEngineDirs } from "./engine/enginePort";
 import { HoldToTalkWatcher, hookAvailable, parseAccelerator, type KeyboardHookEvents } from "./hotkeys/holdToTalk";
 import { applyLaunchAtLogin } from "./lifecycle/autostart";
 import { initUpdater } from "./lifecycle/updater";
+import { runDailyBackup } from "./lifecycle/backup";
 import { initLogging, log } from "./lib/log";
 
 // Must precede anything that touches userData — this pins %APPDATA%/WhisperFlow.
@@ -51,6 +52,9 @@ async function bootstrap(): Promise<void> {
   });
 
   const engine = await createEnginePort(resolveEngineDirs(app.getPath("userData")));
+  // One local backup per day of config + history (kept 7 days), like the app
+  // this is modelled on — a bad write should never cost the user their data.
+  runDailyBackup(app.getPath("userData"));
 
   const windows = new WindowManager({ preloadPath: resolvePreloadPath(), resolveRenderer });
   windowsRef = windows;

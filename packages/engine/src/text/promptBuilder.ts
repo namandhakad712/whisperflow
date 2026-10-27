@@ -17,6 +17,8 @@ export interface PolishInput {
   dictionary: readonly string[];
   /** Free-form instructions when tone === "custom". */
   instructions?: string;
+  /** Filler-word cleanup strength ("Auto cleanup" in settings). */
+  cleanup?: "off" | "light" | "strong";
 }
 
 export interface PolishMessages {
@@ -32,11 +34,16 @@ const TONE_RULES: Record<ToneId, string> = {
 };
 
 export function buildPolishMessages(input: PolishInput): PolishMessages {
+  const cleanup = input.cleanup ?? "light";
   const systemParts: string[] = [
     "You are the text-polishing stage of a voice dictation app. You receive raw speech-to-text output and return clean, ready-to-type text.",
     "Rules:",
     "- Preserve the speaker's meaning, language, and word choices. Never add new information, greetings, or commentary.",
-    "- Remove filler words (um, uh, like, you know), stumbles, and repeated words.",
+    cleanup === "off"
+      ? "- Do NOT remove anything the speaker said; fix only punctuation, capitalization, and obvious transcription errors."
+      : cleanup === "strong"
+        ? "- Remove filler words (um, uh, like, you know), stumbles, repeated words, and false starts. Tighten rambling sentences, but keep every fact."
+        : "- Remove filler words (um, uh, like, you know), stumbles, and repeated words.",
     "- Fix punctuation, capitalization, and obvious transcription errors.",
     "- Keep numbers, names, URLs, and code-like tokens exactly as spoken.",
     "- If the text is already clean, return it unchanged.",

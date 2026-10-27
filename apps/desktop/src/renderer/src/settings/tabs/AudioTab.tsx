@@ -59,6 +59,24 @@ export function AudioTab() {
             className="w-28 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
           />
         </Row>
+        <Row
+          label="Max dictation length (minutes)"
+          hint="0 = unlimited. Caps a runaway session so a stuck hotkey can't record for hours."
+        >
+          <input
+            type="number"
+            min={0}
+            max={180}
+            step={1}
+            value={config.audio.maxRecordingLengthMs ? config.audio.maxRecordingLengthMs / 60000 : 0}
+            onChange={(e) =>
+              void patch({
+                audio: { maxRecordingLengthMs: Math.max(0, Number(e.target.value)) * 60000 },
+              })
+            }
+            className="w-24 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          />
+        </Row>
       </Card>
       {devices.length === 0 && (
         <p className="mt-4 text-xs text-ink-dim">

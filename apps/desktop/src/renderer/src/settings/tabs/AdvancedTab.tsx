@@ -46,6 +46,20 @@ export function AdvancedTab() {
           />
         </Row>
         <Row
+          label="Cleanup strength"
+          hint='How much of the spoken messiness to remove. "Light" drops filler words; "Strong" also tightens repetitions and false starts.'
+        >
+          <Select
+            value={config.polish.cleanup}
+            onChange={(v) => void patch({ polish: { cleanup: v as "off" | "light" | "strong" } })}
+            options={[
+              { value: "off", label: "Off — keep every word" },
+              { value: "light", label: "Light — remove filler words" },
+              { value: "strong", label: "Strong — tighten repetitions too" },
+            ]}
+          />
+        </Row>
+        <Row
           label={`Tone for ${context.toLowerCase()}`}
           hint={context === "Other" ? "Custom instructions steer the polish model." : undefined}
         >

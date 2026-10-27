@@ -39,6 +39,18 @@ describe("promptBuilder", () => {
     const wrongTone = buildPolishMessages({ ...base, tone: "casual", instructions: "Pirate speak" });
     expect(wrongTone.system).not.toContain("Pirate speak");
   });
+
+  it("scales filler-word removal with the cleanup level", () => {
+    const light = buildPolishMessages({ ...base, cleanup: "light" });
+    expect(light.system).toContain("Remove filler words");
+    const strong = buildPolishMessages({ ...base, cleanup: "strong" });
+    expect(strong.system).toContain("Tighten rambling");
+    const off = buildPolishMessages({ ...base, cleanup: "off" });
+    // off must explicitly forbid removal — "Auto cleanup: off" is a real setting
+    expect(off.system).toContain("Do NOT remove anything");
+    // and the default (unset) behaves as light
+    expect(buildPolishMessages(base).system).toContain("Remove filler words");
+  });
 });
 
 describe("model catalog", () => {

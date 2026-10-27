@@ -8,6 +8,7 @@ import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
+import { getForegroundApp } from "../system/foreground";
 
 /**
  * Owns one dictation at a time: hotkey → overlay + mic → engine session →
@@ -54,6 +55,24 @@ export class DictationController {
     else await this.start();
   }
 
+  /** Hard cap on one dictation: 0 disables. Prevents a stuck hotkey from
+   *  recording for hours (the reference app ships the same guard). */
+  private recordingCap: NodeJS.Timeout | null = null;
+  private armRecordingCap(maxMs: number): void {
+    if (this.recordingCap) {
+      clearTimeout(this.recordingCap);
+      this.recordingCap = null;
+    }
+    if (maxMs > 0) {
+      this.recordingCap = setTimeout(() => {
+        if (this.session) {
+          log(`dictation: hit the ${Math.round(maxMs / 60000)}-minute cap — finishing`);
+          void this.finish();
+        }
+      }, maxMs);
+    }
+  }
+
   async start(opts: { recorder?: boolean } = {}): Promise<void> {
     if (this.session) return;
     try {
@@ -63,14 +82,21 @@ export class DictationController {
       this.chunks = [];
       this.audioPath = this.recording ? this.recordingsTarget(cfg?.general?.recordingsDir) : null;
 
+      // Attribute the dictation to the app that will receive it (per-app stats,
+      // history filters) — the reference app stores this too.
+      const fg = await getForegroundApp().catch(() => null);
       const session = await this.deps.engine.startSession(
         (ev) => this.broadcast(ev),
-        this.audioPath ? { audioPath: this.audioPath } : undefined,
+        {
+          ...(fg ? { app: fg.app } : {}),
+          ...(this.audioPath ? { audioPath: this.audioPath } : {}),
+        },
       );
       this.session = session;
       this.finishing = false;
       this.deps.hotkeys.bindEscape();
       this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor");
+      this.armRecordingCap(cfg?.audio?.maxRecordingLengthMs ?? 0);
       log(
         `dictation: started${meeting ? " (meeting mode" + (opts.recorder ? " + recorder" : "") + ")" : ""}${
           this.audioPath ? " (saving audio)" : ""
@@ -116,6 +142,10 @@ export class DictationController {
       this.recording = false;
       this.deps.hotkeys.unbindEscape();
       this.finishing = false;
+      if (this.recordingCap) {
+        clearTimeout(this.recordingCap);
+        this.recordingCap = null;
+      }
       this.notify();
     }
   }
