@@ -131,31 +131,40 @@ export function Overlay() {
 
   if (event.state === "idle" || event.state === "cancelled") return null;
 
+  // Reference design language, extracted from the shipped app: a 500×420 dark
+  // panel (vast-950 #1a1a1a) with warm-neutral text (sand-50 #fcfcfb), white
+  // accent, and the live transcript as the dominant element.
   return (
     <div
-      className={`mx-auto mt-2 w-[500px] select-none bg-gradient-to-r from-accent/40 via-line to-accent/25 p-[1px] shadow-[0_10px_44px_rgba(34,211,238,0.14)] ${
-        shape === "blob" ? "rounded-[38px_24px_42px_20px]" : shape === "rect" ? "rounded-md" : "rounded-2xl"
+      className={`flex h-full w-full select-none p-3 ${
+        shape === "blob" ? "rounded-[38px_24px_42px_20px]" : shape === "rect" ? "rounded-lg" : "rounded-[26px]"
       }`}
     >
       <div
-        className={`relative overflow-hidden border border-line/70 bg-surface/92 p-4 backdrop-blur-xl ${
-        shape === "blob" ? "rounded-[36px_22px_40px_18px]" : shape === "rect" ? "rounded-[5px]" : "rounded-[calc(1rem-1px)]"
-      }`}
-        style={backdrop ? { backgroundImage: `url(${backdrop})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+        className={`relative flex w-full flex-col overflow-hidden border border-[#46454499] bg-[#1a1a1a] shadow-[0_24px_64px_rgba(0,0,0,0.55)] backdrop-blur-2xl ${
+          shape === "blob" ? "rounded-[34px_20px_38px_18px]" : shape === "rect" ? "rounded-[6px]" : "rounded-[23px]"
+        }`}
+        style={
+          backdrop
+            ? { backgroundImage: `url(${backdrop})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : undefined
+        }
       >
-        {backdrop && <div className="absolute inset-0 bg-bg/70" aria-hidden="true" />}
-        <div className="relative">
-        <div className="flex items-center gap-3">
+        {backdrop && <div className="absolute inset-0 bg-[#1a1a1a]/75" aria-hidden="true" />}
+
+        {/* header: status + recorder chip + cancel */}
+        <div className="relative flex items-center gap-3 px-5 pt-4">
           <StatusDot state={event.state} />
-          <p className="text-xs font-medium uppercase tracking-widest text-ink-dim">{label(event.state)}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#fcfcfb]">
+            {label(event.state)}
+          </p>
           {recording && (
             <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> REC
             </span>
           )}
-          <p className="text-[11px] text-ink-dim/70">press {hotkeyHint} again to finish</p>
           {typing && (
-            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-ink-dim">
+            <span className="rounded-full bg-[#fcfcfb10] px-2 py-0.5 text-[10px] font-medium text-[#c5c0b3]">
               ⌨ typing — dictation held
             </span>
           )}
@@ -164,49 +173,58 @@ export function Overlay() {
             aria-label="Cancel dictation"
             data-interactive="true"
             onClick={() => void window.whisperflowExtras.dictation.cancel()}
-            className="ml-auto rounded-md px-2 py-0.5 text-xs text-ink-dim transition-colors hover:bg-surface-2 hover:text-ink"
+            className="ml-auto rounded-md px-2 py-0.5 text-xs text-[#a39d8e] transition-colors hover:bg-[#fcfcfb12] hover:text-[#fcfcfb]"
           >
             Esc ✕
           </button>
         </div>
 
-        {event.state === "listening" && (
-          <>
-            <div className="mt-3 flex h-12 items-center justify-center gap-[5px]" aria-hidden="true">
-              {Array.from({ length: BAR_COUNT }, (_, i) => (
-                <span
-                  key={i}
-                  ref={(el) => {
-                    barsRef.current[i] = el;
-                  }}
-                  className="h-full w-[6px] origin-center rounded-full bg-accent/90 transition-transform duration-75"
-                  style={{ transform: "scaleY(0.12)" }}
-                />
-              ))}
+        {/* transcript — the hero element, like the reference app's panel */}
+        <div className="relative flex min-h-0 flex-1 flex-col justify-center px-6">
+          {event.state === "listening" && (
+            <>
+              <p className="line-clamp-4 min-h-[6.5rem] text-pretty text-[19px] leading-relaxed font-medium text-[#fcfcfb]">
+                {event.partial || <span className="text-[#a39d8e]">Listening…</span>}
+              </p>
+              <div className="mt-4 flex h-10 items-center gap-[5px]" aria-hidden="true">
+                {Array.from({ length: BAR_COUNT }, (_, i) => (
+                  <span
+                    key={i}
+                    ref={(el) => {
+                      barsRef.current[i] = el;
+                    }}
+                    className="h-full w-[5px] origin-center rounded-full bg-[#fcfcfb] opacity-90 transition-transform duration-75"
+                    style={{ transform: "scaleY(0.12)" }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {(event.state === "transcribing" || event.state === "polishing" || event.state === "injecting") && (
+            <div className="flex items-center gap-3">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#464544] border-t-[#fcfcfb]" />
+              <p className="text-sm text-[#c5c0b3]">{label(event.state)}…</p>
+              {event.partial && (
+                <p className="ml-auto max-w-[55%] truncate font-mono text-xs text-[#a39d8e]">
+                  {event.partial}
+                </p>
+              )}
             </div>
-            <p className="mt-2 line-clamp-2 min-h-[2.5rem] font-mono text-sm text-ink-dim">
-              {event.partial || "Listening…"}
-            </p>
-          </>
-        )}
+          )}
 
-        {(event.state === "transcribing" || event.state === "polishing" || event.state === "injecting") && (
-          <div className="mt-4 flex items-center gap-3">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-accent" />
-            <p className="text-sm text-ink-dim">{label(event.state)}…</p>
-            {event.partial && (
-              <p className="ml-auto max-w-[55%] truncate font-mono text-xs text-ink-dim">{event.partial}</p>
-            )}
-          </div>
-        )}
+          {event.state === "done" && (
+            <p className="text-[19px] font-medium text-[#fcfcfb]">✓ Text inserted</p>
+          )}
 
-        {event.state === "done" && (
-          <p className="mt-4 text-sm text-accent">✓ Text inserted</p>
-        )}
+          {event.state === "error" && (
+            <p className="line-clamp-3 text-sm text-red-400">{event.error ?? "Something went wrong"}</p>
+          )}
+        </div>
 
-        {event.state === "error" && (
-          <p className="mt-4 line-clamp-3 text-sm text-red-400">{event.error ?? "Something went wrong"}</p>
-        )}
+        {/* footer hint */}
+        <div className="relative px-5 pb-4">
+          <p className="text-[11px] text-[#736e62]">press {hotkeyHint} again to finish</p>
         </div>
       </div>
     </div>
@@ -237,12 +255,12 @@ function StatusDot({ state }: { state: DictationStateEvent["state"] }) {
     return <span className="h-2.5 w-2.5 rounded-full bg-red-400" />;
   }
   if (state === "done") {
-    return <span className="h-2.5 w-2.5 rounded-full bg-accent" />;
+    return <span className="h-2.5 w-2.5 rounded-full bg-[#fcfcfb]" />;
   }
   return (
     <span className="relative flex h-2.5 w-2.5">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#fcfcfb] opacity-60" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#fcfcfb]" />
     </span>
   );
 }

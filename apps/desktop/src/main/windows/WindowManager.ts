@@ -96,7 +96,7 @@ export class WindowManager {
 
     const bounds = computeOverlayBounds(
       position,
-      { width: size[0] ?? 520, height: size[1] ?? 148 },
+      { width: size[0] ?? 500, height: size[1] ?? 420 },
       display.workArea,
       cursor,
     );
@@ -196,8 +196,14 @@ export class WindowManager {
   private ensureOverlay(): BrowserWindow {
     if (this.overlayWindow?.isDestroyed() === false) return this.overlayWindow;
     const win = new BrowserWindow({
-      width: 520,
-      height: 148,
+      // Reference geometry: 500×420 default panel, 300×200 minimum, expandable
+      // to 920×660 (the overlay grows with long transcripts).
+      width: 500,
+      height: 420,
+      minWidth: 300,
+      minHeight: 200,
+      maxWidth: 920,
+      maxHeight: 660,
       show: false,
       frame: false,
       transparent: true,
