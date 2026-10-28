@@ -2,6 +2,40 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.5] — 2026-10-28
+
+### Added — the post-paste learning loop
+- **The app now learns from your edits.** The reference app's biggest documented gap, ported:
+  after each paste, the target text box is watched (their 60 s window), the edited text is
+  aligned against what you dictated, and corrected words are added to your dictionary
+  automatically — their `shouldAutoLearnWords`, default true (`dictionaryAutoLearn` in Settings
+  → Advanced). Substitution pairs keep their `observedSource` so every auto-added entry says
+  what the STT originally heard.
+- **Focused-element reads via UI Automation** (`system/uia.ts`) — their `GetTextBoxInfo`
+  contract (contents / isEditable) plus the browser document URL, which feeds app
+  classification with the *real* URL. Verified live against a Chrome document and Notepad.
+  The probe is a resident PowerShell child because `Add-Type UIAutomationClient` costs
+  seconds cold.
+- `editDistanceToDictated` (their column): normalized Levenshtein between the dictated text
+  and the anchored region; dictionary-phrase frequency counting from the edited text; the
+  email-signature eligibility check that skips a box which already has a signature.
+
+### Changed — settings fidelity from the reference app
+- Transcription format is now their 4-value enum ("Apply AI formatting" / "No AI formatting" /
+  "Casual messaging" / "All lowercase"), and cleanup is their 5-level `none/light/medium/high/full`
+  with graduated prompt rules. Legacy `off`/`strong` values migrate transparently.
+- Dictation capture now matches their exact constraints: 16 kHz mono with AEC/NS/AGC all off.
+- The dictation cap defaults to their 20 minutes, warning at 19.
+
+## [0.1.4] — 2026-10-28
+
+### Added — app-type classification (the reference app's taxonomy)
+- The foreground app is classified at dictation start using their `AppType` enum and verbatim
+  `WINDOWS_*_PROCESS_NAME` lists. Email apps get your signature, chat apps drop the terminal
+  period, AI apps skip auto-cleanup, and meeting-platform detection covers native clients and
+  browser titles. The 8-part reverse-engineering corpus is published under
+  `docs/research/wisprflow-re/`.
+
 ## [0.1.3] — 2026-10-27
 
 ### Fixed — the shipped overlay had no styling at all

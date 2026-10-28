@@ -58,12 +58,21 @@ Implemented from this corpus (see CHANGELOG):
 - app-type classification with their verbatim process-name lists, feeding
   per-app formatting (email signature, messaging trailing-period, AI-app
   cleanup skip) — [01] + [07]
+- app classification now uses the **real browser URL** via a resident UIA
+  probe (`system/uia.ts`, their `GetActiveAppInfo`/`GetTextBoxInfo` contracts) — [01]
 - meeting-platform detection from process names and window titles — [01]/[04]
 - dictation capture switched to 16 kHz mono with AEC/NS/AGC off — [08]
-- max-recording-length cap with auto-finish (their `maxRecordingLengthMs`) — [08]
-- daily backups, per-dictation app attribution, paste failure surfacing — [03]/[05]/[06]
+- transcription **format enum** + **5-level cleanup** + 20-minute cap with a
+  one-minute warning — [07]/[08]
+- the **post-paste learning loop**: observe the box for 60 s,
+  `editDistanceToDictated` (normalized Levenshtein), anchored-region
+  extraction, dictionary **auto-learn** (`shouldAutoLearnWords`), phrase
+  frequency counts, email-signature eligibility — [06]
+- daily backups, per-dictation app attribution, paste failure surfacing —
+  [03]/[05]/[06]
 
-Backlog (in priority order): the 18-state Flow Bar state machine and dock
-behavior [02]; post-paste edit observation + dictionary auto-learn [06];
-transcription format enum + 5-level cleanup + language selected/effective model
-[07]; native UIA textbox reads and verified paste [06].
+Remaining backlog (in priority order): the 18-state Flow Bar state machine and
+dock behavior [02]; language selected/effective/used model [07]; moving the
+paste itself from SendKeys+clipboard onto a UIA insertion path — verification
+is already ported (`matchesBeforePasteAndAfter` in `editDistance.ts`), but the
+write needs a native helper analogous to their `roots.exe`.
