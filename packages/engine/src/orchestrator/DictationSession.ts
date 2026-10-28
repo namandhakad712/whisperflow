@@ -54,6 +54,9 @@ export interface DictationSessionDeps {
   appType?: "email" | "ai" | "terminal" | "other";
   /** Target app is a chat/messaging client. */
   isMessaging?: boolean;
+  /** Their email-signature eligibility: a signature is already in the target
+   *  box, so don't append another one. */
+  skipSignature?: boolean;
   /** Absolute path of the saved recording, when audio saving was on for this turn. */
   audioPath?: string;
   /**
@@ -152,7 +155,9 @@ export class DictationSession {
         appType: this.deps.appType,
         isMessaging: this.deps.isMessaging,
         emailSignature:
-          this.deps.appType === "email" && this.deps.config.polish.emailSignature
+          this.deps.appType === "email" &&
+          this.deps.config.polish.emailSignature &&
+          !this.deps.skipSignature
             ? this.deps.config.polish.emailSignatureText
             : undefined,
         language: this.deps.config.stt.language,

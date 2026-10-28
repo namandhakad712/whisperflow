@@ -245,6 +245,12 @@ export const DictionaryEntrySchema = z.object({
   term: z.string().min(1),
   pronunciation: z.string().optional(),
   hint: z.string().optional(),
+  /**
+   * What the STT originally said before the user corrected it to `term` — set
+   * by auto-learn (their `observedSource`, saved with auto-added words so the
+   * source of an entry is never a mystery).
+   */
+  observedSource: z.string().optional(),
 });
 
 export const VoiceCommandSchema = z.object({
@@ -298,6 +304,12 @@ export const WhisperFlowConfigSchema = z.object({
   stt: SttConfigSchema.prefault({}),
   polish: PolishConfigSchema.prefault({}),
   dictionary: z.array(DictionaryEntrySchema).default([]),
+  /**
+   * "Adds corrected words automatically" — their `shouldAutoLearnWords`,
+   * default true. After each dictation the app watches the target box; when
+   * the user re-types a word, the correction becomes a dictionary entry.
+   */
+  dictionaryAutoLearn: z.boolean().default(true),
   commands: z.array(VoiceCommandSchema).default([]),
   privacy: PrivacyConfigSchema.prefault({}),
   general: GeneralConfigSchema.prefault({}),

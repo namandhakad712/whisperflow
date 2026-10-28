@@ -43,6 +43,8 @@ export interface StartDictationOptions {
   appType?: "email" | "ai" | "terminal" | "other";
   /** Target app is a chat/messaging client (trailing-period stripping). */
   isMessaging?: boolean;
+  /** A signature is already present in the target box — don't append another. */
+  skipSignature?: boolean;
   /** Absolute path of the recording file when the host is saving audio. */
   audioPath?: string;
 }
@@ -79,6 +81,19 @@ export interface WhisperFlowEngine {
 export { DictationSession, CATALOG };
 export type { DictationResult } from "./orchestrator/DictationSession.js";
 export type { HistoryStore } from "./history/historyStore.js";
+// Text post-processing + learning loop (used by the desktop host).
+export {
+  bestMatchingRegion,
+  levenshtein,
+  matchesBeforePasteAndAfter,
+  normalizedEditDistance,
+} from "./text/editDistance.js";
+export {
+  countDictionaryPhrases,
+  learnFromEdits,
+  STOPWORDS,
+} from "./text/learnFromEdits.js";
+export type { LearnedCandidate } from "./text/learnFromEdits.js";
 
 export async function createEngine(opts: { dirs: EngineDirs; configPath?: string }): Promise<WhisperFlowEngine> {
   const logger = (msg: string) => console.debug(`[engine] ${msg}`);
@@ -191,6 +206,7 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         app: sessionOpts.app,
         appType: sessionOpts.appType,
         isMessaging: sessionOpts.isMessaging,
+        skipSignature: sessionOpts.skipSignature,
         audioPath: sessionOpts.audioPath,
         appendMode: cfg.general.meetingMode,
         onEvent: sessionOpts.onEvent,

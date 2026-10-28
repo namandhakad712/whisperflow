@@ -32,6 +32,7 @@ export interface EnginePort {
       app?: string;
       appType?: "email" | "ai" | "terminal" | "other";
       isMessaging?: boolean;
+      skipSignature?: boolean;
       audioPath?: string;
     },
   ): Promise<EngineSession>;
@@ -82,6 +83,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
         app: opts?.app,
         appType: opts?.appType,
         isMessaging: opts?.isMessaging,
+        skipSignature: opts?.skipSignature,
         audioPath: opts?.audioPath,
       });
       return {

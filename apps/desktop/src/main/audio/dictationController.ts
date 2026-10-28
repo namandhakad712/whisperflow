@@ -10,6 +10,8 @@ import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
 import { getForegroundApp } from "../system/foreground";
 import { getAppType, isMessagingApp } from "../system/appType";
+import { getFocusedElementInfo } from "../system/uia";
+import { applyLearnedWords, observeEdits } from "../learning/editObserver";
 
 /**
  * Owns one dictation at a time: hotkey → overlay + mic → engine session →
@@ -25,6 +27,10 @@ export class DictationController {
   private session: EngineSession | null = null;
   private finishing = false;
   private recording = false;
+  /** Cancels the in-flight post-paste edit observer, if any. */
+  private disposer: (() => void) | null = null;
+  /** Signature already present in the target box — their eligibility rule. */
+  private skipSignature = false;
   /** PCM chunks accumulated while saving audio (engine session is 16 kHz mono). */
   private chunks: Float32Array[] = [];
   private audioPath: string | null = null;
@@ -86,6 +92,44 @@ export class DictationController {
     }
   }
 
+  /** After the paste, watch the target box for edits (their UpdateEditedText
+   *  pipeline): if the user re-typed something, learn corrected words into
+   *  the dictionary. Safe to run unattended — it never blocks or throws. */
+  private observeEdits(dictated: string): void {
+    try {
+      void (async () => {
+        const cfg = await this.deps.engine.getConfig().catch(() => null);
+        const dictionary = cfg?.dictionary ?? [];
+        if (cfg?.dictionaryAutoLearn === false) return;
+        this.disposer?.();
+        this.disposer = observeEdits(
+          {
+            dictated,
+            dictionary: dictionary.map((d) => d.term),
+            autoLearn: cfg?.dictionaryAutoLearn ?? true,
+            log,
+            readContents: async () => {
+              const el = await getFocusedElementInfo().catch(() => null);
+              return el?.isEditable ? el.value : null;
+            },
+          },
+          (res) => {
+            this.disposer = null;
+            if (res.endReason === "edited" && res.candidates.length > 0) {
+              const { added, next } = applyLearnedWords(dictionary, res.candidates);
+              if (added.length > 0) {
+                void this.deps.engine.setConfig({ dictionary: next });
+                log(`dictation: learned ${added.length} word(s) from your edit — ${added.join(", ")}`);
+              }
+            }
+          },
+        );
+      })();
+    } catch (err) {
+      log("dictation: edit observation failed:", err);
+    }
+  }
+
   async start(opts: { recorder?: boolean } = {}): Promise<void> {
     if (this.session) return;
     try {
@@ -100,13 +144,18 @@ export class DictationController {
       // per-app formatting: signature in email apps, no trailing period in
       // chat, cleanup skipped in AI apps.
       const fg = await getForegroundApp().catch(() => null);
-      const appType = fg ? getAppType(fg.app, fg.title) : undefined;
+      // UIA gives us the real browser URL (their GetActiveAppInfo url field) —
+      // a much stronger classification signal than the window title.
+      const uia = await getFocusedElementInfo().catch(() => null);
+      const url = uia?.isUrl ? uia.value : (fg?.title ?? "");
+      const appType = fg ? getAppType(fg.app, url) : undefined;
       const session = await this.deps.engine.startSession(
         (ev) => this.broadcast(ev),
         {
           ...(fg ? { app: fg.app } : {}),
           ...(appType ? { appType } : {}),
-          ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, fg.title) } : {}),
+          ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, url) } : {}),
+          ...(appType === "email" ? { skipSignature: this.skipSignature } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
         },
       );
@@ -115,10 +164,13 @@ export class DictationController {
       this.deps.hotkeys.bindEscape();
       this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor");
       this.armRecordingCap(cfg?.audio?.maxRecordingLengthMs ?? 0);
+      // Their email-signature eligibility: never add a signature when one is
+      // already in the box we're about to type into.
+      this.skipSignature = Boolean(appType === "email" && uia?.isEditable && /\n\s*—/.test(uia.value));
       log(
         `dictation: started${meeting ? " (meeting mode" + (opts.recorder ? " + recorder" : "") + ")" : ""}${
           this.audioPath ? " (saving audio)" : ""
-        }${fg ? ` (app=${fg.app} type=${appType ?? "unknown"})` : ""}`,
+        }${fg ? ` (app=${fg.app} type=${appType ?? "unknown"}${uia?.isUrl ? ` url=${uia.value}` : ""})` : ""}`,
       );
       this.notify();
     } catch (err) {
@@ -146,6 +198,7 @@ export class DictationController {
         this.broadcast({ state: "injecting" });
         const ok = await injectText(result.final);
         if (!ok) log("dictation: injection returned false");
+        else this.observeEdits(result.final);
       }
       this.broadcast({ state: "done" });
       log("dictation: done", result ? `(${result.final.length} chars${result.action ? `, ${result.action}` : ""})` : "(empty)");
