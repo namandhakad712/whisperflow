@@ -45,6 +45,8 @@ export interface StartDictationOptions {
   isMessaging?: boolean;
   /** A signature is already present in the target box — don't append another. */
   skipSignature?: boolean;
+  /** Their transcriptCommand: how the dictation was triggered. */
+  triggerSource?: "ptt" | "popo" | "command" | "lens";
   /** Absolute path of the recording file when the host is saving audio. */
   audioPath?: string;
 }
@@ -73,6 +75,10 @@ export interface WhisperFlowEngine {
   };
   stt: {
     /** Validates the configured cloud STT key against its endpoint (no audio sent). */
+    testCloud(): Promise<{ ok: boolean; message: string }>;
+  };
+  polish: {
+    /** Sends a one-token probe to the configured cloud polish endpoint. */
     testCloud(): Promise<{ ok: boolean; message: string }>;
   };
   dispose(): Promise<void>;
@@ -207,6 +213,7 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         appType: sessionOpts.appType,
         isMessaging: sessionOpts.isMessaging,
         skipSignature: sessionOpts.skipSignature,
+        triggerSource: sessionOpts.triggerSource,
         audioPath: sessionOpts.audioPath,
         appendMode: cfg.general.meetingMode,
         onEvent: sessionOpts.onEvent,
@@ -253,6 +260,45 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     stt: {
       async testCloud() {
         return cloudStt.testConnection();
+      },
+    },
+    polish: {
+      /** One-token probe: validates baseUrl/key/model without dictation. */
+      async testCloud() {
+        const cfg = config.get();
+        if (cfg.privacy.localOnly) {
+          return { ok: false, message: "Local-only mode is on — remote providers are blocked (Privacy tab)." };
+        }
+        const { baseUrl, apiKey, model } = cfg.polish.remote;
+        if (!baseUrl) return { ok: false, message: "No endpoint configured — pick a provider in Settings." };
+        if (!model) return { ok: false, message: "No model configured — pick a model in Settings." };
+        try {
+          const res = await fetch(baseUrl.replace(/\/+$/, "") + "/chat/completions", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+            },
+            body: JSON.stringify({
+              model,
+              temperature: 0,
+              max_tokens: 8,
+              stream: false,
+              messages: [{ role: "user", content: "Reply with the single word: OK" }],
+            }),
+          });
+          if (!res.ok) {
+            const body = (await res.text()).slice(0, 160);
+            return { ok: false, message: `HTTP ${res.status}: ${body}` };
+          }
+          const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+          const text = json.choices?.[0]?.message?.content?.trim();
+          return text
+            ? { ok: true, message: `${model} answered (${text.slice(0, 40)})` }
+            : { ok: true, message: `${model} responded with an empty completion (endpoint works)` };
+        } catch (err) {
+          return { ok: false, message: String(err).slice(0, 200) };
+        }
       },
     },
     async dispose() {

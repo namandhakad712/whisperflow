@@ -2,6 +2,20 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.8] — 2026-10-28
+
+### Changed — cloud polish gets the cloud-STT treatment
+- **Cloud polish now has the same setup experience as cloud STT:** pick a **provider**
+  (Groq / OpenRouter / OpenAI / Mistral / Ollama / custom) → pick one of that provider's
+  **models from a dropdown** → base URL (blank = default) → API key → **Test connection**
+  with a one-token probe. Former free-text-only setup is unchanged for existing configs
+  (`provider` defaults to `custom` so saved baseUrl/model pairs keep working). Groq and
+  OpenRouter free endpoints are still the inline recommendation.
+- Polish probe surfaces real endpoint errors (HTTP status + body) and respects the local-only
+  privacy lock.
+- History records `triggerSource` (their `transcriptCommand`: ptt / popo), and cleanup **none**
+  now forces "No AI formatting" exactly like their effective-format rule.
+
 ## [0.1.7] — 2026-10-28
 
 ### Added — their per-action shortcut map

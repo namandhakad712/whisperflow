@@ -161,6 +161,8 @@ export class DictationController {
           ...(appType ? { appType } : {}),
           ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, url) } : {}),
           ...(appType === "email" ? { skipSignature: this.skipSignature } : {}),
+          // Their transcriptCommand: hold-to-talk is ptt, the one-press toggle is popo.
+          ...(fg ? { triggerSource: cfg?.hotkey?.holdMode ? "ptt" : "popo" } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
         },
       );

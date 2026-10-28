@@ -23,6 +23,13 @@ export interface TranscriptItem {
   polishModel?: string;
   /** Absolute path of the saved WAV when audio saving is on. */
   audioPath?: string;
+  /**
+   * Their `History.transcriptCommand` — how the dictation was triggered:
+   * `ptt` (hold/toggle hotkey), `popo` (hands-free toggle), `command`
+   * (voice command), `lens` (command-mode). Their PTT/POPO distinction maps
+   * to our hold vs toggle modes.
+   */
+  triggerSource?: "ptt" | "popo" | "command" | "lens";
 }
 
 /** A personal-dictionary term used for fuzzy post-STT correction. */

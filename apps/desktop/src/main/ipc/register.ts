@@ -146,6 +146,7 @@ export function registerIpc(deps: {
 
   // ---- cloud STT (BYOK) -----------------------------------------------------------
   ipcMain.handle(IPC.SttTest, () => engine.testCloudStt());
+  ipcMain.handle("app/testCloudPolish", () => engine.testCloudPolish());
 
   // ---- app lifecycle ----------------------------------------------------------------
   ipcMain.handle(IPC.AppVersion, () => app.getVersion());

@@ -33,6 +33,7 @@ export interface EnginePort {
       appType?: "email" | "ai" | "terminal" | "other";
       isMessaging?: boolean;
       skipSignature?: boolean;
+      triggerSource?: "ptt" | "popo" | "command" | "lens";
       audioPath?: string;
     },
   ): Promise<EngineSession>;
@@ -50,6 +51,8 @@ export interface EnginePort {
   recommendModels(): Promise<TierRecommendation>;
   deleteUnusedModels(): Promise<{ deleted: string[] }>;
   testCloudStt(): Promise<{ ok: boolean; message: string }>;
+  /** One-token probe of the configured cloud polish endpoint. */
+  testCloudPolish(): Promise<{ ok: boolean; message: string }>;
   dispose(): Promise<void>;
 }
 
@@ -84,6 +87,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
         appType: opts?.appType,
         isMessaging: opts?.isMessaging,
         skipSignature: opts?.skipSignature,
+        triggerSource: opts?.triggerSource,
         audioPath: opts?.audioPath,
       });
       return {
@@ -106,6 +110,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
     recommendModels: () => engine.models.recommend(),
     deleteUnusedModels: () => engine.models.deleteUnused(),
     testCloudStt: () => engine.stt.testCloud(),
+    testCloudPolish: () => engine.polish.testCloud(),
     dispose: () => engine.dispose(),
   };
 }

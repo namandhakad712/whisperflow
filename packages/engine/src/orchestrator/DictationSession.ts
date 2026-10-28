@@ -55,6 +55,8 @@ export interface DictationSessionDeps {
   appType?: "email" | "ai" | "terminal" | "other";
   /** Target app is a chat/messaging client. */
   isMessaging?: boolean;
+  /** Their transcriptCommand: how this dictation was triggered. */
+  triggerSource?: "ptt" | "popo" | "command" | "lens";
   /** Their email-signature eligibility: a signature is already in the target
    *  box, so don't append another one. */
   skipSignature?: boolean;
@@ -137,8 +139,10 @@ export class DictationSession {
 
     // Polish (skipped when a deterministic command already decided the text,
     // when the user turned AI formatting off, or when the transcription format
-    // is "raw" — their "No AI formatting").
-    const rawFormat = this.deps.config.polish.format === "raw";
+    // is "raw" — their "No AI formatting". Their effective-format rule:
+    // `autoCleanup.level === "none"` also forces Raw.
+    const rawFormat =
+      this.deps.config.polish.format === "raw" || this.deps.config.polish.cleanup === "none";
     const polish =
       !rawFormat &&
       this.deps.polish &&
@@ -194,6 +198,7 @@ export class DictationSession {
     if (!this.deps.config.general.historyEnabled || !this.deps.history) return undefined;
     return this.deps.history.add({
       app: this.deps.app,
+      ...(this.deps.triggerSource ? { triggerSource: this.deps.triggerSource } : {}),
       rawText,
       finalText,
       durationMs: Date.now() - this.startedAt,

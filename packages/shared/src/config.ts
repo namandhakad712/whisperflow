@@ -202,7 +202,10 @@ export const ModelsConfigSchema = z.object({
 export type ModelsConfig = z.infer<typeof ModelsConfigSchema>;
 
 /** BYO OpenAI-compatible endpoint for polish. Blocked when `privacy.localOnly`. */
-export const RemotePolishConfigSchema = z.object({  /** Base URL, e.g. `"https://api.openai.com/v1"` — no trailing `/chat/completions`. */
+export const RemotePolishConfigSchema = z.object({
+  /** Provider preset — `custom` keeps any baseUrl/model pair from older configs. */
+  provider: z.enum(["groq", "openrouter", "openai", "mistral", "ollama", "custom"]).default("custom"),
+  /** Base URL, e.g. `"https://api.groq.com/openai/v1"` — no trailing `/chat/completions`. */
   baseUrl: z.string().default(""),
   /** API key. Stored locally in config.json only. */
   apiKey: z.string().default(""),
@@ -234,6 +237,73 @@ export const POLISH_PRESETS = {
 
 export type PolishPresetId = keyof typeof POLISH_PRESETS;
 
+/**
+ * Cloud polish presets — the same shape as CLOUD_STT_PRESETS so the two cloud
+ * surfaces look and behave identically: pick a provider, pick a model from
+ * that provider's list, optionally override the base URL, paste a key, test.
+ * Model ids verified against each provider's docs on the `verified` date.
+ */
+export const POLISH_CLOUD_PRESETS = {
+  groq: {
+    label: "Groq — free tier",
+    baseUrl: "https://api.groq.com/openai/v1",
+    defaultModel: "openai/gpt-oss-120b",
+    models: ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+    docs: "https://console.groq.com/docs/models",
+    freeNote:
+      "Free tier: generous daily limits, very low latency — polish is a small job, so the free tier comfortably covers heavy dictation. Groq's data page says inputs are not retained by default.",
+    verified: "2026-10-28",
+  },
+  openrouter: {
+    label: "OpenRouter — free endpoints",
+    baseUrl: "https://openrouter.ai/api/v1",
+    defaultModel: "openai/gpt-oss-120b:free",
+    models: ["openai/gpt-oss-120b:free", "meta-llama/llama-3.3-70b-instruct:free", "poolside/laguna-s-2.1:free"],
+    docs: "https://openrouter.ai/models",
+    freeNote:
+      "Several free text models. The `:free` variants rate-limit; a paid key falls back to the same ids without the suffix. Free-endpoint policies are per-upstream-provider.",
+    verified: "2026-10-28",
+  },
+  openai: {
+    label: "OpenAI",
+    baseUrl: "https://api.openai.com/v1",
+    defaultModel: "gpt-4.1-mini",
+    models: ["gpt-4.1-mini", "gpt-4o-mini", "gpt-4o"],
+    docs: "https://platform.openai.com/docs/models",
+    freeNote: "No free tier — pay per token. Polish tokens are cheap (short prompts, short outputs).",
+    verified: "2026-10-28",
+  },
+  mistral: {
+    label: "Mistral",
+    baseUrl: "https://api.mistral.ai/v1",
+    defaultModel: "mistral-small-latest",
+    models: ["mistral-small-latest", "open-mistral-nemo", "magistral-medium-latest"],
+    docs: "https://docs.mistral.ai/getting-started/models/models_overview/",
+    freeNote: "Free-mode quota shows in your Mistral console; `mistral-small-latest` is the thriftiest pick.",
+    verified: "2026-10-28",
+  },
+  ollama: {
+    label: "Ollama — self-hosted",
+    baseUrl: "http://localhost:11434/v1",
+    defaultModel: "qwen2.5:7b",
+    models: ["qwen2.5:7b", "qwen2.5:3b", "llama3.2:3b"],
+    docs: "https://ollama.com/library",
+    freeNote: "Runs on your own machine — nothing leaves it. `ollama pull qwen2.5:7b` first.",
+    verified: "2026-10-28",
+  },
+  custom: {
+    label: "Custom — OpenAI-compatible endpoint",
+    baseUrl: "",
+    defaultModel: "",
+    models: [],
+    docs: "",
+    freeNote: "Anything that speaks POST /chat/completions and returns OpenAI chat JSON.",
+    verified: "2026-10-28",
+  },
+} as const;
+
+export type PolishCloudProviderId = keyof typeof POLISH_CLOUD_PRESETS;
+
 export const PolishConfigSchema = z.object({
   /** `"none"` disables polish and uses the offline cleanup fallback. */
   provider: z
@@ -255,12 +325,6 @@ export const PolishConfigSchema = z.object({
    * "All lowercase".
    */
   format: z.enum(["formatted", "raw", "casual", "lowercase"]).default("formatted"),
-  /**
-   * Filler-word cleanup strength — their autoCleanup.level enum verbatim:
-   * none ("Transcribes exactly what you said, including mistakes"), light
-   * ("Cleans up filler words and grammar"), medium ("Edits for clarity and
-   * conciseness"), high, full. Their UI exposes None/Light/Medium.
-   */
   /**
    * Filler-word cleanup strength — their autoCleanup.level enum verbatim:
    * none ("Transcribes exactly what you said, including mistakes"), light

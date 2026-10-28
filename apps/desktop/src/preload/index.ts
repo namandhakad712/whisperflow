@@ -100,6 +100,8 @@ const extras = {
     onNavigate: (cb: (route: string) => void) => subscribe<string>("app/navigate", cb),
     keyboardHookStatus: () =>
       ipcRenderer.invoke("app/keyboardHookStatus") as Promise<{ available: boolean; reason?: string }>,
+    testCloudPolish: () =>
+      ipcRenderer.invoke("app/testCloudPolish") as Promise<{ ok: boolean; message: string }>,
   },
   settings: {
     /** Fired after every settings/set — lets live windows re-read config. */
