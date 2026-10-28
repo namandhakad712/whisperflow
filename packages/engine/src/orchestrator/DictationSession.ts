@@ -47,6 +47,13 @@ export interface DictationSessionDeps {
   history: HistoryStore | null;
   /** App the text will be typed into, when known. */
   app?: string;
+  /**
+   * Reference app's AppType classification of the target app — email apps get a
+   * signature, messaging apps drop the trailing period, AI apps skip cleanup.
+   */
+  appType?: "email" | "ai" | "terminal" | "other";
+  /** Target app is a chat/messaging client. */
+  isMessaging?: boolean;
   /** Absolute path of the saved recording, when audio saving was on for this turn. */
   audioPath?: string;
   /**
@@ -139,6 +146,12 @@ export class DictationSession {
         tone: this.deps.config.polish.tone,
         modelId: this.deps.config.polish.modelId,
         app: this.deps.app,
+        appType: this.deps.appType,
+        isMessaging: this.deps.isMessaging,
+        emailSignature:
+          this.deps.appType === "email" && this.deps.config.polish.emailSignature
+            ? this.deps.config.polish.emailSignatureText
+            : undefined,
         language: this.deps.config.stt.language,
         dictionary: this.deps.config.dictionary.map((d) => d.term),
         instructions: this.deps.config.polish.customInstructions,

@@ -203,6 +203,13 @@ export const PolishConfigSchema = z.object({
    * repetitions and false starts.
    */
   cleanup: z.enum(["off", "light", "strong"]).default("light"),
+  /**
+   * "Add a signature when dictating an email" — only appends when the target
+   * app is classified as an email client (the reference app's emailAutoSignature).
+   */
+  emailSignature: z.boolean().default(false),
+  /** Signature body appended after a blank line. */
+  emailSignatureText: z.string().default("— Sent with WhisperFlow"),
   remote: RemotePolishConfigSchema.prefault({}),
   /**
    * When the remote polish endpoint fails (quota, network, 5xx), retry on the

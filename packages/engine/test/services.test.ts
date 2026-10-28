@@ -51,6 +51,28 @@ describe("promptBuilder", () => {
     // and the default (unset) behaves as light
     expect(buildPolishMessages(base).system).toContain("Remove filler words");
   });
+
+  it("skips cleanup in AI apps (their appType rule)", () => {
+    const ai = buildPolishMessages({ ...base, appType: "ai", cleanup: "strong" });
+    expect(ai.system).toContain("Do NOT remove anything");
+    const normal = buildPolishMessages({ ...base, appType: "other", cleanup: "strong" });
+    expect(normal.system).not.toContain("Do NOT remove anything");
+  });
+
+  it("adapts to messaging and email target apps", () => {
+    const chat = buildPolishMessages({ ...base, isMessaging: true });
+    expect(chat.system).toContain("chat app");
+    const email = buildPolishMessages({
+      ...base,
+      appType: "email",
+      emailSignature: "— Sent with WhisperFlow",
+    });
+    expect(email.system).toContain("email composer");
+    expect(email.user).toContain("— Sent with WhisperFlow");
+    // without a signature configured the body is untouched
+    const plainEmail = buildPolishMessages({ ...base, appType: "email" });
+    expect(plainEmail.user).toBe(base.raw);
+  });
 });
 
 describe("model catalog", () => {

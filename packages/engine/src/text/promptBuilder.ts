@@ -19,6 +19,16 @@ export interface PolishInput {
   instructions?: string;
   /** Filler-word cleanup strength ("Auto cleanup" in settings). */
   cleanup?: "off" | "light" | "strong";
+  /**
+   * Classified target-app type (replicated from the reference app's AppType):
+   * email apps get a signature, messaging apps drop the trailing period, and
+   * AI apps skip cleanup entirely.
+   */
+  appType?: "email" | "ai" | "terminal" | "other";
+  /** True for chat/messaging apps (their messaging-process list). */
+  isMessaging?: boolean;
+  /** Signature lines to append when dictating into an email app. */
+  emailSignature?: string;
 }
 
 export interface PolishMessages {
@@ -34,7 +44,8 @@ const TONE_RULES: Record<ToneId, string> = {
 };
 
 export function buildPolishMessages(input: PolishInput): PolishMessages {
-  const cleanup = input.cleanup ?? "light";
+  // AI apps: their build skips auto-cleanup entirely when appType === "ai".
+  const cleanup = input.appType === "ai" ? "off" : input.cleanup ?? "light";
   const systemParts: string[] = [
     "You are the text-polishing stage of a voice dictation app. You receive raw speech-to-text output and return clean, ready-to-type text.",
     "Rules:",
@@ -61,9 +72,25 @@ export function buildPolishMessages(input: PolishInput): PolishMessages {
   if (input.app) {
     systemParts.push(`The text will be typed into ${input.app}; format appropriately for that context.`);
   }
+  if (input.isMessaging) {
+    // Their behavior: trailing periods read as stern in chat, so they strip them.
+    systemParts.push(
+      "This is a chat app: do not end the message with a terminal period unless the speaker clearly ended a sentence with emphasis. Prefer no trailing period on short messages.",
+    );
+  }
+  if (input.appType === "email") {
+    systemParts.push(
+      "This is an email composer: keep paragraph breaks where the speaker paused, and end with the email signature below, separated by a blank line.",
+    );
+  }
   if (input.language && input.language !== "auto") {
     systemParts.push(`Write the output in ${input.language}.`);
   }
 
-  return { system: systemParts.join("\n"), user: input.raw };
+  const user =
+    input.appType === "email" && input.emailSignature?.trim()
+      ? `${input.raw}\n\n[append this signature after the body, starting on its own line: ${input.emailSignature.trim()}]`
+      : input.raw;
+
+  return { system: systemParts.join("\n"), user };
 }

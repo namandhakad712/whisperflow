@@ -28,7 +28,12 @@ export interface EngineSession {
 export interface EnginePort {
   startSession(
     onEvent: (ev: DictationStateEvent) => void,
-    opts?: { app?: string; audioPath?: string },
+    opts?: {
+      app?: string;
+      appType?: "email" | "ai" | "terminal" | "other";
+      isMessaging?: boolean;
+      audioPath?: string;
+    },
   ): Promise<EngineSession>;
   getConfig(): Promise<WhisperFlowConfig>;
   setConfig(patch: Record<string, unknown>): Promise<WhisperFlowConfig>;
@@ -72,7 +77,13 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
 
   return {
     startSession: async (onEvent, opts) => {
-      const session = await engine.startDictation({ onEvent, app: opts?.app, audioPath: opts?.audioPath });
+      const session = await engine.startDictation({
+        onEvent,
+        app: opts?.app,
+        appType: opts?.appType,
+        isMessaging: opts?.isMessaging,
+        audioPath: opts?.audioPath,
+      });
       return {
         feed: (pcm) => session.feed(pcm),
         stop: () => session.stop(),

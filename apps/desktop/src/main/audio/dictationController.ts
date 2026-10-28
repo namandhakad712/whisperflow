@@ -9,6 +9,7 @@ import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
 import { getForegroundApp } from "../system/foreground";
+import { getAppType, isMessagingApp } from "../system/appType";
 
 /**
  * Owns one dictation at a time: hotkey → overlay + mic → engine session →
@@ -83,12 +84,17 @@ export class DictationController {
       this.audioPath = this.recording ? this.recordingsTarget(cfg?.general?.recordingsDir) : null;
 
       // Attribute the dictation to the app that will receive it (per-app stats,
-      // history filters) — the reference app stores this too.
+      // history filters) — the reference app stores this too. The type drives
+      // per-app formatting: signature in email apps, no trailing period in
+      // chat, cleanup skipped in AI apps.
       const fg = await getForegroundApp().catch(() => null);
+      const appType = fg ? getAppType(fg.app, fg.title) : undefined;
       const session = await this.deps.engine.startSession(
         (ev) => this.broadcast(ev),
         {
           ...(fg ? { app: fg.app } : {}),
+          ...(appType ? { appType } : {}),
+          ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, fg.title) } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
         },
       );
@@ -100,7 +106,7 @@ export class DictationController {
       log(
         `dictation: started${meeting ? " (meeting mode" + (opts.recorder ? " + recorder" : "") + ")" : ""}${
           this.audioPath ? " (saving audio)" : ""
-        }`,
+        }${fg ? ` (app=${fg.app} type=${appType ?? "unknown"})` : ""}`,
       );
       this.notify();
     } catch (err) {

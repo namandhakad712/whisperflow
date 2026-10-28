@@ -60,6 +60,24 @@ export function AdvancedTab() {
           />
         </Row>
         <Row
+          label="Email signature"
+          hint="Add a signature when you dictate into an email app — only fires in detected email clients, and never twice."
+        >
+          <Toggle
+            checked={config.polish.emailSignature ?? false}
+            onChange={(v) => void patch({ polish: { emailSignature: v } })}
+          />
+        </Row>
+        {config.polish.emailSignature && (
+          <Row label="Signature text" hint="Appended after a blank line at the end of the email.">
+            <TextInput
+              value={config.polish.emailSignatureText ?? "— Sent with WhisperFlow"}
+              onChange={(v) => void patch({ polish: { emailSignatureText: v } })}
+              className="w-72"
+            />
+          </Row>
+        )}
+        <Row
           label={`Tone for ${context.toLowerCase()}`}
           hint={context === "Other" ? "Custom instructions steer the polish model." : undefined}
         >

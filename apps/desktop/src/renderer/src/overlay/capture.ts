@@ -31,13 +31,18 @@ export async function startCapture(opts: {
     audio: {
       deviceId: opts.deviceId && opts.deviceId !== "default" ? { exact: opts.deviceId } : undefined,
       channelCount: 1,
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
+      sampleRate: 16000,
+      // Reference app's dictation capture: all browser DSP OFF. STT models are
+      // trained on near-raw audio; echo cancellation/noise suppression/AGC
+      // color the signal and cost accuracy. (Their meeting-mic path enables
+      // AEC, which is a different goal.)
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
     },
   });
 
-  const ctx = new AudioContext({ sampleRate: 16000 });
+  const ctx = new AudioContext({ sampleRate: 16000, latencyHint: "interactive" });
   const workletUrl = URL.createObjectURL(new Blob([WORKLET_CODE], { type: "application/javascript" }));
   await ctx.audioWorklet.addModule(workletUrl);
 

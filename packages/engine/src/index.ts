@@ -39,6 +39,10 @@ export interface StartDictationOptions {
   onEvent: (ev: DictationStateEvent) => void;
   /** Target app name, when the host knows it (used as polish context). */
   app?: string;
+  /** Reference AppType of the target app — gates signature/messaging/cleanup rules. */
+  appType?: "email" | "ai" | "terminal" | "other";
+  /** Target app is a chat/messaging client (trailing-period stripping). */
+  isMessaging?: boolean;
   /** Absolute path of the recording file when the host is saving audio. */
   audioPath?: string;
 }
@@ -185,6 +189,8 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         polish: activePolish(),
         history,
         app: sessionOpts.app,
+        appType: sessionOpts.appType,
+        isMessaging: sessionOpts.isMessaging,
         audioPath: sessionOpts.audioPath,
         appendMode: cfg.general.meetingMode,
         onEvent: sessionOpts.onEvent,
