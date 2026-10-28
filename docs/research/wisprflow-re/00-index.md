@@ -68,11 +68,18 @@ Implemented from this corpus (see CHANGELOG):
   `editDistanceToDictated` (normalized Levenshtein), anchored-region
   extraction, dictionary **auto-learn** (`shouldAutoLearnWords`), phrase
   frequency counts, email-signature eligibility — [06]
+- the **language model** (`selectedLanguages` + auto-detect toggle +
+  `effectiveLanguages` override, their exact resolution rule) — [07]
+- the **unresponsive-surface recovery ladder** (invalidate → hide+show →
+  rebuild, their backoff and dictation deferral) on the overlay and settings
+  windows — [02]
 - daily backups, per-dictation app attribution, paste failure surfacing —
   [03]/[05]/[06]
 
 Remaining backlog (in priority order): the 18-state Flow Bar state machine and
-dock behavior [02]; language selected/effective/used model [07]; moving the
-paste itself from SendKeys+clipboard onto a UIA insertion path — verification
-is already ported (`matchesBeforePasteAndAfter` in `editDistance.ts`), but the
-write needs a native helper analogous to their `roots.exe`.
+dock behavior [02] — our state coverage is equivalent but the names/transitions
+aren't ported as such; moving the paste itself from SendKeys+clipboard onto a
+UIA insertion path — verification is already ported
+(`matchesBeforePasteAndAfter` in `editDistance.ts`), but the write needs a
+native helper analogous to their `roots.exe`; the full per-action shortcut map
+(ptt/popo/lens/paste/copy/dismiss) [07].

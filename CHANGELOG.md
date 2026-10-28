@@ -2,6 +2,20 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.6] — 2026-10-28
+
+### Added — language model + surface recovery
+- **Their language model**: `stt.languages` (the set of languages you speak, their
+  `selectedLanguages`), `stt.autoDetect` ("Automatic language detection"), and
+  `resolveSttLanguage` implementing their exact rule — **one selected language with auto-detect
+  off is sent as the explicit ASR parameter (no guessing)**; several selected act as detection
+  hints; the runtime `effectiveLanguages` override wins. Settings shows their widget copy with a
+  16-language chip picker; onboarding picks one language explicitly.
+- **Unresponsive-surface recovery** — their StatusSurface ladder: on `unresponsive`, escalate
+  `invalidate` (+150 ms content-bounds pulse) → hide+show → full window rebuild, with backoff
+  `min(10 min·2^(n−1), 60 min)`, deferred (3 s poll) while a dictation is mid-flight. Attached to
+  the overlay and the settings window — directly hardening the "app is invisible" class.
+
 ## [0.1.5] — 2026-10-28
 
 ### Added — the post-paste learning loop
