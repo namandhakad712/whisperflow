@@ -131,9 +131,12 @@ export class DictationSession {
       action = applied.action;
     }
 
-    // Polish (skipped when a deterministic command already decided the text, or
-    // when the user turned AI formatting off).
+    // Polish (skipped when a deterministic command already decided the text,
+    // when the user turned AI formatting off, or when the transcription format
+    // is "raw" — their "No AI formatting").
+    const rawFormat = this.deps.config.polish.format === "raw";
     const polish =
+      !rawFormat &&
       this.deps.polish &&
       this.deps.config.polish.provider !== "none" &&
       this.deps.config.polish.enabled !== false
@@ -155,6 +158,7 @@ export class DictationSession {
         language: this.deps.config.stt.language,
         dictionary: this.deps.config.dictionary.map((d) => d.term),
         instructions: this.deps.config.polish.customInstructions,
+        format: this.deps.config.polish.format,
         cleanup: this.deps.config.polish.cleanup,
       };
       try {
@@ -165,6 +169,8 @@ export class DictationSession {
         this.deps.logger?.(`polish failed, using offline cleanup: ${String(err)}`);
         final = offlinePolish(final);
       }
+      // "All lowercase" is a mechanical final pass on whatever came out.
+      if (this.deps.config.polish.format === "lowercase") final = final.toLowerCase();
     } else if (!action && final) {
       final = offlinePolish(final);
     }

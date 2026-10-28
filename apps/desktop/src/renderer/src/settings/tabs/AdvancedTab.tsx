@@ -47,15 +47,38 @@ export function AdvancedTab() {
         </Row>
         <Row
           label="Cleanup strength"
-          hint='How much of the spoken messiness to remove. "Light" drops filler words; "Strong" also tightens repetitions and false starts.'
+          hint='Their five levels, verbatim: None transcribes exactly what you said; Light cleans up filler words and grammar; Medium edits for clarity and conciseness.'
         >
           <Select
             value={config.polish.cleanup}
-            onChange={(v) => void patch({ polish: { cleanup: v as "off" | "light" | "strong" } })}
+            onChange={(v) =>
+              void patch({ polish: { cleanup: v as "none" | "light" | "medium" | "high" | "full" } })
+            }
             options={[
-              { value: "off", label: "Off — keep every word" },
+              { value: "none", label: "None — keep every word" },
               { value: "light", label: "Light — remove filler words" },
-              { value: "strong", label: "Strong — tighten repetitions too" },
+              { value: "medium", label: "Medium — edit for clarity" },
+              { value: "high", label: "High — tighten and restructure" },
+              { value: "full", label: "Full — free rewrite" },
+            ]}
+          />
+        </Row>
+        <Row
+          label="Transcription format"
+          hint="How AI shapes the typed text. 'No AI formatting' skips polish entirely; 'Casual messaging' lowercases everything but proper nouns."
+        >
+          <Select
+            value={config.polish.format}
+            onChange={(v) =>
+              void patch({
+                polish: { format: v as "formatted" | "raw" | "casual" | "lowercase" },
+              })
+            }
+            options={[
+              { value: "formatted", label: "Apply AI formatting" },
+              { value: "raw", label: "No AI formatting" },
+              { value: "casual", label: "Casual messaging" },
+              { value: "lowercase", label: "All lowercase" },
             ]}
           />
         </Row>

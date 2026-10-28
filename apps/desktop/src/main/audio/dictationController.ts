@@ -57,14 +57,26 @@ export class DictationController {
   }
 
   /** Hard cap on one dictation: 0 disables. Prevents a stuck hotkey from
-   *  recording for hours (the reference app ships the same guard). */
+   *  recording for hours (the reference app ships the same guard, default 20
+   *  minutes, warning one minute before the cap). */
   private recordingCap: NodeJS.Timeout | null = null;
+  private recordingCapWarn: NodeJS.Timeout | null = null;
   private armRecordingCap(maxMs: number): void {
     if (this.recordingCap) {
       clearTimeout(this.recordingCap);
       this.recordingCap = null;
     }
+    if (this.recordingCapWarn) {
+      clearTimeout(this.recordingCapWarn);
+      this.recordingCapWarn = null;
+    }
     if (maxMs > 0) {
+      // Their DICTATION_DURATION_WARNING_TIMEOUT: "…one more minute".
+      if (maxMs > 60_000) {
+        this.recordingCapWarn = setTimeout(() => {
+          if (this.session) log(`dictation: one minute left of the ${Math.round(maxMs / 60000)}-minute cap`);
+        }, maxMs - 60_000);
+      }
       this.recordingCap = setTimeout(() => {
         if (this.session) {
           log(`dictation: hit the ${Math.round(maxMs / 60000)}-minute cap — finishing`);
@@ -152,6 +164,10 @@ export class DictationController {
         clearTimeout(this.recordingCap);
         this.recordingCap = null;
       }
+      if (this.recordingCapWarn) {
+        clearTimeout(this.recordingCapWarn);
+        this.recordingCapWarn = null;
+      }
       this.notify();
     }
   }
@@ -168,6 +184,14 @@ export class DictationController {
     this.recording = false;
     this.deps.windows.hideOverlay();
     this.deps.hotkeys.unbindEscape();
+    if (this.recordingCap) {
+      clearTimeout(this.recordingCap);
+      this.recordingCap = null;
+    }
+    if (this.recordingCapWarn) {
+      clearTimeout(this.recordingCapWarn);
+      this.recordingCapWarn = null;
+    }
     this.broadcast({ state: "cancelled" });
     this.notify();
     log("dictation: cancelled");

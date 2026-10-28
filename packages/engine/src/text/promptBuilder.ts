@@ -17,8 +17,13 @@ export interface PolishInput {
   dictionary: readonly string[];
   /** Free-form instructions when tone === "custom". */
   instructions?: string;
-  /** Filler-word cleanup strength ("Auto cleanup" in settings). */
-  cleanup?: "off" | "light" | "strong";
+  /** Reference app's 5-level autoCleanup enum (none/light/medium/high/full). */
+  cleanup?: "none" | "light" | "medium" | "high" | "full";
+  /**
+   * Reference app's transcription-format enum: "raw" = no AI formatting,
+   * "casual" = capitalise proper nouns only, "lowercase" = all lowercase.
+   */
+  format?: "formatted" | "raw" | "casual" | "lowercase";
   /**
    * Classified target-app type (replicated from the reference app's AppType):
    * email apps get a signature, messaging apps drop the trailing period, and
@@ -43,24 +48,41 @@ const TONE_RULES: Record<ToneId, string> = {
   custom: "Follow the user's custom instructions below instead of a preset tone.",
 };
 
+export const CLEANUP_RULES: Record<"none" | "light" | "medium" | "high" | "full", string> = {
+  none: "- Do NOT remove anything the speaker said; fix only punctuation, capitalization, and obvious transcription errors.",
+  light: "- Remove filler words (um, uh, like, you know), stumbles, and repeated words.",
+  medium:
+    "- Remove filler words, stumbles, and repeated words. Edit for clarity and conciseness: tighten phrasing and drop redundancy, but keep every fact and the speaker's word choices.",
+  high:
+    "- Remove filler words, stumbles, repeated words, and false starts. Tighten rambling sentences and lightly restructure for readability, but keep every fact.",
+  full:
+    "- Freely rewrite for clarity, brevity, and flow while preserving every fact, name, number, and the speaker's intent.",
+};
+
 export function buildPolishMessages(input: PolishInput): PolishMessages {
   // AI apps: their build skips auto-cleanup entirely when appType === "ai".
-  const cleanup = input.appType === "ai" ? "off" : input.cleanup ?? "light";
+  const cleanup = input.appType === "ai" ? "none" : input.cleanup ?? "light";
+  const format = input.format ?? "formatted";
   const systemParts: string[] = [
     "You are the text-polishing stage of a voice dictation app. You receive raw speech-to-text output and return clean, ready-to-type text.",
     "Rules:",
     "- Preserve the speaker's meaning, language, and word choices. Never add new information, greetings, or commentary.",
-    cleanup === "off"
-      ? "- Do NOT remove anything the speaker said; fix only punctuation, capitalization, and obvious transcription errors."
-      : cleanup === "strong"
-        ? "- Remove filler words (um, uh, like, you know), stumbles, repeated words, and false starts. Tighten rambling sentences, but keep every fact."
-        : "- Remove filler words (um, uh, like, you know), stumbles, and repeated words.",
+    CLEANUP_RULES[cleanup],
     "- Fix punctuation, capitalization, and obvious transcription errors.",
     "- Keep numbers, names, URLs, and code-like tokens exactly as spoken.",
     "- If the text is already clean, return it unchanged.",
     "- Respond with ONLY the final text. No preamble, no quotes, no explanations.",
     TONE_RULES[input.tone],
   ];
+
+  if (format === "casual") {
+    // Their "Casual messaging": capitalize proper nouns only.
+    systemParts.push(
+      "Casual messaging format: keep the message lowercase except for proper nouns, and do not add a period at the very end.",
+    );
+  } else if (format === "lowercase") {
+    systemParts.push("All-lowercase format: the entire output is lowercase, including the first word.");
+  }
 
   if (input.tone === "custom" && input.instructions?.trim()) {
     systemParts.push(`Custom instructions: ${input.instructions.trim()}`);

@@ -42,11 +42,13 @@ export const AudioConfigSchema = z.object({
   deviceId: z.string().default("default"),
   vad: VadConfigSchema.prefault({}),
   /**
-   * Hard cap on a single dictation, in milliseconds (0 = unlimited). The
-   * reference app ships the same guard so a hotkey held down by accident (or
-   * a stuck key) cannot fill the disk with a 6-hour recording.
+   * Hard cap on a single dictation, in milliseconds (0 = unlimited). Default
+   * is the reference app's DICTATION_DURATION_TIMEOUT — 20 minutes, with a
+   * warning one minute before — so a hotkey held by accident cannot fill the
+   * disk with a 6-hour recording. `maxRecordingLengthMs` in their build is the
+   * debug override of exactly this cap.
    */
-  maxRecordingLengthMs: z.number().int().nonnegative().default(0),
+  maxRecordingLengthMs: z.number().int().nonnegative().default(20 * 60_000),
 });
 export type AudioConfig = z.infer<typeof AudioConfigSchema>;
 
@@ -198,11 +200,29 @@ export const PolishConfigSchema = z.object({
   /** Free-form extra instructions used when `tone === "custom"`. */
   customInstructions: z.string().default(""),
   /**
-   * Filler-word cleanup strength ("Auto cleanup" in the reference app): off
-   * leaves every word; light drops "um/uh/like"; strong also removes
-   * repetitions and false starts.
+   * Reference app's transcription-format enum (their defaultTranscriptionFormat):
+   * "formatted" = "Apply AI formatting" (default), "raw" = "No AI formatting",
+   * "casual" = "Casual messaging" (capitalise proper nouns only), "lowercase" =
+   * "All lowercase".
    */
-  cleanup: z.enum(["off", "light", "strong"]).default("light"),
+  format: z.enum(["formatted", "raw", "casual", "lowercase"]).default("formatted"),
+  /**
+   * Filler-word cleanup strength — their autoCleanup.level enum verbatim:
+   * none ("Transcribes exactly what you said, including mistakes"), light
+   * ("Cleans up filler words and grammar"), medium ("Edits for clarity and
+   * conciseness"), high, full. Their UI exposes None/Light/Medium.
+   */
+  /**
+   * Filler-word cleanup strength — their autoCleanup.level enum verbatim:
+   * none ("Transcribes exactly what you said, including mistakes"), light
+   * ("Cleans up filler words and grammar"), medium ("Edits for clarity and
+   * conciseness"), high, full. Their UI exposes None/Light/Medium.
+   */
+  cleanup: z
+    .preprocess(
+      (v) => (v === "off" ? "none" : v === "strong" ? "high" : v),
+      z.enum(["none", "light", "medium", "high", "full"]).default("light"),
+    ),
   /**
    * "Add a signature when dictating an email" — only appends when the target
    * app is classified as an email client (the reference app's emailAutoSignature).

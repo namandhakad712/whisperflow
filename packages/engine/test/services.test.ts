@@ -40,22 +40,32 @@ describe("promptBuilder", () => {
     expect(wrongTone.system).not.toContain("Pirate speak");
   });
 
-  it("scales filler-word removal with the cleanup level", () => {
-    const light = buildPolishMessages({ ...base, cleanup: "light" });
-    expect(light.system).toContain("Remove filler words");
-    const strong = buildPolishMessages({ ...base, cleanup: "strong" });
-    expect(strong.system).toContain("Tighten rambling");
-    const off = buildPolishMessages({ ...base, cleanup: "off" });
-    // off must explicitly forbid removal — "Auto cleanup: off" is a real setting
-    expect(off.system).toContain("Do NOT remove anything");
+  it("scales cleanup across the reference app's five levels", () => {
+    expect(buildPolishMessages({ ...base, cleanup: "light" }).system).toContain("Remove filler words");
+    expect(buildPolishMessages({ ...base, cleanup: "medium" }).system).toContain("clarity and conciseness");
+    expect(buildPolishMessages({ ...base, cleanup: "high" }).system).toContain("false starts");
+    expect(buildPolishMessages({ ...base, cleanup: "full" }).system).toContain("Freely rewrite");
+    const none = buildPolishMessages({ ...base, cleanup: "none" });
+    expect(none.system).toContain("Do NOT remove anything");
     // and the default (unset) behaves as light
     expect(buildPolishMessages(base).system).toContain("Remove filler words");
   });
 
+  it("honours the transcription-format enum", () => {
+    const casual = buildPolishMessages({ ...base, format: "casual" });
+    expect(casual.system).toContain("Casual messaging format");
+    const lower = buildPolishMessages({ ...base, format: "lowercase" });
+    expect(lower.system).toContain("All-lowercase format");
+    // raw formatting never reaches the prompt (the session skips polish) — but
+    // if it did, the prompt must not add styling beyond the rules.
+    const plain = buildPolishMessages({ ...base, format: "formatted" });
+    expect(plain.system).not.toContain("Casual messaging");
+  });
+
   it("skips cleanup in AI apps (their appType rule)", () => {
-    const ai = buildPolishMessages({ ...base, appType: "ai", cleanup: "strong" });
+    const ai = buildPolishMessages({ ...base, appType: "ai", cleanup: "high" });
     expect(ai.system).toContain("Do NOT remove anything");
-    const normal = buildPolishMessages({ ...base, appType: "other", cleanup: "strong" });
+    const normal = buildPolishMessages({ ...base, appType: "other", cleanup: "high" });
     expect(normal.system).not.toContain("Do NOT remove anything");
   });
 
