@@ -136,7 +136,7 @@ export function GeneralTab() {
         />
         <ChangeRow
           label="My languages"
-          value={config.stt.language === "auto" ? "Auto-detect" : config.stt.language}
+          value={languageSummary(config.stt)}
           onChange={() => go("audio")}
         />
         <div className="flex items-center justify-between gap-6 px-5 py-5">
@@ -199,4 +199,21 @@ export function GeneralTab() {
       </p>
     </section>
   );
+}
+
+/**
+ * Their widget copy: "Flow will detect your language automatically. Make sure
+ * all the languages you speak are selected." Summarises the selected set the
+ * same way their header does.
+ */
+export function languageSummary(stt: {
+  language: string;
+  languages?: string[];
+  autoDetect?: boolean;
+}): string {
+  const langs = stt.languages ?? [];
+  if (langs.length === 0)
+    return stt.autoDetect === false && stt.language !== "auto" ? stt.language : "Auto-detect";
+  if (stt.autoDetect !== false) return `Auto-detect · ${langs.join(", ")}`;
+  return langs.length === 1 ? (langs[0] ?? "Auto-detect") : `${langs[0]!} +${langs.length - 1} more`;
 }

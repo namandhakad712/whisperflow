@@ -2,6 +2,30 @@ import { useEffect } from "react";
 import { useSettings } from "../store";
 import { Card, Row, PageHeader, Select } from "../../shared/ui";
 
+/**
+ * A compact version of their language list — the codes whisper.cpp accepts
+ * natively. Their picker carries 30+ (with a Hinglish tile); ours opens with
+ * the common ones and can be extended without a schema change.
+ */
+const SUPPORTED_LANGUAGES: [code: string, name: string][] = [
+  ["en", "English"],
+  ["es", "Spanish"],
+  ["fr", "French"],
+  ["de", "German"],
+  ["it", "Italian"],
+  ["pt", "Portuguese"],
+  ["nl", "Dutch"],
+  ["hi", "Hindi"],
+  ["ja", "Japanese"],
+  ["ko", "Korean"],
+  ["zh", "Chinese"],
+  ["ru", "Russian"],
+  ["pl", "Polish"],
+  ["tr", "Turkish"],
+  ["uk", "Ukrainian"],
+  ["sv", "Swedish"],
+];
+
 export function AudioTab() {
   const config = useSettings((s) => s.config);
   const devices = useSettings((s) => s.devices);
@@ -61,7 +85,7 @@ export function AudioTab() {
         </Row>
         <Row
           label="Max dictation length (minutes)"
-          hint="0 = unlimited. Caps a runaway session so a stuck hotkey can't record for hours."
+          hint="Their default is 20 minutes (a warning fires one minute before). 0 = unlimited."
         >
           <input
             type="number"
@@ -76,6 +100,49 @@ export function AudioTab() {
             }
             className="w-24 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
           />
+        </Row>
+      </Card>
+      <Card className="mt-5">
+        <Row
+          label="Automatic language detection"
+          hint="Flow will detect your language automatically. Make sure all the languages you speak are selected."
+        >
+          <Select
+            value={config.stt.autoDetect === false ? "off" : "on"}
+            onChange={(v) => void patch({ stt: { autoDetect: v === "on" } })}
+            options={[
+              { value: "on", label: "On — detect while I speak" },
+              { value: "off", label: "Off — use my languages" },
+            ]}
+          />
+        </Row>
+        <Row
+          label="My languages"
+          hint="One selected language is used explicitly; several act as detection hints. Auto-detect off + one language = never auto-detect."
+        >
+          <div className="flex max-w-[55%] flex-wrap gap-1.5">
+            {SUPPORTED_LANGUAGES.map(([code, name]) => {
+              const on = (config.stt.languages ?? []).includes(code);
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => {
+                    const set = new Set(config.stt.languages ?? []);
+                    on ? set.delete(code) : set.add(code);
+                    void patch({ stt: { languages: [...set] } });
+                  }}
+                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                    on
+                      ? "border-accent bg-accent/15 text-ink"
+                      : "border-line text-ink-dim hover:border-accent/50"
+                  }`}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
         </Row>
       </Card>
       {devices.length === 0 && (

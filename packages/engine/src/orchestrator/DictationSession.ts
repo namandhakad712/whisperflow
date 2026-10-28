@@ -8,6 +8,7 @@
  */
 import {
   canTransition,
+  resolveSttLanguage,
   type DictationState,
   type DictationStateEvent,
   type TranscriptItem,
@@ -160,7 +161,7 @@ export class DictationSession {
           !this.deps.skipSignature
             ? this.deps.config.polish.emailSignatureText
             : undefined,
-        language: this.deps.config.stt.language,
+        language: resolveSttLanguage(this.deps.config.stt),
         dictionary: this.deps.config.dictionary.map((d) => d.term),
         instructions: this.deps.config.polish.customInstructions,
         format: this.deps.config.polish.format,
@@ -226,7 +227,9 @@ export class DictationSession {
       if (this.cancelled) return;
       const text = await stt.transcribe(pcm, {
         ...(modelPath ? { modelPath } : {}),
-        language: config.stt.language,
+        // Their resolution: explicit when one language is selected with
+        // auto-detect off, otherwise auto over the selected set.
+        language: resolveSttLanguage(config.stt),
         prompt,
       });
       if (this.cancelled || !text) return;

@@ -120,8 +120,22 @@ export const SttConfigSchema = z.object({
   provider: z.enum(["whispercpp-local", "cloud"]).default("whispercpp-local"),
   /** Catalog id, e.g. `"whisper-base-en" | "whisper-small" | "whisper-large-v3-turbo"`. */
   modelId: z.string().default("whisper-small"),
-  /** BCP-47-ish tag or `"auto"`. */
+  /**
+   * BCP-47-ish tag or `"auto"` — the resolved language (see
+   * `resolveSttLanguage`). Kept for back-compat: it is the selected language
+   * when `languages` is empty.
+   */
   language: z.string().default("auto"),
+  /**
+   * Their `selectedLanguages` — the set of languages you speak. With exactly
+   * one entry and auto-detect off, that language is sent as the *explicit*
+   * ASR parameter (no auto-detect); with several, they act as detection hints
+   * and the engine picks ("Flow will detect your language automatically. Make
+   * sure all the languages you speak are selected.").
+   */
+  languages: z.array(z.string().min(1)).default([]),
+  /** Their auto-detect toggle ("Automatic language detection"). */
+  autoDetect: z.boolean().default(true),
   cloud: CloudSttConfigSchema.prefault({}),
   /**
    * Backup engine used when the primary one fails mid-dictation.
@@ -131,6 +145,27 @@ export const SttConfigSchema = z.object({
   fallback: z.enum(["none", "local", "cloud"]).default("none"),
 });
 export type SttConfig = z.infer<typeof SttConfigSchema>;
+
+/**
+ * Their language resolution, verbatim:
+ *   getLanguages() = effectiveLanguages ?? selectedLanguages
+ *   exactly one selected + auto-detect off → that language is explicit (no guessing);
+ *   several selected + auto-detect off → auto-detect restricted to that set
+ *   (the local whisper adapter has no hint list, so it degrades to `auto`);
+ *   auto-detect on → "auto".
+ * `effectiveLanguages` is the runtime override their language widget sets
+ * mid-session; pass it in when you have one.
+ */
+export function resolveSttLanguage(
+  stt: Pick<SttConfig, "language" | "languages" | "autoDetect">,
+  effectiveLanguages?: readonly string[],
+): string {
+  const selected = effectiveLanguages?.length ? effectiveLanguages : stt.languages;
+  if (stt.autoDetect) return "auto";
+  if (selected.length === 1) return selected[0] ?? "auto";
+  if (selected.length > 1) return "auto"; // hints, not a forced language
+  return stt.language;
+}
 
 /** User-added model entries appended to the built-in catalog. */
 export const CustomModelEntrySchema = z.object({

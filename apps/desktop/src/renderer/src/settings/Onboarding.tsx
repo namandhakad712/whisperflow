@@ -203,9 +203,11 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
           <button
             key={value}
             type="button"
-            onClick={() => void patch({ stt: { language: value } })}
+            // Their onboarding picks one language explicitly: auto-detect goes
+            // off and the chosen language is the single selected one.
+            onClick={() => void patch({ stt: { language: value, languages: [value], autoDetect: false } })}
             className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-              config.stt.language === value
+              (config.stt.languages ?? []).includes(value)
                 ? "border-accent/70 bg-accent/10 text-ink"
                 : "border-line bg-surface-2/60 text-ink-dim hover:border-accent/40"
             }`}
@@ -215,8 +217,10 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
         ))}
       </div>
       <select
-        value={config.stt.language}
-        onChange={(e) => void patch({ stt: { language: e.target.value } })}
+        value={config.stt.languages?.[0] ?? config.stt.language}
+        onChange={(e) =>
+          void patch({ stt: { language: e.target.value, languages: [e.target.value], autoDetect: false } })
+        }
         className="mt-2 w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
       >
         {LANGUAGES.map(([value, label]) => (
