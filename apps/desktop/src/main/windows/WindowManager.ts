@@ -138,7 +138,7 @@ export class WindowManager {
 
     const bounds = computeOverlayBounds(
       position,
-      { width: size[0] ?? 500, height: size[1] ?? 420 },
+      { width: size[0] ?? 440, height: size[1] ?? 120 },
       display.workArea,
       cursor,
     );
@@ -240,14 +240,10 @@ export class WindowManager {
   private ensureOverlay(): BrowserWindow {
     if (this.overlayWindow?.isDestroyed() === false) return this.overlayWindow;
     const win = new BrowserWindow({
-      // Reference geometry: 500×420 default panel, 300×200 minimum, expandable
-      // to 920×660 (the overlay grows with long transcripts).
-      width: 500,
-      height: 420,
-      minWidth: 300,
-      minHeight: 200,
-      maxWidth: 920,
-      maxHeight: 660,
+      // The reference pill: 416×48 (mini) / 416×80 (card) / 416×322 (l4), plus
+      // room for the badge and the drop shadow. Their window hugs the bar.
+      width: 440,
+      height: 120,
       show: false,
       frame: false,
       transparent: true,

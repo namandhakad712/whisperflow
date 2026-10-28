@@ -2,6 +2,21 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.9] — 2026-10-28
+
+### Changed — the dictation overlay is now the reference pill, rebuilt from their CSS
+- **The dictation surface is a pixel-faithful port of their compiled status-pill CSS**
+  (extracted verbatim from their shipped bundle):
+  - **mini** (listening): `416×48`, `border-radius:16px`, `background:#1f1f1f`, `1.5px border #30302f`,
+    `box-shadow:0 8px 32px rgba(0,0,0,.38)`. Row: `8px gap`, `12px` padding — green `6×6 #10b981`
+    record dot → frosted 24px avatar → live text (`15px/20px weight 500 #fcfcfb` with their 20px
+    right-edge fade mask) → meta (`12px/18px #71716e` duration).
+  - **card** (transcribing/polishing): `416×80`, column layout, status line.
+  - **l4**: `416×322` for long transcripts.
+  - Every size morph runs on **their exact spring easing** (`linear()` 21-stop curve) at `0.42s`;
+    the generating state uses **their shimmer sweep** (`#6f6f76→#fff`, 150% travel).
+- Window geometry hugs the bar (`440×120`); the overlay capture harness verifies all states.
+
 ## [0.1.8] — 2026-10-28
 
 ### Changed — cloud polish gets the cloud-STT treatment

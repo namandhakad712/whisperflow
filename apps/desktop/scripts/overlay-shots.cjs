@@ -27,8 +27,8 @@ const STATES = [
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
-    width: 500,
-    height: 420,
+    width: 440,
+    height: 120,
     transparent: true,
     frame: false,
     hasShadow: false,
@@ -46,7 +46,8 @@ app.whenReady().then(async () => {
   fs.mkdirSync(OUT, { recursive: true });
   for (const [name, ev] of STATES) {
     win.webContents.send("dictation/state", ev);
-    await new Promise((r) => setTimeout(r, 260));
+    // Longer than the pill's 0.42s morph so captures settle past the spring.
+    await new Promise((r) => setTimeout(r, 800));
     const img = await win.webContents.capturePage();
     fs.writeFileSync(path.join(OUT, `overlay-${name}.png`), img.toPNG());
     console.log(`overlay-${name}.png`);

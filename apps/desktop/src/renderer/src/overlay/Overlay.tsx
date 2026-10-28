@@ -6,43 +6,220 @@ const BAR_COUNT = 28;
 const BAR_HISTORY_MS = 28;
 
 /**
+ * The dictation surface — rebuilt 1:1 from the reference app's compiled CSS
+ * (extracted verbatim from its shipped status-window bundle; every value
+ * below is theirs, sources noted inline).
+ *
+ *   rest  → 30×6 dash, rgba(0,0,0,.5) bg, hsla(0,0%,100%,.5) border
+ *   mini  → 416×48, radius 16, #1f1f1f, 1.5px #30302f border,
+ *           shadow 0 8px 32px rgba(0,0,0,.38)
+ *   card  → 416×80, column content, status line with a 6×6 #10b981 dot
+ *   l4    → 416×322 (expanded transcript)
+ * All morphs run on their exact spring easing at 0.42s.
+ */
+const SPRING_EASING =
+  "linear(0, 0.0015, 0.0057 1.07%, 0.0214 2.13%, 0.0739 4.26%, 0.1638 6.93%, 0.479 15.46%, 0.5791 18.66%, 0.6512 21.32%, 0.7243, 0.784, 0.832 30.92%, 0.8757 34.65%, 0.9126 38.91%, 0.9418 43.71%, 0.9633 49.04%, 0.9781 54.9%, 0.9882 61.83%, 0.9948 70.89%, 0.9982 82.09%, 0.9997 99.68%)";
+
+const PILL_CSS = `
+:root { --spring-easing: ${SPRING_EASING}; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Inter", "Figtree", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+.pill-zone { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
+
+/* The card — their exact pill geometry. */
+.pill-card {
+  position: relative;
+  width: 416px;
+  height: 48px;
+  border-radius: 16px;
+  background: #1f1f1f;
+  border: 1.5px solid #30302f;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+  transition:
+    width 0.42s var(--spring-easing),
+    height 0.42s var(--spring-easing),
+    border-radius 0.42s var(--spring-easing),
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    opacity 0.3s ease;
+  overflow: hidden;
+}
+.pill-card[data-state="card"] { height: 80px; }
+.pill-card[data-state="l4"] { height: 322px; }
+
+/* Mini content row: flex, 8px gap, 12px side padding, single line. */
+.mini-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.18s ease 0.1s;
+}
+.pill-card[data-state="card"] .mini-row,
+.pill-card[data-state="l4"] .mini-row { opacity: 0; pointer-events: none; transition: opacity 0.08s ease; }
+
+/* Frosted avatar circle (their 24px, hsla white .15 + blur 8px). */
+.avatar {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: hsla(0, 0%, 100%, 0.15);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fcfcfb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Live text: 15px/20px, weight 500, sand-50, single line with a right-edge
+ * fade (their 20px mask). */
+.live-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  color: #fcfcfb;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+}
+.live-text[data-multiline="true"] {
+  white-space: normal;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Meta (timer / WPM): 12px/18px, vast-500 #71716e. */
+.meta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: #71716e;
+  white-space: nowrap;
+}
+
+/* The record dot: 6×6, radius 2, their green #10b981. */
+.rec-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: #10b981;
+}
+.rec-dot[data-pulsing="true"] { animation: rec-pulse 1.6s ease-in-out infinite; }
+@keyframes rec-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Card content: column, 16px/12px padding. */
+.card-content {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.18s ease 0.1s;
+}
+.pill-card[data-state="card"] .card-content,
+.pill-card[data-state="l4"] .card-content { display: flex; opacity: 1; }
+.card-row { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.status-line { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; }
+
+/* Shimmer: their generating-text sweep, 90deg #6f6f76→#fff, 150% travel. */
+.shimmer {
+  background-image: linear-gradient(90deg, #6f6f76 0%, #6f6f76 35%, #fff 50%, #6f6f76 65%, #6f6f76 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-sweep 1.2s linear infinite;
+}
+@keyframes shimmer-sweep { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+
+/* Notification badge straddling the top-right (their #2a2a29/#343432 pill). */
+.badge {
+  position: absolute;
+  top: -12px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #2a2a29;
+  border: 1px solid #343432;
+  color: #deddd7;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  z-index: 3;
+  transition: opacity 0.2s ease;
+}
+.pill-card[data-state="card"] .badge,
+.pill-card[data-state="l4"] .badge { opacity: 0; transition: opacity 0.08s ease; }
+
+/* Error text — their destructive-400 #f87171. */
+.error-text { color: #f87171; }
+`;
+
+const STATE_LABEL: Record<DictationStateEvent["state"], string> = {
+  idle: "Idle",
+  listening: "Listening",
+  transcribing: "Transcribing",
+  polishing: "Polishing",
+  injecting: "Typing",
+  done: "Done",
+  error: "Error",
+  cancelled: "Cancelled",
+};
+
+/**
  * The floating dictation pill. Listens for engine state; captures the mic
  * while `listening` and streams 16 kHz PCM to the main process.
  */
 export function Overlay() {
   const [event, setEvent] = useState<DictationStateEvent>({ state: "idle" });
-  const [backdrop, setBackdrop] = useState<string>("");
-  const [shape, setShape] = useState<"pill" | "rect" | "blob">("pill");
+  const [micId] = useState<string | undefined>(undefined);
   const [recording, setRecording] = useState(false);
   const [typing, setTyping] = useState(false);
   const typingTimer = useRef<number | null>(null);
   const micIdRef = useRef<string | undefined>(undefined);
-  const [hotkeyHint, setHotkeyHint] = useState("the hotkey");
   const captureRef = useRef<Capture | null>(null);
   const startingRef = useRef(false);
-  const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
-  const levelsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0.04));
+  const [elapsed, setElapsed] = useState(0);
+  const startedAtRef = useRef<number | null>(null);
 
   const readConfig = useCallback(async () => {
     const c = (await window.whisperflow.settings.get()) as {
-      general?: { overlayBackdrop?: string; overlayStyle?: "pill" | "rect" | "blob" };
+      general?: { overlayBackdrop?: string };
       hotkey?: { pushToTalk?: string };
       audio?: { deviceId?: string };
     };
-    setBackdrop(c.general?.overlayBackdrop ?? "");
-    setShape(c.general?.overlayStyle ?? "pill");
     // The mic the user picked in Audio settings (ref so capture reads the
     // freshest value without re-running this effect).
     micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
-    if (c.hotkey?.pushToTalk) {
-      setHotkeyHint(
-        c.hotkey.pushToTalk
-          .split("+")
-          .map((p) => (p === "Control" ? "Ctrl" : p === "Space" ? "Space" : p))
-          .join("+"),
-      );
-    }
-  }, []);
+    void micId;
+  }, [micId]);
 
   // Click-through by default (like the reference overlay): the window ignores the
   // mouse so it never blocks the app underneath; we only make it interactive
@@ -69,6 +246,8 @@ export function Overlay() {
     const unsub = window.whisperflow.dictation.onState((ev) => {
       setEvent(ev);
       setRecording(Boolean(ev.recording));
+      if (ev.recording) startedAtRef.current = Date.now();
+      if (ev.state === "idle" || ev.state === "done" || ev.state === "cancelled") startedAtRef.current = null;
       // Typing-hold: the user typed mid-dictation. Show it briefly so they know
       // the session is deliberately still live.
       if (ev.typing) {
@@ -78,7 +257,6 @@ export function Overlay() {
       }
     });
     void readConfig();
-    // Live: re-read config the moment it changes in the settings window.
     const unsubSettings = window.whisperflowExtras.settings.onChanged(() => void readConfig());
     return () => {
       unsub();
@@ -96,10 +274,7 @@ export function Overlay() {
       startCapture({
         deviceId: micIdRef.current,
         onChunk: (pcm) => window.whisperflow.capture.sendPcm(pcm),
-        onLevel: (rms) => {
-          levelsRef.current.push(Math.min(1, rms * 6));
-          if (levelsRef.current.length > BAR_COUNT) levelsRef.current.shift();
-        },
+        onLevel: () => {},
       })
         .then((cap) => {
           captureRef.current = cap;
@@ -116,151 +291,72 @@ export function Overlay() {
     }
   }, [event.state]);
 
-  // Waveform animation: reflect recent mic levels into the bars.
+  // Recording timer (their meta column shows duration / WPM).
   useEffect(() => {
-    if (event.state !== "listening") return;
+    if (!recording) {
+      setElapsed(0);
+      return;
+    }
     const timer = window.setInterval(() => {
-      const levels = levelsRef.current;
-      for (let i = 0; i < BAR_COUNT; i++) {
-        const el = barsRef.current[i];
-        if (el) el.style.transform = `scaleY(${Math.max(0.12, levels[Math.min(i, levels.length - 1)] ?? 0.04)})`;
-      }
-    }, BAR_HISTORY_MS);
+      if (startedAtRef.current) setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 1000);
     return () => window.clearInterval(timer);
-  }, [event.state]);
+  }, [recording]);
 
   if (event.state === "idle" || event.state === "cancelled") return null;
 
-  // Reference design language, extracted from the shipped app: a 500×420 dark
-  // panel (vast-950 #1a1a1a) with warm-neutral text (sand-50 #fcfcfb), white
-  // accent, and the live transcript as the dominant element.
+  const processing = event.state === "transcribing" || event.state === "polishing" || event.state === "injecting";
+  const card = processing;
+  // Their state machine: listening → mini; processing → card; long
+  // transcripts get the 322px l4 expansion.
+  const pillState = event.state === "listening" ? "mini" : card ? (event.partial && event.partial.length > 60 ? "l4" : "card") : "mini";
+
+  const seconds = String(elapsed % 60).padStart(2, "0");
+  const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const meta = recording ? `${minutes}:${seconds}` : typing ? "typing…" : "";
+
+  const liveText =
+    event.state === "listening"
+      ? event.partial || (recording ? "" : "Press the hotkey and speak")
+      : event.state === "done"
+        ? "✓ Text inserted"
+        : event.state === "error"
+          ? event.error ?? "Something went wrong"
+          : event.partial || `${STATE_LABEL[event.state]}…`;
+
   return (
-    <div
-      className={`flex h-full w-full select-none p-3 ${
-        shape === "blob" ? "rounded-[38px_24px_42px_20px]" : shape === "rect" ? "rounded-lg" : "rounded-[26px]"
-      }`}
-    >
-      <div
-        className={`relative flex w-full flex-col overflow-hidden border border-[#46454499] bg-[#1a1a1a] shadow-[0_24px_64px_rgba(0,0,0,0.55)] backdrop-blur-2xl ${
-          shape === "blob" ? "rounded-[34px_20px_38px_18px]" : shape === "rect" ? "rounded-[6px]" : "rounded-[23px]"
-        }`}
-        style={
-          backdrop
-            ? { backgroundImage: `url(${backdrop})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : undefined
-        }
-      >
-        {backdrop && <div className="absolute inset-0 bg-[#1a1a1a]/75" aria-hidden="true" />}
-
-        {/* header: status + recorder chip + cancel */}
-        <div className="relative flex items-center gap-3 px-5 pt-4">
-          <StatusDot state={event.state} />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#fcfcfb]">
-            {label(event.state)}
-          </p>
-          {recording && (
-            <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> REC
-            </span>
-          )}
-          {typing && (
-            <span className="rounded-full bg-[#fcfcfb10] px-2 py-0.5 text-[10px] font-medium text-[#c5c0b3]">
-              ⌨ typing — dictation held
-            </span>
-          )}
-          <button
-            type="button"
-            aria-label="Cancel dictation"
-            data-interactive="true"
-            onClick={() => void window.whisperflowExtras.dictation.cancel()}
-            className="ml-auto rounded-md px-2 py-0.5 text-xs text-[#a39d8e] transition-colors hover:bg-[#fcfcfb12] hover:text-[#fcfcfb]"
-          >
-            Esc ✕
-          </button>
-        </div>
-
-        {/* transcript — the hero element, like the reference app's panel */}
-        <div className="relative flex min-h-0 flex-1 flex-col justify-center px-6">
-          {event.state === "listening" && (
-            <>
-              <p className="line-clamp-4 min-h-[6.5rem] text-pretty text-[19px] leading-relaxed font-medium text-[#fcfcfb]">
-                {event.partial || <span className="text-[#a39d8e]">Listening…</span>}
-              </p>
-              <div className="mt-4 flex h-10 items-center gap-[5px]" aria-hidden="true">
-                {Array.from({ length: BAR_COUNT }, (_, i) => (
-                  <span
-                    key={i}
-                    ref={(el) => {
-                      barsRef.current[i] = el;
-                    }}
-                    className="h-full w-[5px] origin-center rounded-full bg-[#fcfcfb] opacity-90 transition-transform duration-75"
-                    style={{ transform: "scaleY(0.12)" }}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          {(event.state === "transcribing" || event.state === "polishing" || event.state === "injecting") && (
-            <div className="flex items-center gap-3">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#464544] border-t-[#fcfcfb]" />
-              <p className="text-sm text-[#c5c0b3]">{label(event.state)}…</p>
-              {event.partial && (
-                <p className="ml-auto max-w-[55%] truncate font-mono text-xs text-[#a39d8e]">
-                  {event.partial}
-                </p>
-              )}
+    <>
+      <style>{PILL_CSS}</style>
+      <div className="pill-zone">
+        <div className="pill-card" data-state={pillState} data-interactive="true">
+          <div className="mini-row">
+            {recording && <span className="rec-dot" data-pulsing="true" />}
+            <span className="avatar">W</span>
+            <p
+              className={`live-text ${processing ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
+              data-multiline={pillState === "l4"}
+            >
+              {liveText}
+            </p>
+            <span className="meta">{meta}</span>
+          </div>
+          <div className="card-content">
+            <div className="card-row">
+              {recording && <span className="rec-dot" data-pulsing="true" />}
+              <span className="status-line">
+                {STATE_LABEL[event.state]}
+                {recording ? ` · ${minutes}:${seconds}` : ""}
+              </span>
             </div>
-          )}
-
-          {event.state === "done" && (
-            <p className="text-[19px] font-medium text-[#fcfcfb]">✓ Text inserted</p>
-          )}
-
-          {event.state === "error" && (
-            <p className="line-clamp-3 text-sm text-red-400">{event.error ?? "Something went wrong"}</p>
-          )}
-        </div>
-
-        {/* footer hint */}
-        <div className="relative px-5 pb-4">
-          <p className="text-[11px] text-[#736e62]">press {hotkeyHint} again to finish</p>
+            <p
+              className={`live-text ${processing && !event.partial ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
+              data-multiline="true"
+            >
+              {liveText}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function label(state: DictationStateEvent["state"]): string {
-  switch (state) {
-    case "listening":
-      return "Listening";
-    case "transcribing":
-      return "Transcribing";
-    case "polishing":
-      return "Polishing";
-    case "injecting":
-      return "Typing";
-    case "done":
-      return "Done";
-    case "error":
-      return "Error";
-    default:
-      return state;
-  }
-}
-
-function StatusDot({ state }: { state: DictationStateEvent["state"] }) {
-  if (state === "error") {
-    return <span className="h-2.5 w-2.5 rounded-full bg-red-400" />;
-  }
-  if (state === "done") {
-    return <span className="h-2.5 w-2.5 rounded-full bg-[#fcfcfb]" />;
-  }
-  return (
-    <span className="relative flex h-2.5 w-2.5">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#fcfcfb] opacity-60" />
-      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#fcfcfb]" />
-    </span>
+    </>
   );
 }
