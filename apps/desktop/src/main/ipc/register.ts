@@ -183,6 +183,14 @@ export function registerIpc(deps: {
     if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator, toggleMode: true } });
     return { ok };
   });
+  ipcMain.handle("app/rebindShortcut", async (_e, req: { action: "pasteLast" | "copyLast"; accelerator: string }) => {
+    const ok = hotkeys.bindActions({ [req.action]: req.accelerator }).ok;
+    if (ok) {
+      const config = await engine.getConfig();
+      await engine.setConfig({ hotkey: { shortcuts: { ...config.hotkey.shortcuts, [req.action]: req.accelerator } } });
+    }
+    return { ok };
+  });
   ipcMain.handle("app/keyboardHookStatus", () => {
     // Hold-to-talk availability is reported honestly to the settings UI.
     return { available: hookAvailable(), reason: hookUnavailableReason() };

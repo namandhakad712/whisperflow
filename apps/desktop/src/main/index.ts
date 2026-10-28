@@ -65,7 +65,12 @@ async function bootstrap(): Promise<void> {
     isDictationBusy: () => busyRef.fn?.() ?? false,
   });
   windowsRef = windows;
-  const hotkeys = new HotkeyManager({ onToggle: () => void controllerToggle(), onCancel: () => controllerCancel() });
+  const hotkeys = new HotkeyManager({
+    onToggle: () => void controllerToggle(),
+    onCancel: () => controllerCancel(),
+    onPasteLast: () => void controllerPasteLast(),
+    onCopyLast: () => void controllerCopyLast(),
+  });
   // The controller is created before the tray; it reaches the tray through this
   // late-bound handle (both sides only call each other after bootstrap).
   const trayHandle: { setActivity?: (active: boolean, recording: boolean) => void } = {};
@@ -84,6 +89,12 @@ async function bootstrap(): Promise<void> {
   }
   function controllerCancel(): void {
     controller.cancel();
+  }
+  function controllerPasteLast(): void {
+    void controller.pasteLast();
+  }
+  function controllerCopyLast(): void {
+    void controller.copyLast();
   }
 
   const config = await engine.getConfig();
@@ -120,6 +131,8 @@ async function bootstrap(): Promise<void> {
       holdWatcher = null;
       log("hotkey: hold-to-talk off — toggle mode");
     }
+    // Re-apply their per-action shortcuts on every settings change.
+    hotkeys.bindActions(cfg.hotkey?.shortcuts ?? {});
   }
   applyHotkeyConfig(config);
 
@@ -129,6 +142,13 @@ async function bootstrap(): Promise<void> {
       log(`hotkey: "${mainHotkey}" is taken by another app — rebind in Settings → Shortcuts`);
     }
   }
+  // Their per-action shortcuts (paste_last / copy_last) register whenever the
+  // hotkey config is applied; bindActions is idempotent.
+  const shortcutResult = hotkeys.bindActions(config.hotkey?.shortcuts ?? {});
+  if (!shortcutResult.ok) {
+    log(`hotkey: "${shortcutResult.failed}" shortcut is taken by another app — rebind in Settings → Shortcuts`);
+  }
+  applyHotkeyConfig(config);
 
   const tray = createTray({
     toggleDictation: () => void controller.toggle(),

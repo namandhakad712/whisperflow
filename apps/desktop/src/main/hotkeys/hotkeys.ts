@@ -9,14 +9,20 @@ import { globalShortcut } from "electron";
  * start, press again (or fall silent) to finish. Escape is registered only
  * while a dictation is active and cancels it without pasting.
  */
+/** Their shortcut actions that need a global binding. */
+export type ShortcutAction = "pasteLast" | "copyLast";
+
 export class HotkeyManager {
   private mainAccelerator = "";
   private escapeBound = false;
+  private actionAccelerators: Partial<Record<ShortcutAction, string>> = {};
 
   constructor(
     private readonly handlers: {
       onToggle: () => void;
       onCancel: () => void;
+      onPasteLast?: () => void;
+      onCopyLast?: () => void;
     },
   ) {}
 
@@ -33,6 +39,33 @@ export class HotkeyManager {
       globalShortcut.unregister(this.mainAccelerator);
       this.mainAccelerator = "";
     }
+  }
+
+  /**
+   * Registers their per-action shortcuts. Any action without an accelerator is
+   * unregistered, so this is idempotent — safe to call on every settings save.
+   */
+  bindActions(accelerators: Partial<Record<ShortcutAction, string>>): { ok: boolean; failed?: ShortcutAction } {
+    this.unbindActions();
+    for (const action of Object.keys(accelerators) as ShortcutAction[]) {
+      const accelerator = accelerators[action];
+      if (!accelerator) continue;
+      const handler = action === "pasteLast" ? this.handlers.onPasteLast : this.handlers.onCopyLast;
+      if (!handler) continue;
+      if (globalShortcut.register(accelerator, handler)) {
+        this.actionAccelerators[action] = accelerator;
+      } else {
+        return { ok: false, failed: action };
+      }
+    }
+    return { ok: true };
+  }
+
+  unbindActions(): void {
+    for (const [action, accelerator] of Object.entries(this.actionAccelerators)) {
+      if (accelerator) globalShortcut.unregister(accelerator);
+    }
+    this.actionAccelerators = {};
   }
 
   bindEscape(): void {
@@ -54,5 +87,6 @@ export class HotkeyManager {
   dispose(): void {
     this.unbindMain();
     this.unbindEscape();
+    this.unbindActions();
   }
 }

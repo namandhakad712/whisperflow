@@ -23,7 +23,7 @@ function acceleratorFrom(e: KeyboardEvent): string | null {
 export function ShortcutsTab() {
   const config = useSettings((s) => s.config);
   const patch = useSettings((s) => s.patchConfig);
-  const [recording, setRecording] = useState(false);
+  const [recording, setRecording] = useState<"main" | "pasteLast" | "copyLast" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [hook, setHook] = useState<{ available: boolean; reason?: string } | null>(null);
 
@@ -32,21 +32,56 @@ export function ShortcutsTab() {
   }, []);
   if (!config) return null;
 
-  const captureKey = (e: React.KeyboardEvent) => {
+  /**
+   * Their capture protocol generalized: bind any action, then persist the
+   * accelerator through the same path the main hotkey uses.
+   */
+  const captureFor = (action: "main" | "pasteLast" | "copyLast") => (e: React.KeyboardEvent) => {
     e.preventDefault();
     const accel = acceleratorFrom(e.nativeEvent);
     if (!accel) return;
-    setRecording(false);
-    void window.whisperflowExtras.app.rebindHotkey(accel).then(({ ok }) => {
+    setRecording(null);
+    const done = ({ ok }: { ok: boolean }) => {
       if (ok) {
         setMessage(`Bound to ${accel}`);
-        void patch({ hotkey: { pushToTalk: accel } });
+        if (action === "main") void patch({ hotkey: { pushToTalk: accel } });
+        else void patch({ hotkey: { shortcuts: { ...config.hotkey.shortcuts, [action]: accel } } });
       } else {
         setMessage(`"${accel}" is already taken by another app — try a different combo.`);
       }
       setTimeout(() => setMessage(null), 4000);
-    });
+    };
+    if (action === "main") {
+      void window.whisperflowExtras.app.rebindHotkey(accel).then(done);
+    } else {
+      void window.whisperflowExtras.app.rebindShortcut(action, accel).then(done);
+    }
   };
+
+  const bindRow = (
+    label: string,
+    value: string,
+    action: "main" | "pasteLast" | "copyLast",
+    hint?: string,
+  ) => (
+    <Row label={label} hint={hint}>
+      {recording === action ? (
+        <input
+          autoFocus
+          readOnly
+          onKeyDown={captureFor(action)}
+          onBlur={() => setRecording(null)}
+          value="Press a key combination…"
+          className="w-56 rounded-lg border border-accent/60 bg-surface-2 px-3 py-2 text-center text-sm outline-none"
+        />
+      ) : (
+        <Button variant="ghost" onClick={() => setRecording(action)}>
+          <Kbd>{value}</Kbd>
+          <span className="ml-2 text-ink-dim">Rebind</span>
+        </Button>
+      )}
+    </Row>
+  );
 
   return (
     <section>
@@ -55,23 +90,7 @@ export function ShortcutsTab() {
         hint="Global keys that work in any application. Press once to start, again to finish; Esc cancels."
       />
       <Card>
-        <Row label="Dictation hotkey">
-          {recording ? (
-            <input
-              autoFocus
-              readOnly
-              onKeyDown={captureKey}
-              onBlur={() => setRecording(false)}
-              value="Press a key combination…"
-              className="w-56 rounded-lg border border-accent/60 bg-surface-2 px-3 py-2 text-center text-sm outline-none"
-            />
-          ) : (
-            <Button variant="ghost" onClick={() => setRecording(true)}>
-              <Kbd>{config.hotkey.pushToTalk}</Kbd>
-              <span className="ml-2 text-ink-dim">Rebind</span>
-            </Button>
-          )}
-        </Row>
+        {bindRow("Dictation hotkey", config.hotkey.pushToTalk, "main")}
         <Row
           label="Toggle mode"
           hint="On: one press starts, next press finishes. Off: the session also auto-finishes after silence."
@@ -109,6 +128,18 @@ export function ShortcutsTab() {
               </span>
             )}
           </p>
+        )}
+        {bindRow(
+          "Paste last dictation",
+          config.hotkey.shortcuts?.pasteLast ?? "Shift+Alt+Z",
+          "pasteLast",
+          "Their paste_last_text — type your most recent dictation again, wherever the cursor is.",
+        )}
+        {bindRow(
+          "Copy last dictation",
+          config.hotkey.shortcuts?.copyLast ?? "Shift+Alt+X",
+          "copyLast",
+          "Their copy_last_text — puts the same text on the clipboard without typing.",
         )}
         <Row label="Cancel shortcut">
           <Kbd>Esc</Kbd>

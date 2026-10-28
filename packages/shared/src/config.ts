@@ -23,6 +23,20 @@ export const HotkeyConfigSchema = z.object({
    * unavailable this silently falls back to toggle mode.
    */
   holdMode: z.boolean().default(false),
+  /**
+   * Their per-action shortcut map. We keep the primary PTT binding above and
+   * add their dictation-adjacent actions; the Win defaults below are theirs
+   * (`Shift+Alt+Z` = paste_last, `Shift+Alt+X` = copy_last). Dismiss is `Esc`
+   * in both builds.
+   */
+  shortcuts: z
+    .object({
+      /** Their `paste_last_text` — re-type the last dictation. */
+      pasteLast: z.string().min(1).default("Shift+Alt+Z"),
+      /** Their `copy_last_text` — put the last dictation on the clipboard. */
+      copyLast: z.string().min(1).default("Shift+Alt+X"),
+    })
+    .prefault({}),
 });
 export type HotkeyConfig = z.infer<typeof HotkeyConfigSchema>;
 

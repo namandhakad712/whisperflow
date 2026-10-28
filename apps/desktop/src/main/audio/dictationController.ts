@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { app } from "electron";
+import { app, clipboard } from "electron";
 import type { DictationStateEvent } from "@whisperflow/shared";
 import { pcmToWav } from "@whisperflow/engine";
 import type { EnginePort, EngineSession } from "../engine/enginePort";
@@ -227,6 +227,39 @@ export class DictationController {
         this.recordingCapWarn = null;
       }
       this.notify();
+    }
+  }
+
+  /** Their `paste_last_text` action — re-type the most recent dictation. */
+  async pasteLast(): Promise<void> {
+    const last = await this.lastDictation();
+    if (!last) {
+      log("dictation: paste-last — nothing to paste yet");
+      return;
+    }
+    log(`dictation: paste-last (${last.length} chars)`);
+    await injectText(last).catch((err) => log("dictation: paste-last failed:", err));
+  }
+
+  /** Their `copy_last_text` action — clipboard only, no typing. */
+  async copyLast(): Promise<void> {
+    const last = await this.lastDictation();
+    if (!last) {
+      log("dictation: copy-last — nothing to copy yet");
+      return;
+    }
+    clipboard.writeText(last);
+    log(`dictation: copy-last (${last.length} chars)`);
+  }
+
+  private async lastDictation(): Promise<string | null> {
+    try {
+      const rows = await this.deps.engine.listHistory({ limit: 1 });
+      const latest = rows[0];
+      return latest && latest.finalText ? latest.finalText : null;
+    } catch (err) {
+      log("dictation: history read failed:", err);
+      return null;
     }
   }
 

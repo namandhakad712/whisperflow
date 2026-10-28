@@ -73,6 +73,9 @@ Implemented from this corpus (see CHANGELOG):
 - the **unresponsive-surface recovery ladder** (invalidate → hide+show →
   rebuild, their backoff and dictation deferral) on the overlay and settings
   windows — [02]
+- the **per-action shortcut map**: `paste_last_text` / `copy_last_text` with
+  their Windows defaults (Shift+Alt+Z / Shift+Alt+X), rebindable in Settings —
+  [07]
 - daily backups, per-dictation app attribution, paste failure surfacing —
   [03]/[05]/[06]
 
@@ -81,5 +84,4 @@ dock behavior [02] — our state coverage is equivalent but the names/transition
 aren't ported as such; moving the paste itself from SendKeys+clipboard onto a
 UIA insertion path — verification is already ported
 (`matchesBeforePasteAndAfter` in `editDistance.ts`), but the write needs a
-native helper analogous to their `roots.exe`; the full per-action shortcut map
-(ptt/popo/lens/paste/copy/dismiss) [07].
+native helper analogous to their `roots.exe`.

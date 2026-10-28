@@ -2,6 +2,15 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.7] — 2026-10-28
+
+### Added — their per-action shortcut map
+- **Paste last dictation** (`Shift+Alt+Z`) and **Copy last dictation** (`Shift+Alt+X`) — their
+  `paste_last_text` / `copy_last_text` actions with their Windows defaults. Paste re-types the most
+  recent dictation wherever the cursor is; copy puts it on the clipboard. Both are rebindable in
+  Settings → Shortcuts through the same capture flow as the main hotkey, and the bindings are
+  re-registered on every settings save (idempotent `bindActions`).
+
 ## [0.1.6] — 2026-10-28
 
 ### Added — language model + surface recovery

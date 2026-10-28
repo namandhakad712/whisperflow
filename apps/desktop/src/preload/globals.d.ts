@@ -8,6 +8,7 @@ declare global {
       app: {
         setLaunchAtLogin(enabled: boolean): Promise<void>;
         rebindHotkey(accelerator: string): Promise<{ ok: boolean }>;
+        rebindShortcut(action: "pasteLast" | "copyLast", accelerator: string): Promise<{ ok: boolean }>;
         checkForUpdates(): Promise<{ message: string }>;
         exportBackup(): Promise<{ exported: boolean; path?: string }>;
         onNavigate(cb: (route: string) => void): () => void;
