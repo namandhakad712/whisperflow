@@ -1,7 +1,7 @@
 {
   "name": "@whisperflow/desktop",
   "productName": "WhisperFlow",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "WhisperFlow — open-source, local-first AI voice dictation (desktop app)",
   "license": "Apache-2.0",
