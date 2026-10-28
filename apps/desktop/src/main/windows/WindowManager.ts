@@ -3,6 +3,7 @@ import type { Display, WebContents } from "electron";
 import { join } from "node:path";
 import { log } from "../lib/log";
 import { computeOverlayBounds, type OverlayAnchor } from "./overlayAnchor";
+import { SurfaceRecovery, type RecoverableSurface } from "./surfaceRecovery";
 
 export type { OverlayAnchor };
 
@@ -14,13 +15,53 @@ export type { OverlayAnchor };
 export class WindowManager {
   private settingsWindow: BrowserWindow | null = null;
   private overlayWindow: BrowserWindow | null = null;
+  private overlayRecovery: SurfaceRecovery | null = null;
+  private settingsRecovery: SurfaceRecovery | null = null;
 
   constructor(
     private readonly opts: {
       preloadPath: string;
       resolveRenderer: (page: "settings" | "overlay") => string | null; // dev URL or null → file
+      /** True while a dictation is mid-flight — recovery must defer then. */
+      isDictationBusy?: () => boolean;
     },
   ) {}
+
+  private busy(): boolean {
+    return this.opts.isDictationBusy?.() ?? false;
+  }
+
+  /** Their StatusSurface recovery ladder, attached to one of our windows. */
+  private attachRecovery(win: BrowserWindow, name: "settings" | "overlay"): SurfaceRecovery {
+    const surface: RecoverableSurface = {
+      isAlive: () => !win.isDestroyed(),
+      invalidate: () => void win.webContents?.invalidate(),
+      pulse: () => {
+        if (win.isDestroyed()) return null;
+        const b = win.getContentBounds();
+        win.setContentBounds({ ...b, height: b.height + 1 });
+        return { width: b.width, height: b.height + 1 };
+      },
+      hideShow: () => {
+        if (win.isDestroyed()) return;
+        win.hide();
+        // The overlay must never steal focus on its way back.
+        if (name === "overlay") win.showInactive();
+        else win.show();
+      },
+      rebuild: () => {
+        if (win.isDestroyed()) return;
+        win.destroy();
+        if (name === "overlay") this.ensureOverlay();
+        else this.createSettingsWindow();
+      },
+      log,
+    };
+    const recovery = new SurfaceRecovery(surface, () => this.busy());
+    // Renderer deadlock or a hung load → escalate through the ladder.
+    win.on("unresponsive", () => recovery.trigger());
+    return recovery;
+  }
 
   createSettingsWindow(route = ""): BrowserWindow {
     if (this.settingsWindow?.isDestroyed() === false) {
@@ -48,6 +89,7 @@ export class WindowManager {
     win.once("ready-to-show", () => {
       if (!win.isDestroyed()) win.show();
     });
+    this.settingsRecovery = this.attachRecovery(win, "settings");
     // Never stay invisible: if the renderer fails or is slow, show the window
     // anyway. An app with no window and no visible tray icon reads as "not
     // installed" — a blank window plus a log line is far better.
@@ -247,6 +289,7 @@ export class WindowManager {
       // overlay swallowing clicks.
       if (!win.isDestroyed()) win.setIgnoreMouseEvents(true, { forward: true });
     });
+    this.overlayRecovery = this.attachRecovery(win, "overlay");
     this.overlayWindow = win;
     return win;
   }

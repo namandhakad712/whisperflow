@@ -130,6 +130,11 @@ export class DictationController {
     }
   }
 
+  /** True while a dictation is mid-flight — their deferred-recovery gate. */
+  get busy(): boolean {
+    return this.session !== null || this.finishing;
+  }
+
   async start(opts: { recorder?: boolean } = {}): Promise<void> {
     if (this.session) return;
     try {

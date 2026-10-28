@@ -56,7 +56,14 @@ async function bootstrap(): Promise<void> {
   // this is modelled on — a bad write should never cost the user their data.
   runDailyBackup(app.getPath("userData"));
 
-  const windows = new WindowManager({ preloadPath: resolvePreloadPath(), resolveRenderer });
+  // The controller is created after the windows (it needs the manager), so the
+  // busy signal reaches WindowManager through this late-bound handle.
+  const busyRef: { fn?: () => boolean } = {};
+  const windows = new WindowManager({
+    preloadPath: resolvePreloadPath(),
+    resolveRenderer,
+    isDictationBusy: () => busyRef.fn?.() ?? false,
+  });
   windowsRef = windows;
   const hotkeys = new HotkeyManager({ onToggle: () => void controllerToggle(), onCancel: () => controllerCancel() });
   // The controller is created before the tray; it reaches the tray through this
@@ -71,6 +78,7 @@ async function bootstrap(): Promise<void> {
       holdWatcher?.setArmed(active); // typing detection runs only mid-dictation
     },
   });
+  busyRef.fn = () => controller.busy;
   function controllerToggle(): void {
     void controller.toggle();
   }
