@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.11] — 2026-10-29
+
+### Fixed — exactness pass on the pill (every deviation from their compiled CSS)
+- **The pill morph now uses their root spring curve** (`linear(0, 0.005, 0.019 1.8%, … 1)`) at 0.42s — the capsule curve we had was a different widget's, at 0.2s.
+- **Zone geometry** is their 428×54 bottom-center strip with the `rgba(0,0,0,.004)` hit area (was invented).
+- **Mini-row gating** matches theirs: base hidden with `opacity:0; pointer-events:none`, shown only under `[data-state=mini]` with the `.18s/.1s` fade, plus the `[data-peek=true]` rule.
+- **card-content** `gap:0`, stays in flow (opacity-toggled, no `display:none` — keeps their fade).
+- **Shimmer** is theirs: 220% travel, 4s ease-in-out, italic, −0.01em.
+- **Focus ring** (`2px #10b981`, offset 3px) and the **l4 transcript body** (28px top padding, 4px #30302f scrollbar, 12.5px/18 weight, heading/list/marker rules) ported verbatim.
+- Font stack: **Figtree first**, with `font-feature-settings: "salt" on`.
+
 ## [0.1.10] — 2026-10-29
 
 ### Fixed — live-test findings

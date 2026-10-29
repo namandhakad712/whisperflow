@@ -17,15 +17,23 @@ const BAR_HISTORY_MS = 28;
  *   l4    → 416×322 (expanded transcript)
  * All morphs run on their exact spring easing at 0.42s.
  */
+// Root pill morph curve (reference status bundle @665034) — drives the
+// 0.42s width/height/border-radius morphs below.
 const SPRING_EASING =
+  "linear(0, 0.005, 0.019 1.8%, 0.079 3.9%, 0.476 13.5%, 0.72 24%, 0.867 34%, 0.948 43.6%, 0.981 53.4%, 0.994 63.4%, 0.999 76%, 1)";
+// Capsule curve is used by StatusBar.tsx (different bundle position — the
+// status capsule at 0.2s).
+const CAPSULE_SPRING_EASING =
   "linear(0, 0.0015, 0.0057 1.07%, 0.0214 2.13%, 0.0739 4.26%, 0.1638 6.93%, 0.479 15.46%, 0.5791 18.66%, 0.6512 21.32%, 0.7243, 0.784, 0.832 30.92%, 0.8757 34.65%, 0.9126 38.91%, 0.9418 43.71%, 0.9633 49.04%, 0.9781 54.9%, 0.9882 61.83%, 0.9948 70.89%, 0.9982 82.09%, 0.9997 99.68%)";
 
 const PILL_CSS = `
 :root { --spring-easing: ${SPRING_EASING}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Inter", "Figtree", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Figtree", "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { font-feature-settings: "salt" on; }
 
-.pill-zone { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
+.pill-zone { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 428px; height: 54px; display: flex; align-items: flex-end; justify-content: center; }
+.pill-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 428px; height: 54px; background: rgba(0, 0, 0, 0.004); }
 
 /* The card — their exact pill geometry. */
 .pill-card {
@@ -57,7 +65,7 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
   border-color: hsla(0, 0%, 100%, 0.5);
   box-shadow: none;
 }
-
+.pill-card:focus-visible { outline: 2px solid #10b981; outline-offset: 3px; }
 /* Mini content row: flex, 8px gap, 12px side padding, single line. */
 .mini-row {
   position: absolute;
@@ -68,11 +76,12 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
   padding: 0 12px;
   white-space: nowrap;
   overflow: hidden;
-  opacity: 1;
-  transition: opacity 0.18s ease 0.1s;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.08s ease;
 }
-.pill-card[data-state="card"] .mini-row,
-.pill-card[data-state="l4"] .mini-row { opacity: 0; pointer-events: none; transition: opacity 0.08s ease; }
+.pill-card[data-state="mini"] .mini-row { opacity: 1; pointer-events: auto; transition: opacity 0.18s ease 0.1s; }
+.pill-card[data-peek="true"] .mini-row { opacity: 0; }
 
 /* Frosted avatar circle (their 24px, hsla white .15 + blur 8px). */
 .avatar {
@@ -139,29 +148,47 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
 .card-content {
   position: absolute;
   inset: 0;
-  display: none;
+  display: flex;
   flex-direction: column;
   padding: 16px 12px;
-  gap: 2px;
+  gap: 0;
   opacity: 0;
   transition: opacity 0.18s ease 0.1s;
 }
 .pill-card[data-state="card"] .card-content,
 .pill-card[data-state="l4"] .card-content { display: flex; opacity: 1; }
 .card-row { display: flex; align-items: center; gap: 8px; min-height: 48px; }
-.status-line { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; }
+.status-line { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; min-width: 0; }
 
-/* Shimmer: their generating-text sweep, 90deg #6f6f76→#fff, 150% travel. */
+/* l4 transcript body (rules L65-L85). */
+.pill-card[data-state="l4"] .l4-body {
+  padding-top: 28px;
+  transition: opacity 0.32s ease 0.12s;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #30302f transparent;
+}
+.l4-body::-webkit-scrollbar { width: 4px; }
+.l4-body::-webkit-scrollbar-thumb { background: #30302f; border-radius: 2px; }
+.l4-body { font-size: 12.5px; line-height: 18px; opacity: 0.92; }
+.l4-body h1, .l4-body h2, .l4-body h3 { font-size: 13px; line-height: 18px; font-weight: 600; margin-bottom: 5px; }
+.l4-body ul { padding-left: 17px; margin-bottom: 7px; }
+.l4-body li::marker { color: #878683; }
+
+/* Shimmer: their generating-text sweep, 90deg #6f6f76→#fff, 220% travel
+ * (pillcss @541469). */
 .shimmer {
   background-image: linear-gradient(90deg, #6f6f76 0%, #6f6f76 35%, #fff 50%, #6f6f76 65%, #6f6f76 100%);
-  background-size: 200% 100%;
+  background-size: 220% 100%;
   background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: shimmer-sweep 1.2s linear infinite;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  animation: shimmer-sweep 4s ease-in-out infinite;
 }
-@keyframes shimmer-sweep { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+@keyframes shimmer-sweep { from { background-position: 220% 0; } to { background-position: -220% 0; } }
 
 /* Notification badge straddling the top-right (their #2a2a29/#343432 pill). */
 .badge {
@@ -382,12 +409,14 @@ export function Overlay() {
                 {recording ? ` · ${minutes}:${seconds}` : ""}
               </span>
             </div>
-            <p
-              className={`live-text ${processing && !event.partial ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
-              data-multiline="true"
-            >
-              {liveText}
-            </p>
+            <div className="l4-body">
+              <p
+                className={`live-text ${processing && !event.partial ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
+                data-multiline="true"
+              >
+                {liveText}
+              </p>
+            </div>
           </div>
         </div>
       </div>
