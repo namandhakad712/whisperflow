@@ -37,7 +37,7 @@ export function ScratchpadTab() {
 
   const add = () => {
     const clean = draft.trim();
-    if (!clean) return;
+    if (!clean) return; // the button stays clickable; an empty draft just does nothing
     setNotes((n) => [{ id: crypto.randomUUID(), text: clean, updatedAt: Date.now() }, ...n]);
     setDraft("");
   };
@@ -56,9 +56,7 @@ export function ScratchpadTab() {
           placeholder="Start a note…"
           onKeyDown={(e) => e.key === "Enter" && add()}
         />
-        <Button onClick={add} disabled={!draft.trim()}>
-          New note
-        </Button>
+        <Button onClick={add}>New note</Button>
       </div>
       {notes.length === 0 ? (
         <EmptyState

@@ -66,6 +66,8 @@ export class DictationController {
    *  recording for hours (the reference app ships the same guard, default 20
    *  minutes, warning one minute before the cap). */
   private recordingCap: NodeJS.Timeout | null = null;
+  /** Pending overlay collapse — cleared whenever a new dictation starts. */
+  private hideTimer: NodeJS.Timeout | null = null;
   private recordingCapWarn: NodeJS.Timeout | null = null;
   private armRecordingCap(maxMs: number): void {
     if (this.recordingCap) {
@@ -137,6 +139,11 @@ export class DictationController {
 
   async start(opts: { recorder?: boolean } = {}): Promise<void> {
     if (this.session) return;
+    // The pill is coming back — cancel any pending collapse from the last turn.
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
     try {
       const cfg = await this.deps.engine.getConfig().catch(() => null);
       const meeting = Boolean(cfg?.general?.meetingMode) || opts.recorder;
@@ -209,13 +216,19 @@ export class DictationController {
       }
       this.broadcast({ state: "done" });
       log("dictation: done", result ? `(${result.final.length} chars${result.action ? `, ${result.action}` : ""})` : "(empty)");
-      setTimeout(() => this.deps.windows.hideOverlay(), 400);
       this.deps.windows.sendToSettings("dictation/state", { state: "done" });
     } catch (err) {
       log("dictation: failed:", err);
       this.broadcast({ state: "error", error: String(err) });
-      setTimeout(() => this.deps.windows.hideOverlay(), 2200);
     } finally {
+      // Collapse the pill in every outcome — the renderer morphs to the rest
+      // dash, and the window hides (and is released) a beat later. Nothing
+      // can leave the overlay stuck on screen, not even an injection failure.
+      // Cancellable: a rapid next dictation revives the pill before this fires.
+      this.hideTimer = setTimeout(() => {
+        this.hideTimer = null;
+        this.deps.windows.hideOverlay();
+      }, 900);
       if (this.recording) this.flushRecording();
       this.recording = false;
       this.deps.hotkeys.unbindEscape();

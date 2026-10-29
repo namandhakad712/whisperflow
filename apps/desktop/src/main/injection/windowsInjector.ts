@@ -1,6 +1,7 @@
 import { clipboard } from "electron";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import { log } from "../lib/log";
 
 /**
  * Pastes text into the focused window on Windows:
@@ -21,7 +22,17 @@ export async function injectText(text: string): Promise<boolean> {
   await clipboard.writeText(text);
   let pasted = false;
   try {
-    await sendPaste();
+    // One retry: a paste can lose a focus race right after the overlay window
+    // dismisses — the target app has the keys a beat too early or too late.
+    // A second attempt 300 ms in costs almost nothing and recovers the
+    // common transient failure without degrading the fast path.
+    try {
+      await sendPaste();
+    } catch (firstErr) {
+      logInjection(`first paste attempt failed (${String(firstErr).slice(0, 90)}) — retrying once`);
+      await delay(300);
+      await sendPaste();
+    }
     pasted = true;
   } finally {
     if (pasted) {
@@ -127,6 +138,15 @@ function sendPaste(): Promise<void> {
 }
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Same sink as the rest of the main process (logs go to userData/logs). */
+const logInjection = (msg: string): void => {
+  try {
+    log(`injection: ${msg}`);
+  } catch {
+    /* logging must never break a paste */
+  }
+};
 
 /**
  * ClipboardItem is a class on the CJS electron module. A static ESM named

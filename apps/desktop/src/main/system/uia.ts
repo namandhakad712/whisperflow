@@ -65,6 +65,34 @@ let probe: ChildProcessByStdio<Writable, Readable, null> | null = null;
 let pending: ((out: string) => void) | null = null;
 let buffer = "";
 let cached: { at: number; info: FocusedElementInfo | null } = { at: 0, info: null };
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * The probe is only needed while dictations are flowing. Once idle it is
+ * killed (a resident powershell.exe + UIAutomationClient sits on ~60 MB RSS
+ * for nothing); the next observation lazily spawns it again via ensureProbe().
+ * Cold UIA load takes seconds, so the grace period is long enough that
+ * back-to-back dictations never pay it.
+ */
+const PROBE_IDLE_MS = 5 * 60_000;
+
+function scheduleProbeIdleUnload(): void {
+  cancelProbeIdleUnload();
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    if (probe && !probe.killed && probe.exitCode === null) probe.kill();
+    probe = null;
+  }, PROBE_IDLE_MS);
+  // Never keep the app alive on quit just for this timer.
+  if (typeof idleTimer === "object" && "unref" in idleTimer) idleTimer.unref();
+}
+
+function cancelProbeIdleUnload(): void {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+}
 
 /** Lazily start (or revive) the resident probe. */
 function ensureProbe(): ChildProcessByStdio<Writable, Readable, null> {
@@ -110,9 +138,13 @@ export async function getFocusedElementInfo(): Promise<FocusedElementInfo | null
       if (settled) return;
       settled = true;
       cached = { at: Date.now(), info };
+      // The dictation cycle that needed the probe is over: start the idle
+      // countdown to release it again.
+      scheduleProbeIdleUnload();
       resolve(info);
     };
     try {
+      cancelProbeIdleUnload(); // in use — hold the probe resident
       const p = ensureProbe();
       if (pending) {
         // A probe is already in flight (rapid polling) — skip this one.

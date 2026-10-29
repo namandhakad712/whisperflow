@@ -22,6 +22,35 @@ files:
   - "!node_modules/onnxruntime-node/**"
   - "!node_modules/@earendil-works/pi-ai/**"
   - "!node_modules/@napi-rs/**"
+  # --- installer size diet (~420 MB unpacked) ---
+  # node-llama-cpp ships one native package per (arch, backend) and picks
+  # between them at runtime by process.arch + GPU detection, so every package
+  # unneeded on the target is pure dead weight:
+  #   - win-x64-cuda-ext is a 370 MB *fallback* copy of ggml-cuda.dll that only
+  #     loads when the primary CUDA binary fails its load test. Dropping it
+  #     still leaves three working backends (CUDA primary, Vulkan, CPU) — a
+  #     370 MB insurance copy is not a defensible trade for a dictation app.
+  #   - win-arm64 can never load from an x64 build (node-llama-cpp imports it
+  #     only when process.arch === "arm64").
+  - "!node_modules/@node-llama-cpp/win-x64-cuda-ext/**"
+  - "!node_modules/@node-llama-cpp/win-arm64/**"
+  # Import-library / export-table leftovers from the addon build — link-time
+  # artifacts, never dlopen'ed at runtime.
+  - "!node_modules/@node-llama-cpp/**/*.lib"
+  - "!node_modules/@node-llama-cpp/**/*.exp"
+  # node-llama-cpp's bundled llama.cpp *source* (gitRelease.bundle alone is
+  # 34 MB). Only consumed when compiling the addon from source, which needs
+  # CMake + MSVC on the user's machine; the prebuilt binaries above always win.
+  - "!node_modules/node-llama-cpp/llama/**"
+  # uiohook-napi's prebuilds for other OSes/architectures — dead on win-x64.
+  - "!node_modules/uiohook-napi/prebuilds/darwin-*/**"
+  - "!node_modules/uiohook-napi/prebuilds/linux-*/**"
+  - "!node_modules/uiohook-napi/prebuilds/win32-arm64/**"
+
+# The UI ships English only — ship just the matching Chromium locale pack and
+# drop the other ~80 (48 MB unpacked). Chromium falls back to en-US regardless.
+electronLanguages:
+  - en-US
 
 win:
   icon: resources/icon.png

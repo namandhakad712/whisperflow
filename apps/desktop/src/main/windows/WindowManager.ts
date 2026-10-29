@@ -175,13 +175,15 @@ export class WindowManager {
 
   private overlayDisplayId: number | null = null;
   private displayHooked = false;
+  private repositionOverlay: (() => void) | null = null;
 
   /** Corner-anchored overlays must stay on their display when the layout changes. */
   private watchDisplayChanges(win: BrowserWindow): void {
     if (this.displayHooked) return;
     this.displayHooked = true;
     const reposition = () => {
-      if (win.isDestroyed() || !win.isVisible()) return;
+      const win = this.overlayWindow;
+      if (!win || win.isDestroyed() || !win.isVisible()) return;
       if (this.overlayAnchor === "cursor") return; // re-derived per dictation
       const display =
         screen.getAllDisplays().find((d) => d.id === this.overlayDisplayId) ??
@@ -192,8 +194,18 @@ export class WindowManager {
       const height = size[1] ?? 148;
       win.setBounds(this.boundsFor(this.overlayAnchor, { width, height }, display, screen.getCursorScreenPoint()), false);
     };
+    this.repositionOverlay = reposition;
     screen.on("display-removed", reposition);
     screen.on("display-metrics-changed", reposition);
+  }
+
+  private unwatchDisplayChanges(): void {
+    if (this.repositionOverlay) {
+      screen.removeListener("display-removed", this.repositionOverlay);
+      screen.removeListener("display-metrics-changed", this.repositionOverlay);
+      this.repositionOverlay = null;
+    }
+    this.displayHooked = false;
   }
 
   /**
@@ -208,6 +220,18 @@ export class WindowManager {
 
   hideOverlay(): void {
     if (this.overlayWindow?.isDestroyed() === false) this.overlayWindow.hide();
+    // The overlay is only shown while a dictation is in flight; keeping a
+    // hidden BrowserWindow (and its renderer process) resident between
+    // dictations wastes real memory for something used seconds at a time.
+    // ensureOverlay() rebuilds it on demand, so drop it once it is hidden.
+    this.destroyOverlay();
+  }
+
+  private destroyOverlay(): void {
+    this.unwatchDisplayChanges();
+    if (this.overlayWindow?.isDestroyed() === false) this.overlayWindow.destroy();
+    this.overlayWindow = null;
+    this.overlayRecovery = null;
   }
 
   isOverlayVisible(): boolean {

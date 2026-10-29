@@ -37,39 +37,61 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
   height: 30px;
 }
 
-/* Hover morph: the pill grows to a rounded capsule and shows the hotkey hint.
- * Their window widens with it; ours morphs the dash alone — width transitions
- * within this 56px hit zone would clip, so the pill overlay is a fixed-size
- * element that fades/scales in on hover. */
-.pill {
+/* Hover capsule — their exact status-bar capsule: a 30px circle that expands
+ * to 54px width, vast-950 bg, 1.5px border fading from transparent to
+ * vast-900, all on the 0.2s capsule spring. (The invented 416px "Dictate +
+ * hotkey" pill is gone — it didn't exist in the reference.) */
+.capsule {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%) scale(0.6);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  justify-content: flex-end;
   height: 30px;
-  max-width: none;
+  width: 30px;
   border-radius: 999px;
-  background: #1f1f1f;
-  border: 1.5px solid #30302f;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
-  white-space: nowrap;
+  background: #1a1a1a;
+  border: 1.5px solid transparent;
+  overflow: hidden;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.42s var(--spring-easing);
-  z-index: 2;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s var(--spring-easing), border-color 0.05s ease, opacity 0.18s ease;
 }
-.zone:hover .pill, .zone[data-hover="true"] .pill {
+.zone:hover .capsule, .zone[data-hover="true"] .capsule {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  width: 54px;
+  border-color: #30302f;
 }
 .zone:hover .dash, .zone[data-hover="true"] .dash { opacity: 0; }
 
-.hint { font-size: 12px; line-height: 18px; color: #fcfcfb; font-weight: 500; }
-.key { font-size: 11px; color: #71716e; }
+/* Inner circle button: shade-black with a vast-900 ring; hover fills
+ * vast-900 and lightens the ring to vast-700 (their hover). */
+.cap-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #000;
+  border: 1.5px solid #30302f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.zone:hover .cap-btn { background: #30302f; border-color: #5b5b59; }
+
+/* The chevron: vast-500, 22px, hover shade-white, rotated per dock edge. */
+.cap-chevron {
+  width: 22px;
+  height: 22px;
+  color: #878683;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+.zone:hover .cap-chevron { color: #fff; }
+.zone[data-edge="left"] .cap-chevron { transform: rotate(90deg); }
+.zone[data-edge="right"] .cap-chevron { transform: rotate(-90deg); }
 `;
 
 const DEFAULT_HOTKEY = "Ctrl+Shift+Space";
@@ -133,9 +155,13 @@ export function StatusBar() {
         }}
       >
         <span className="dash" />
-        <div className="pill">
-          <span className="hint">Dictate</span>
-          <span className="key">{hotkey}</span>
+        {/* Their hover capsule: circle button + chevron; expanding 30→54px. */}
+        <div className="capsule" aria-label={`Start dictation (${hotkey})`}>
+          <span className="cap-btn">
+            <svg className="cap-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </span>
         </div>
       </div>
     </>

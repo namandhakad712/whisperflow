@@ -13,9 +13,28 @@ export function DictionaryTab() {
 
   const add = () => {
     const clean = term.trim();
-    if (!clean) return;
+    if (!clean) {
+      setNotice("Type a word first — then press Add (or Enter).");
+      setTimeout(() => setNotice(null), 4000);
+      return;
+    }
+    // The placeholder promises "word → replacement": honour it by splitting
+    // the arrow form into term + pronunciation instead of storing the raw
+    // line as the term itself.
+    const arrow = clean.match(/^(.+?)\s*(?:->|→|=>)\s*(.+)$/);
+    const entryTerm = arrow ? arrow[1]!.trim() : clean;
+    const pronunciation = arrow ? arrow[2]!.trim() : undefined;
     setTerm("");
-    void addDictionaryEntry(clean).then(loadConfig);
+    void addDictionaryEntry(entryTerm, pronunciation)
+      .then(loadConfig)
+      .then(() => {
+        setNotice(`Added “${entryTerm}” to the dictionary.`);
+        setTimeout(() => setNotice(null), 4000);
+      })
+      .catch(() => {
+        setNotice("Couldn't add that word — check the logs folder (Settings → About).");
+        setTimeout(() => setNotice(null), 6000);
+      });
   };
 
   /** Imports a word list: one term per line, optional "word → replacement". */
@@ -53,7 +72,7 @@ export function DictionaryTab() {
     <section>
       <PageHeader
         title="Dictionary"
-        actions={<><Button variant="ghost" onClick={() => void importList()}>Import</Button><Button onClick={add} disabled={!term.trim()}>Add new</Button></>}
+        actions={<><Button variant="ghost" onClick={() => void importList()}>Import</Button><Button onClick={add}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}

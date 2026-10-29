@@ -99,8 +99,8 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
 // ---- dictionary & command helpers (config-backed collections) ---------------
 
-export async function addDictionaryEntry(term: string): Promise<void> {
-  await window.whisperflow.dictionary.add({ term });
+export async function addDictionaryEntry(term: string, pronunciation?: string): Promise<void> {
+  await window.whisperflow.dictionary.add({ term, ...(pronunciation ? { pronunciation } : {}) });
 }
 
 export async function removeDictionaryEntry(entry: DictionaryEntry): Promise<void> {

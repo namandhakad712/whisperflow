@@ -28,10 +28,19 @@ export function CommandsTab() {
 
   const add = () => {
     const clean = phrase.trim();
-    if (!clean) return;
+    if (!clean) {
+      setNotice("Type the phrase you'll say, then press Add.");
+      setTimeout(() => setNotice(null), 4000);
+      return;
+    }
     setPhrase("");
     setPayload("");
-    void addCommand(clean, action, payload.trim() || undefined).then(loadConfig);
+    void addCommand(clean, action, payload.trim() || undefined)
+      .then(loadConfig)
+      .catch(() => {
+        setNotice("Couldn't add that command — check the logs folder (Settings → About).");
+        setTimeout(() => setNotice(null), 6000);
+      });
   };
 
   /**
@@ -84,7 +93,7 @@ export function CommandsTab() {
     <section>
       <PageHeader
         title="Snippets"
-        actions={<><Button variant="ghost" onClick={() => void importJson()}>Import</Button><Button onClick={add} disabled={!phrase.trim()}>Add new</Button></>}
+        actions={<><Button variant="ghost" onClick={() => void importJson()}>Import</Button><Button onClick={add}>Add new</Button></>}
         segmented={["All", "Personal"]}
         activeSeg={filter}
         onSegChange={setFilter}

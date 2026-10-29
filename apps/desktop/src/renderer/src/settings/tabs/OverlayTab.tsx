@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
-import { Card, PageHeader, Row, TextInput, Toggle } from "../../shared/ui";
+import { Button, Card, PageHeader, Row, TextInput, Toggle } from "../../shared/ui";
 
 type Shape = "pill" | "rect" | "blob";
 type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom";
@@ -108,6 +108,42 @@ export function OverlayTab() {
               </button>
             ))}
           </div>
+        </Row>
+
+        <Row
+          label="Custom pill color"
+          hint="Paint the pill any color — leave blank for the reference look (#1f1f1f)."
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={g.overlayTint && g.overlayTint.startsWith("#") ? g.overlayTint : "#1f1f1f"}
+              onChange={(e) => void patch({ general: { overlayTint: e.target.value } })}
+              className="h-9 w-12 cursor-pointer rounded-lg border border-line bg-surface-2"
+              aria-label="Pill color picker"
+            />
+            <TextInput
+              value={g.overlayTint}
+              onChange={(v) => void patch({ general: { overlayTint: v } })}
+              placeholder="#1f1f1f or blank"
+              className="w-40"
+            />
+            {g.overlayTint && (
+              <Button variant="ghost" onClick={() => void patch({ general: { overlayTint: "" } })}>
+                Reset
+              </Button>
+            )}
+          </div>
+        </Row>
+
+        <Row
+          label="Sync with system theme"
+          hint="The pill follows light/dark mode and flips its card and text. Off = the reference dark pill."
+        >
+          <Toggle
+            checked={Boolean(g.overlayFollowSystemTheme)}
+            onChange={(v) => void patch({ general: { overlayFollowSystemTheme: v } })}
+          />
         </Row>
 
         <Row label="Custom backdrop" hint="An image or GIF drawn behind the pill, under a dark scrim.">

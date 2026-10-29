@@ -412,6 +412,16 @@ export const GeneralConfigSchema = z.object({
      * chosen screen edge and morphs to the dictation pill on hover.
      */
     dockEdge: z.enum(["none", "left", "right", "bottom"]).default("none"),
+    /**
+     * Custom overlay tint — overrides the reference #1f1f1f card background.
+     * Empty string = the reference look.
+     */
+    overlayTint: z.string().default(""),
+    /**
+     * Follow the OS theme: the pill reads light/dark from the OS and flips
+     * its card + text colors. Off = always the reference dark pill.
+     */
+    overlayFollowSystemTheme: z.boolean().default(false),
 });
 export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 

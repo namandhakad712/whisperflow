@@ -6,6 +6,15 @@ import type { PolishInput } from "../../text/promptBuilder.js";
 import { buildPolishMessages } from "../../text/promptBuilder.js";
 import type { PolishProvider } from "./PolishProvider.js";
 
+/**
+ * How long a loaded local model stays resident after the last dictation.
+ * A GGUF context holds hundreds of MB of weights + KV cache; dictation bursts
+ * are seconds long, so keeping it hot through a long idle is a bad RAM trade.
+ * The next polish re-loads lazily (hundreds of ms) — an acceptable cost once
+ * every few minutes.
+ */
+const IDLE_UNLOAD_MS = 5 * 60_000;
+
 // Minimal structural types over the dynamically imported module.
 interface LlamaModel {
   dispose(): void;
@@ -27,6 +36,7 @@ export class LocalLlamaProvider implements PolishProvider {
   private llama: LlamaModule | null = null;
   private model: LlamaModel | null = null;
   private loadedModelPath = "";
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly opts: {
@@ -51,6 +61,7 @@ export class LocalLlamaProvider implements PolishProvider {
     if (!modelPath) {
       throw new Error("polish model not downloaded — get it in Settings → Models");
     }
+    this.cancelIdleUnload();
     await this.ensureLoaded(modelPath);
     const messages = buildPolishMessages(input);
 
@@ -64,13 +75,36 @@ export class LocalLlamaProvider implements PolishProvider {
       yield text.trim();
     } finally {
       session.dispose();
+      this.scheduleIdleUnload();
     }
   }
 
   dispose(): void {
+    this.cancelIdleUnload();
     this.model?.dispose();
     this.model = null;
     this.loadedModelPath = "";
+  }
+
+  /** Frees the resident model once dictation has been quiet for a while. */
+  private scheduleIdleUnload(): void {
+    this.cancelIdleUnload();
+    this.idleTimer = setTimeout(() => {
+      this.idleTimer = null;
+      if (this.model) this.opts.logger?.("polish: idle — unloading the local model");
+      this.model?.dispose();
+      this.model = null;
+      this.loadedModelPath = "";
+    }, IDLE_UNLOAD_MS);
+    // The timer must never keep the process alive on quit.
+    if (typeof this.idleTimer === "object" && "unref" in this.idleTimer) this.idleTimer.unref();
+  }
+
+  private cancelIdleUnload(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
   }
 
   private async ensureLoaded(modelPath: string): Promise<void> {

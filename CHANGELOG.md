@@ -2,6 +2,25 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.10] — 2026-10-29
+
+### Fixed — live-test findings
+- **Empty dictations no longer pollute history** — `recordHistory` drops turns where nothing was said.
+- **The overlay can never get stuck again**: the collapse-to-rest-dash and window release now run in a `finally` for every outcome, the pending hide is cancelled if a new dictation starts inside its 900 ms window, and the overlay window is destroyed (not hidden-resident) between turns.
+- **Double-trigger bug fixed**: toggling hold-to-talk at runtime used to leave BOTH the global shortcut and the keyboard hook armed on the same combo (paired "dictation: started" lines ~200 ms apart — the source of the background CPU spikes). `applyHotkeyConfig` now owns both bindings exclusively.
+- **Injection retries once**: a paste can lose a focus race right after the pill dismisses; a 300 ms-spaced second attempt recovers the common transient failure before falling back to the clipboard.
+- **Add buttons work**: Dictionary / Commands / Scratchpad Add buttons are no longer greyed-out-until-typed — always clickable, validate on click with visible feedback, and the dictionary now parses its promised `word → replacement` syntax into term + pronunciation.
+- **The resting bar's hover is their actual capsule** (30→54px vast-950 circle + chevron on the 0.2s capsule spring) — the invented 416px "Dictate + hotkey" pill (and its clipped text) is gone.
+- **No more debug text on done**: the pill collapses to the rest dash instead of flashing "✓ Text inserted".
+
+### Added
+- **Cloud polish models in the Models tab** — the same provider → model → key → Test picker as cloud STT, with an honest per-provider note. Picking a provider activates the remote polish engine.
+- **Custom overlay color + system theme sync** (Overlay tab): a color picker/text field for the pill (`--pill-*` variables, reference look by default) and a toggle that follows the OS light/dark mode.
+
+### Performance (measured, before → after)
+- **Installer 407.41 MB → 261.94 MB (−35.7%)**: dropped the 370 MB cuda-ext *fallback* binary (CUDA primary + Vulkan + CPU all still ship), win-arm64 prebuilds, .lib/.exp link artifacts, 34 MB of llama.cpp source, and 48 MB of unused Chromium locales (en-US only). Two-phase release flow re-proven end-to-end with the blockmap still generating.
+- **Idle footprint**: the resident PowerShell UIA probe (~60 MB) and the loaded local GGUF context now unload after 5 min idle; the overlay BrowserWindow is no longer resident between dictations. Warm idle is ~285 MB / 0.25–0.34% CPU — the Electron process-model floor.
+
 ## [0.1.9] — 2026-10-28
 
 ### Changed — the dictation overlay is now the reference pill, rebuilt from their CSS

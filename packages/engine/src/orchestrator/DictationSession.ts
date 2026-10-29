@@ -196,6 +196,10 @@ export class DictationSession {
   /** Writes one history entry (raw + final + optional saved-audio path). */
   private recordHistory(rawText: string, finalText: string, audioPath?: string): TranscriptItem | undefined {
     if (!this.deps.config.general.historyEnabled || !this.deps.history) return undefined;
+    // Nothing was said — don't store an empty entry. History is for things
+    // actually dictated; a "dictation: done (0 chars)" turn must not end up
+    // as a blank row the user then has to clean out.
+    if (!rawText.trim() && !finalText.trim()) return undefined;
     return this.deps.history.add({
       app: this.deps.app,
       ...(this.deps.triggerSource ? { triggerSource: this.deps.triggerSource } : {}),

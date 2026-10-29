@@ -33,8 +33,8 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
   width: 416px;
   height: 48px;
   border-radius: 16px;
-  background: #1f1f1f;
-  border: 1.5px solid #30302f;
+  background: var(--pill-bg, #1f1f1f);
+  border: 1.5px solid var(--pill-border, #30302f);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
   transition:
     width 0.42s var(--spring-easing),
@@ -48,6 +48,15 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
 }
 .pill-card[data-state="card"] { height: 80px; }
 .pill-card[data-state="l4"] { height: 322px; }
+/* Their rest state — the pill collapses to a 30×6 dash (exact values). */
+.pill-card[data-state="rest"] {
+  width: 30px;
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-color: hsla(0, 0%, 100%, 0.5);
+  box-shadow: none;
+}
 
 /* Mini content row: flex, 8px gap, 12px side padding, single line. */
 .mini-row {
@@ -93,7 +102,7 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
   font-size: 15px;
   line-height: 20px;
   font-weight: 500;
-  color: #fcfcfb;
+  color: var(--pill-ink, #fcfcfb);
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
   mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
 }
@@ -211,7 +220,11 @@ export function Overlay() {
 
   const readConfig = useCallback(async () => {
     const c = (await window.whisperflow.settings.get()) as {
-      general?: { overlayBackdrop?: string };
+      general?: {
+        overlayBackdrop?: string;
+        overlayTint?: string;
+        overlayFollowSystemTheme?: boolean;
+      };
       hotkey?: { pushToTalk?: string };
       audio?: { deviceId?: string };
     };
@@ -219,6 +232,19 @@ export function Overlay() {
     // freshest value without re-running this effect).
     micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
     void micId;
+    // Custom tint + OS theme sync: the pill recolors from config (their colors
+    // stay the default). `prefers-color-scheme` is the OS theme signal.
+    const follow = Boolean(c.general?.overlayFollowSystemTheme);
+    const systemLight =
+      follow && typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches;
+    const tint = c.general?.overlayTint?.trim() || "";
+    document.documentElement.style.setProperty("--pill-bg", tint || (systemLight ? "#fcfcfb" : "#1f1f1f"));
+    document.documentElement.style.setProperty(
+      "--pill-border",
+      systemLight && !tint ? "rgba(0,0,0,0.1)" : "#30302f",
+    );
+    document.documentElement.style.setProperty("--pill-ink", systemLight && !tint ? "#1a1a1a" : "#fcfcfb");
+    document.documentElement.style.setProperty("--pill-meta", systemLight && !tint ? "#71716e" : "#71716e");
   }, [micId]);
 
   // Click-through by default (like the reference overlay): the window ignores the
@@ -308,8 +334,18 @@ export function Overlay() {
   const processing = event.state === "transcribing" || event.state === "polishing" || event.state === "injecting";
   const card = processing;
   // Their state machine: listening → mini; processing → card; long
-  // transcripts get the 322px l4 expansion.
-  const pillState = event.state === "listening" ? "mini" : card ? (event.partial && event.partial.length > 60 ? "l4" : "card") : "mini";
+  // transcripts get the 322px l4 expansion; done collapses back to the rest
+  // dash (the window then hides — no "inserted!" debug text hangs around).
+  const pillState =
+    event.state === "done"
+      ? "rest"
+      : event.state === "listening"
+        ? "mini"
+        : card
+          ? event.partial && event.partial.length > 60
+            ? "l4"
+            : "card"
+          : "mini";
 
   const seconds = String(elapsed % 60).padStart(2, "0");
   const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
@@ -318,11 +354,9 @@ export function Overlay() {
   const liveText =
     event.state === "listening"
       ? event.partial || (recording ? "" : "Press the hotkey and speak")
-      : event.state === "done"
-        ? "✓ Text inserted"
-        : event.state === "error"
-          ? event.error ?? "Something went wrong"
-          : event.partial || `${STATE_LABEL[event.state]}…`;
+      : event.state === "error"
+        ? event.error ?? "Something went wrong"
+        : event.partial || `${STATE_LABEL[event.state]}…`;
 
   return (
     <>

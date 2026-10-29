@@ -118,6 +118,11 @@ async function bootstrap(): Promise<void> {
   function applyHotkeyConfig(cfg: WhisperFlowConfig): void {
     const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
     if (holdWanted(cfg)) {
+      // Hold mode owns the accelerator: the global shortcut MUST be unbound,
+      // or pressing it fires both paths — a double-trigger that starts two
+      // dictations back-to-back (seen in the wild as paired
+      // "dictation: started" log lines 200 ms apart).
+      hotkeys.unbindMain();
       if (!holdWatcher || holdWatcher.accelerator !== accelerator) {
         holdWatcher?.stop();
         const parsed = parseAccelerator(accelerator);
@@ -126,29 +131,27 @@ async function bootstrap(): Promise<void> {
         holdWatcher.start();
         log(`hotkey: hold-to-talk armed (${accelerator}) via keyboard hook`);
       }
-    } else if (holdWatcher) {
-      holdWatcher.stop();
-      holdWatcher = null;
-      log("hotkey: hold-to-talk off — toggle mode");
+    } else {
+      if (holdWatcher) {
+        holdWatcher.stop();
+        holdWatcher = null;
+        log("hotkey: hold-to-talk off — toggle mode");
+      }
+      if (!hotkeys.bindMain(accelerator)) {
+        log(`hotkey: "${accelerator}" is taken by another app — rebind in Settings → Shortcuts`);
+      }
     }
     // Re-apply their per-action shortcuts on every settings change.
     hotkeys.bindActions(cfg.hotkey?.shortcuts ?? {});
   }
   applyHotkeyConfig(config);
 
-  const mainHotkey = config.hotkey?.pushToTalk || "Control+Shift+Space";
-  if (!holdWanted(config)) {
-    if (!hotkeys.bindMain(mainHotkey)) {
-      log(`hotkey: "${mainHotkey}" is taken by another app — rebind in Settings → Shortcuts`);
-    }
-  }
   // Their per-action shortcuts (paste_last / copy_last) register whenever the
   // hotkey config is applied; bindActions is idempotent.
   const shortcutResult = hotkeys.bindActions(config.hotkey?.shortcuts ?? {});
   if (!shortcutResult.ok) {
     log(`hotkey: "${shortcutResult.failed}" shortcut is taken by another app — rebind in Settings → Shortcuts`);
   }
-  applyHotkeyConfig(config);
 
   // Their persistent resting "flow bar" — the 30×6 dash docked on a screen
   // edge. Off by default (their `hideFlowBarPermanently` equivalent).
