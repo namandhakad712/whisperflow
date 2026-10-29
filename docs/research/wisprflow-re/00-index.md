@@ -100,7 +100,13 @@ Remaining backlog (in priority order):
    `roots.exe`. Verification is already ported (`matchesBeforePasteAndAfter`
    in `editDistance.ts`); the write is what's missing.
 
-In flight (parallel work, not from this corpus): slimming the ~400 MB Windows
-installer, and a re-audit of the cloud STT/polish presets in
-`packages/shared/src/config.ts` (per-provider limits re-verified 2026-10-29,
-dead ids and unverifiable marketing numbers dropped).
+In flight (parallel work, not from this corpus): ~completed (v0.1.10–v0.1.13)~
+the ~400 MB Windows installer is now 262 MB (dropped a 370 MB cuda-*fallback*
+binary, arm64 prebuilds, llama.cpp source, unused locales); the cloud
+STT/polish presets were re-verified 2026-10-29 (dead ids and unverifiable
+marketing numbers dropped); the dictation pill gained the remaining exact
+values from their compiled CSS (root spring curve, shimmer, focus ring, l4
+transcript body, typing dots, the 30→54px resting capsule, and their
+paste-failure notification card). Remaining backlog unchanged: the full
+18-state machine names/transitions, the meeting-mode pill, and the native UIA
+paste write-path.
