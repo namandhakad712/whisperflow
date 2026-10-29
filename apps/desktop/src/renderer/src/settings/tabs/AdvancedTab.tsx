@@ -221,7 +221,7 @@ function CloudPolishCard() {
             <TextInput
               value={cloud.model}
               onChange={(v) => void patch({ polish: { remote: { model: v } } })}
-              placeholder="model id, e.g. gpt-4o-mini"
+              placeholder="model id, e.g. gpt-6-luna"
             />
           )}
         </div>

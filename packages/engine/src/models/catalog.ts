@@ -82,10 +82,10 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     url: HF("unsloth/Qwen3.5-4B-GGUF", "Qwen3.5-4B-Q4_K_M.gguf"),
     sizeBytes: 2_740_937_888,
     format: "gguf",
-    tiers: ["mid", "high"],
+    tiers: ["high"],
     license: "Apache-2.0",
     notes:
-      "Default polish model — strong instruction following at 4B, Apache-2.0. Use the text path only (don't load the mmproj vision file). ~2.7 GB.",
+      "Larger polish model — only worth the download if you want heavier rewriting than text cleanup; the 2B default handles filler removal, punctuation, and casing fine. Use the text path only (don't load the mmproj vision file). ~2.7 GB.",
   },
   {
     id: "qwen3.5-2b-q4",
@@ -96,9 +96,10 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     url: HF("unsloth/Qwen3.5-2B-GGUF", "Qwen3.5-2B-Q4_K_M.gguf"),
     sizeBytes: 1_280_835_840,
     format: "gguf",
-    tiers: ["low", "mid"],
+    tiers: ["low", "mid", "high"],
     license: "Apache-2.0",
-    notes: "Light polish model for low-RAM machines. ~1.3 GB.",
+    notes:
+      "Default polish model — 2B is plenty for text cleanup (filler words, punctuation, casing), and it is half the download of the 4B. Recommended for every hardware tier. ~1.3 GB.",
   },
   {
     id: "silero-vad",

@@ -16,9 +16,9 @@ export function recommendFor(tier: HardwareTier): TierRecommendation {
     case "low":
       return { tier, stt: "whisper-base-en", polish: "qwen3.5-2b-q4", polishViable: true, vad: "silero-vad" };
     case "mid":
-      return { tier, stt: "whisper-small", polish: "qwen3.5-4b-q4", polishViable: true, vad: "silero-vad" };
+      return { tier, stt: "whisper-small", polish: "qwen3.5-2b-q4", polishViable: true, vad: "silero-vad" };
     case "high":
-      return { tier, stt: "whisper-large-v3-turbo", polish: "qwen3.5-4b-q4", polishViable: true, vad: "silero-vad" };
+      return { tier, stt: "whisper-large-v3-turbo", polish: "qwen3.5-2b-q4", polishViable: true, vad: "silero-vad" };
   }
 }
 

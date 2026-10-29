@@ -80,18 +80,18 @@ export const CLOUD_STT_PRESETS = {
     models: ["whisper-large-v3-turbo", "whisper-large-v3"],
     docs: "https://console.groq.com/docs/speech-to-text",
     freeNote:
-      "Free tier: 20 RPM, ~2,000 requests/day, 7,200 audio-sec/hour. Groq's data page says inputs are not retained by default (abuse logs ≤30 days; zero-data-retention available).",
-    verified: "2026-10-26",
+      "Free tier (Groq's rate-limits table): 20 RPM, 2,000 requests/day, 7,200 audio-sec/hour (ASH), 28,800 audio-sec/day (ASD). Groq's data page says inputs are not retained by default (abuse logs ≤30 days; zero-data-retention available).",
+    verified: "2026-10-29",
   },
   mistral: {
-    label: "Mistral — Voxtral",
+    label: "Mistral — Voxtral 3",
     baseUrl: "https://api.mistral.ai/v1",
     defaultModel: "voxtral-mini-transcribe-3-0",
-    models: ["voxtral-mini-transcribe-3-0", "voxtral-mini-latest", "voxtral-small-latest"],
-    docs: "https://docs.mistral.ai/models/voxtral-mini-transcribe-3-0",
+    models: ["voxtral-mini-transcribe-3-0", "voxtral-small-transcribe-3-0"],
+    docs: "https://docs.mistral.ai/studio/audio/overview",
     freeNote:
-      "Voxtral Mini Transcribe 3 costs $0.0035/min (~$0.21/hour). Free-mode quota is not published — it shows in your Mistral console. Users report ~$10/month of free usage, which would be ~47 hours, but treat that as unconfirmed until you see your own console.",
-    verified: "2026-10-26",
+      "No free Voxtral quota as of 2026-10-29: Mistral prices Voxtral 3 purely per minute ($0.0035/min Mini Transcribe, $0.0040/min Small Transcribe — about $0.21/hour for Mini) and nothing in their docs, pricing, or Voxtral announcement lists any free audio quota. Treat older '~$10/month free' reports as outdated — this is a pay-per-minute endpoint.",
+    verified: "2026-10-29",
   },
   openai: {
     label: "OpenAI",
@@ -100,8 +100,8 @@ export const CLOUD_STT_PRESETS = {
     models: ["gpt-transcribe", "whisper-1"],
     docs: "https://platform.openai.com/docs/api-reference/audio",
     freeNote:
-      "No free tier — pay per minute. Note: `whisper-1` is deprecated with a shutdown date of 2027-02-26; `gpt-transcribe` is the current model.",
-    verified: "2026-10-26",
+      "No free tier — pay per minute. `gpt-transcribe` is $0.0045/min. `whisper-1` is deprecated (announced 2026-08-26) with a shutdown date of 2027-02-26; `gpt-transcribe` is the current model.",
+    verified: "2026-10-29",
   },
   custom: {
     label: "Custom — OpenAI-compatible endpoint",
@@ -110,7 +110,7 @@ export const CLOUD_STT_PRESETS = {
     models: [],
     docs: "",
     freeNote: "Anything that speaks POST /audio/transcriptions and returns JSON { text }.",
-    verified: "2026-10-26",
+    verified: "2026-10-29",
   },
 } as const;
 
@@ -215,23 +215,23 @@ export const RemotePolishConfigSchema = z.object({
 export type RemotePolishConfig = z.infer<typeof RemotePolishConfigSchema>;
 
 /**
- * One-click polish endpoints. Polish is a tiny job — a 8–120B model at low
- * temperature, or a small free endpoint, is plenty. Verified 2026-10-26.
+ * One-click polish endpoints. Polish is a tiny job — a small model at low
+ * temperature, or a small free endpoint, is plenty. Verified 2026-10-29.
  */
 export const POLISH_PRESETS = {
   groq: {
-    label: "Groq · gpt-oss-120b",
+    label: "Groq · gpt-oss-20b",
     hint: "Fast, ~1,000 req/day free",
     baseUrl: "https://api.groq.com/openai/v1",
-    model: "openai/gpt-oss-120b",
-    note: "Groq's free tier. Inputs not retained by default; ZDR available.",
+    model: "openai/gpt-oss-20b",
+    note: "Groq's free tier (30 RPM, 1,000 req/day for gpt-oss models). gpt-oss-20b is the smaller of the two gpt-oss models — plenty for polish, and faster than the 120B. Inputs not retained by default; ZDR available.",
   },
   openrouterPoolside: {
     label: "OpenRouter · Poolside Laguna S 2.1",
     hint: "$0 endpoint (poolside/laguna-s-2.1:free)",
     baseUrl: "https://openrouter.ai/api/v1",
     model: "poolside/laguna-s-2.1:free",
-    note: "Poolside's Laguna is a text→text model with a verified $0 OpenRouter endpoint (262k ctx). Not a speech model — this is for polish only. Training policy is per-upstream-provider.",
+    note: "Poolside's Laguna is a text→text model with a $0 OpenRouter endpoint (verified on its OpenRouter model page: free, 262k ctx). Not a speech model — this is for polish only. Training policy is per-upstream-provider.",
   },
 } as const;
 
@@ -247,12 +247,12 @@ export const POLISH_CLOUD_PRESETS = {
   groq: {
     label: "Groq — free tier",
     baseUrl: "https://api.groq.com/openai/v1",
-    defaultModel: "openai/gpt-oss-120b",
-    models: ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+    defaultModel: "openai/gpt-oss-20b",
+    models: ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
     docs: "https://console.groq.com/docs/models",
     freeNote:
-      "Free tier: generous daily limits, very low latency — polish is a small job, so the free tier comfortably covers heavy dictation. Groq's data page says inputs are not retained by default.",
-    verified: "2026-10-28",
+      "Free tier for the gpt-oss models (Groq's rate-limits table): 30 RPM, 1,000 requests/day. The two llama-3.x models are still listed as production models but no longer appear in the published free-tier limits table — treat their free limits as unverified.",
+    verified: "2026-10-29",
   },
   openrouter: {
     label: "OpenRouter — free endpoints",
@@ -261,35 +261,37 @@ export const POLISH_CLOUD_PRESETS = {
     models: ["openai/gpt-oss-120b:free", "meta-llama/llama-3.3-70b-instruct:free", "poolside/laguna-s-2.1:free"],
     docs: "https://openrouter.ai/models",
     freeNote:
-      "Several free text models. The `:free` variants rate-limit; a paid key falls back to the same ids without the suffix. Free-endpoint policies are per-upstream-provider.",
-    verified: "2026-10-28",
+      "All three ids verified free on their OpenRouter model pages (2026-10-29): gpt-oss-120b:free (131k ctx), llama-3.3-70b-instruct:free (131k ctx), poolside/laguna-s-2.1:free (262k ctx). The `:free` variants rate-limit; a paid key falls back to the same ids without the suffix. Free-endpoint policies are per-upstream-provider.",
+    verified: "2026-10-29",
   },
   openai: {
     label: "OpenAI",
     baseUrl: "https://api.openai.com/v1",
-    defaultModel: "gpt-4.1-mini",
-    models: ["gpt-4.1-mini", "gpt-4o-mini", "gpt-4o"],
+    defaultModel: "gpt-6-luna",
+    models: ["gpt-6-luna", "gpt-6.1-terra"],
     docs: "https://platform.openai.com/docs/models",
-    freeNote: "No free tier — pay per token. Polish tokens are cheap (short prompts, short outputs).",
-    verified: "2026-10-28",
+    freeNote: "No free tier — pay per token. The GPT-4 series (gpt-4.1-mini, gpt-4o-mini, gpt-4o) was deprecated 2026-10-14 with shutdown 2027-01-14, so those ids are gone; gpt-6-luna is the thrift pick at $0.10 in / $0.50 out per 1M tokens. Polish tokens are cheap (short prompts, short outputs).",
+    verified: "2026-10-29",
   },
   mistral: {
     label: "Mistral",
     baseUrl: "https://api.mistral.ai/v1",
     defaultModel: "mistral-small-latest",
-    models: ["mistral-small-latest", "open-mistral-nemo", "magistral-medium-latest"],
+    models: ["mistral-small-latest", "mistral-medium-latest", "mistral-large-latest"],
     docs: "https://docs.mistral.ai/getting-started/models/models_overview/",
-    freeNote: "Free-mode quota shows in your Mistral console; `mistral-small-latest` is the thriftiest pick.",
-    verified: "2026-10-28",
+    freeNote:
+      "Pay per token. The old ids open-mistral-nemo and magistral-medium-latest are deprecated/retired (Mistral's models-overview deprecated table) and were removed here. `mistral-small-latest` (Mistral Small 4) is the thriftiest current pick; mistral-medium-latest and mistral-large-latest are the current completion aliases used in Mistral's own docs. No free quota is documented for these models — don't count on one.",
+    verified: "2026-10-29",
   },
   ollama: {
     label: "Ollama — self-hosted",
     baseUrl: "http://localhost:11434/v1",
-    defaultModel: "qwen2.5:7b",
-    models: ["qwen2.5:7b", "qwen2.5:3b", "llama3.2:3b"],
+    defaultModel: "qwen2.5:3b",
+    models: ["qwen2.5:3b", "qwen2.5:7b", "llama3.2:3b"],
     docs: "https://ollama.com/library",
-    freeNote: "Runs on your own machine — nothing leaves it. `ollama pull qwen2.5:7b` first.",
-    verified: "2026-10-28",
+    freeNote:
+      "Runs on your own machine — nothing leaves it. All three tags live on ollama.com/library (qwen2.5:3b ~1.9 GB, qwen2.5:7b ~4.7 GB, llama3.2:3b ~2.0 GB). `qwen2.5:3b` is plenty for polish; `ollama pull qwen2.5:3b` first.",
+    verified: "2026-10-29",
   },
   custom: {
     label: "Custom — OpenAI-compatible endpoint",
@@ -298,7 +300,7 @@ export const POLISH_CLOUD_PRESETS = {
     models: [],
     docs: "",
     freeNote: "Anything that speaks POST /chat/completions and returns OpenAI chat JSON.",
-    verified: "2026-10-28",
+    verified: "2026-10-29",
   },
 } as const;
 
@@ -311,8 +313,10 @@ export const PolishConfigSchema = z.object({
     .default("llama-local"),
   /** Master switch — "Apply AI formatting" in the reference app's settings. */
   enabled: z.boolean().default(true),
-  /** Catalog id of the local GGUF model. */
-  modelId: z.string().default("qwen3.5-4b-q4"),
+  /** Catalog id of the local GGUF model. Qwen3.5 2B (Q4) is the smallest
+   *  competent option — polish is text cleanup, not frontier reasoning, so the
+   *  4B download is wasteful for most users. */
+  modelId: z.string().default("qwen3.5-2b-q4"),
   /** LLM sampling temperature — low keeps dictation faithful. */
   temperature: z.number().min(0).max(2).default(0.2),
   tone: z.enum(["neutral", "casual", "professional", "custom"]).default("neutral"),
