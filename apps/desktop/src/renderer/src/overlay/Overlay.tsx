@@ -141,8 +141,21 @@ body { font-feature-settings: "salt" on; }
   border-radius: 2px;
   background: #10b981;
 }
-.rec-dot[data-pulsing="true"] { animation: rec-pulse 1.6s ease-in-out infinite; }
-@keyframes rec-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+/* Their typing indicator: three dots, 1.4s ease-in-out infinite, .2s stagger,
+ * translateY(0)→(-4px at 30%) (css2 @512261). */
+.typing-dots { display: inline-flex; align-items: center; gap: 2px; margin-left: 2px; }
+.typing-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #878683;
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
 
 /* Card content: column, 16px/12px padding. */
 .card-content {
@@ -217,6 +230,15 @@ body { font-feature-settings: "salt" on; }
 /* Error text — their destructive-400 #f87171. */
 .error-text { color: #f87171; }
 `;
+
+/** Their typing indicator markup (styled above). */
+const TYPING_DOTS = (
+  <span className="typing-dots" aria-label="typing">
+    <span />
+    <span />
+    <span />
+  </span>
+);
 
 const STATE_LABEL: Record<DictationStateEvent["state"], string> = {
   idle: "Idle",
@@ -376,7 +398,7 @@ export function Overlay() {
 
   const seconds = String(elapsed % 60).padStart(2, "0");
   const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
-  const meta = recording ? `${minutes}:${seconds}` : typing ? "typing…" : "";
+  const meta = recording ? `${minutes}:${seconds}` : null;
 
   const liveText =
     event.state === "listening"
@@ -391,7 +413,7 @@ export function Overlay() {
       <div className="pill-zone">
         <div className="pill-card" data-state={pillState} data-interactive="true">
           <div className="mini-row">
-            {recording && <span className="rec-dot" data-pulsing="true" />}
+            {recording && <span className="rec-dot" />}
             <span className="avatar">W</span>
             <p
               className={`live-text ${processing ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
@@ -399,11 +421,11 @@ export function Overlay() {
             >
               {liveText}
             </p>
-            <span className="meta">{meta}</span>
+            {typing && !recording ? TYPING_DOTS : meta ? <span className="meta">{meta}</span> : null}
           </div>
           <div className="card-content">
             <div className="card-row">
-              {recording && <span className="rec-dot" data-pulsing="true" />}
+              {recording && <span className="rec-dot" />}
               <span className="status-line">
                 {STATE_LABEL[event.state]}
                 {recording ? ` · ${minutes}:${seconds}` : ""}
