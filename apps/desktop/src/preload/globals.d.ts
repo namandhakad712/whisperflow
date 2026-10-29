@@ -5,6 +5,11 @@ declare global {
     whisperflow: WhisperflowApi;
     whisperflowExtras: {
       dictation: { cancel(): Promise<{ ok: boolean }> };
+      status: {
+        setInteractive(interactive: boolean): void;
+        click(): Promise<void>;
+        contextMenu(): Promise<void>;
+      };
       app: {
         setLaunchAtLogin(enabled: boolean): Promise<void>;
         rebindHotkey(accelerator: string): Promise<{ ok: boolean }>;

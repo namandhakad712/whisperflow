@@ -36,7 +36,7 @@ function resolvePreloadPath(): string {
   return join(dir, "index.mjs");
 }
 
-function resolveRenderer(page: "settings" | "overlay"): string | null {
+function resolveRenderer(page: "settings" | "overlay" | "status"): string | null {
   const devUrl = process.env["ELECTRON_RENDERER_URL"];
   return devUrl ? `${devUrl}/${page}.html` : null;
 }
@@ -149,6 +149,10 @@ async function bootstrap(): Promise<void> {
     log(`hotkey: "${shortcutResult.failed}" shortcut is taken by another app — rebind in Settings → Shortcuts`);
   }
   applyHotkeyConfig(config);
+
+  // Their persistent resting "flow bar" — the 30×6 dash docked on a screen
+  // edge. Off by default (their `hideFlowBarPermanently` equivalent).
+  windows.applyStatusBar(config.general?.dockEdge ?? "none");
 
   const tray = createTray({
     toggleDictation: () => void controller.toggle(),

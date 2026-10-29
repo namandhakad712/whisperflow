@@ -56,9 +56,12 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
   ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
     const next = await engine.setConfig(patch ?? {});
-    // Live windows (overlay) re-read config so shape/position/backdrop changes
-    // apply without a relaunch; main re-evaluates hold-to-talk vs toggle.
+    // Live windows (overlay, status bar) re-read config so shape/position/
+    // backdrop/dock changes apply without a relaunch; main re-evaluates
+    // hold-to-talk vs toggle.
     windows.sendToOverlay(IPC.SettingsChanged, null);
+    windows.sendToStatus(IPC.SettingsChanged, null);
+    windows.applyStatusBar(next.general?.dockEdge ?? "none");
     deps.onConfigChanged();
     return next;
   });
@@ -236,6 +239,18 @@ export function registerIpc(deps: {
   // panel can stay click-through (never blocking the app underneath) otherwise.
   ipcMain.on("overlay/setInteractive", (_e, interactive: boolean) => {
     windows.setOverlayInteractive(Boolean(interactive));
+  });
+  // ---- status bar (persistent resting pill) ---------------------------------------
+  // Same discoverability protocol as the overlay: click-through except over
+  // the bar itself. Click toggles a dictation; right-click opens Settings.
+  ipcMain.on("status/setInteractive", (_e, interactive: boolean) => {
+    windows.setStatusBarInteractive(Boolean(interactive));
+  });
+  ipcMain.handle("status/click", () => {
+    void deps.controller.toggle();
+  });
+  ipcMain.handle("status/contextMenu", () => {
+    windows.createSettingsWindow();
   });
   ipcMain.handle(IPC.AppOpenLogsFolder, () => {
     void shell.openPath(join(app.getPath("userData"), "logs"));

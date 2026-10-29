@@ -402,6 +402,12 @@ export const GeneralConfigSchema = z.object({
     saveAudio: z.boolean().default(false),
     /** Recordings folder. Empty = `<userData>/recordings`. */
     recordingsDir: z.string().default(""),
+    /**
+     * Their resting "flow bar" dock. `none` hides the persistent resting pill
+     * (their `hideFlowBarPermanently`); otherwise the 30×6 dash sits on the
+     * chosen screen edge and morphs to the dictation pill on hover.
+     */
+    dockEdge: z.enum(["none", "left", "right", "bottom"]).default("none"),
 });
 export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 

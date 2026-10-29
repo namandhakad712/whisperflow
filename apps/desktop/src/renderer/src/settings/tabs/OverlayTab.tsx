@@ -83,6 +83,33 @@ export function OverlayTab() {
           </div>
         </Row>
 
+        <Row
+          label="Resting bar"
+          hint="A small dash docked on a screen edge (their flow bar) — hover it to see the hotkey, click it to dictate, right-click for Settings."
+        >
+          <div className="flex gap-2">
+            {([
+              { id: "none", label: "Off" },
+              { id: "left", label: "Left" },
+              { id: "right", label: "Right" },
+              { id: "bottom", label: "Bottom" },
+            ] as const).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => void patch({ general: { dockEdge: p.id } })}
+                className={`rounded-lg border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                  g.dockEdge === p.id
+                    ? "border-accent/70 bg-accent/10 text-ink"
+                    : "border-line bg-surface-2/60 text-ink-dim hover:border-accent/40"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </Row>
+
         <Row label="Custom backdrop" hint="An image or GIF drawn behind the pill, under a dark scrim.">
           <div className="flex gap-2">
             <TextInput

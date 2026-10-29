@@ -15,13 +15,14 @@ export type { OverlayAnchor };
 export class WindowManager {
   private settingsWindow: BrowserWindow | null = null;
   private overlayWindow: BrowserWindow | null = null;
+  private statusWindow: BrowserWindow | null = null;
   private overlayRecovery: SurfaceRecovery | null = null;
   private settingsRecovery: SurfaceRecovery | null = null;
 
   constructor(
     private readonly opts: {
       preloadPath: string;
-      resolveRenderer: (page: "settings" | "overlay") => string | null; // dev URL or null → file
+      resolveRenderer: (page: "settings" | "overlay" | "status") => string | null; // dev URL or null → file
       /** True while a dictation is mid-flight — recovery must defer then. */
       isDictationBusy?: () => boolean;
     },
@@ -225,16 +226,25 @@ export class WindowManager {
     this.overlayWeb()?.send(channel, payload);
   }
 
+  statusWeb(): WebContents | null {
+    return this.statusWindow?.isDestroyed() === false ? this.statusWindow.webContents : null;
+  }
+
+  sendToStatus(channel: string, payload: unknown): void {
+    this.statusWeb()?.send(channel, payload);
+  }
+
   sendToSettings(channel: string, payload: unknown): void {
     this.settingsWeb()?.send(channel, payload);
   }
 
   dispose(): void {
-    for (const w of [this.settingsWindow, this.overlayWindow]) {
+    for (const w of [this.settingsWindow, this.overlayWindow, this.statusWindow]) {
       if (w && !w.isDestroyed()) w.destroy();
     }
     this.settingsWindow = null;
     this.overlayWindow = null;
+    this.statusWindow = null;
   }
 
   private ensureOverlay(): BrowserWindow {
@@ -288,5 +298,78 @@ export class WindowManager {
     this.overlayRecovery = this.attachRecovery(win, "overlay");
     this.overlayWindow = win;
     return win;
+  }
+
+  /**
+   * Their persistent resting "flow bar": a 30×6 dash docked on a screen edge.
+   * The window is a 56×56 invisible hit zone centered on the dash; the renderer
+   * draws the dash and morphs it on hover. `edge: "none"` closes it.
+   */
+  applyStatusBar(edge: "none" | "left" | "right" | "bottom"): void {
+    if (edge === "none") {
+      if (this.statusWindow?.isDestroyed() === false) this.statusWindow.destroy();
+      this.statusWindow = null;
+      return;
+    }
+    if (this.statusWindow?.isDestroyed()) this.statusWindow = null;
+    if (!this.statusWindow) {
+      const win = new BrowserWindow({
+        width: 56,
+        height: 56,
+        show: true,
+        frame: false,
+        transparent: true,
+        backgroundColor: "#00000000",
+        hasShadow: false,
+        type: process.platform === "darwin" ? "panel" : "toolbar",
+        fullscreenable: false,
+        maximizable: false,
+        minimizable: false,
+        closable: false,
+        resizable: false,
+        movable: false,
+        skipTaskbar: true,
+        focusable: false,
+        alwaysOnTop: true,
+        webPreferences: {
+          preload: this.opts.preloadPath,
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: false,
+        },
+      });
+      win.setAlwaysOnTop(true, "screen-saver");
+      // Click-through until the renderer reports the pointer is over the dash.
+      win.setIgnoreMouseEvents(true, { forward: true });
+      const target = this.opts.resolveRenderer("status");
+      if (target) void win.loadURL(target);
+      else void win.loadFile(join(__dirname, "../renderer/status.html"));
+      win.webContents.on("did-finish-load", () => {
+        if (!win.isDestroyed()) win.setIgnoreMouseEvents(true, { forward: true });
+      });
+      this.statusWindow = win;
+    }
+    this.dockStatusBar(this.statusWindow, edge);
+    if (!this.statusWindow.isVisible()) this.statusWindow.showInactive();
+  }
+
+  /** Edge-anchors the status hit zone (flush to the edge, vertically centered). */
+  private dockStatusBar(win: BrowserWindow, edge: "left" | "right" | "bottom"): void {
+    const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
+    const w = 56;
+    const h = 56;
+    const bounds =
+      edge === "left"
+        ? { x: area.x + 2, y: area.y + Math.round((area.height - h) / 2), width: w, height: h }
+        : edge === "right"
+          ? { x: area.x + area.width - w - 2, y: area.y + Math.round((area.height - h) / 2), width: w, height: h }
+          : { x: area.x + Math.round((area.width - w) / 2), y: area.y + area.height - h - 2, width: w, height: h };
+    win.setBounds(bounds, false);
+  }
+
+  setStatusBarInteractive(interactive: boolean): void {
+    const win = this.statusWindow;
+    if (!win || win.isDestroyed()) return;
+    win.setIgnoreMouseEvents(!interactive, { forward: true });
   }
 }

@@ -90,6 +90,11 @@ const extras = {
   dictation: {
     cancel: () => ipcRenderer.invoke("dictation/cancel"),
   },
+  status: {
+    setInteractive: (interactive: boolean) => ipcRenderer.send("status/setInteractive", interactive),
+    click: () => ipcRenderer.invoke("status/click"),
+    contextMenu: () => ipcRenderer.invoke("status/contextMenu"),
+  },
   app: {
     setLaunchAtLogin: (enabled: boolean) => ipcRenderer.invoke("app/setLaunchAtLogin", enabled),
     rebindHotkey: (accelerator: string) => ipcRenderer.invoke("app/rebindHotkey", accelerator),

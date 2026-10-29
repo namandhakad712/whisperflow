@@ -18,6 +18,7 @@ export default defineConfig({
         input: {
           settings: resolve(__dirname, "src/renderer/settings.html"),
           overlay: resolve(__dirname, "src/renderer/overlay.html"),
+          status: resolve(__dirname, "src/renderer/status.html"),
         },
       },
     },
