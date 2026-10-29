@@ -23,12 +23,13 @@ const STATES = [
   ["done", { state: "done" }],
   ["error", { state: "error", error: "Microphone unavailable: permission denied" }],
   ["rec-typing", { state: "listening", partial: "Meeting notes: follow up with the design team", recording: true, typing: true }],
+  ["clipboard-fallback", { state: "error", error: "couldn't paste into the focused window — the text is on your clipboard, press Ctrl+V" }],
 ];
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
     width: 440,
-    height: 120,
+    height: 240, // tall enough to also capture the 200px notification card
     transparent: true,
     frame: false,
     hasShadow: false,

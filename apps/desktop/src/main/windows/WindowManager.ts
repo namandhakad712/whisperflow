@@ -227,6 +227,18 @@ export class WindowManager {
     this.destroyOverlay();
   }
 
+  /**
+   * Grows/shrinks the overlay window while keeping the pill bottom-anchored —
+   * used for their notification card (200px) on a paste failure. The default
+   * height (120) fits the pill states.
+   */
+  resizeOverlay(height: number): void {
+    const win = this.overlayWindow;
+    if (!win || win.isDestroyed()) return;
+    const b = win.getBounds();
+    win.setBounds({ ...b, y: b.y + b.height - height, height }, false);
+  }
+
   private destroyOverlay(): void {
     this.unwatchDisplayChanges();
     if (this.overlayWindow?.isDestroyed() === false) this.overlayWindow.destroy();

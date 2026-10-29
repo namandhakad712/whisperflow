@@ -229,6 +229,45 @@ body { font-feature-settings: "salt" on; }
 
 /* Error text — their destructive-400 #f87171. */
 .error-text { color: #f87171; }
+
+/* Their notification card (exact): 400px wide, 200px min/max height, 20px
+ * padding, shade-black bg, radius 11, vast-900 border, the dual white glow,
+ * entering with a 10px slide + .2s ease-in (pillcss @744286). */
+.notification {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 400px;
+  min-height: 200px;
+  max-height: 200px;
+  padding: 20px;
+  background: #000;
+  border-radius: 11px;
+  border: 1px solid #30302f;
+  box-shadow: 0 3px 30px -6px hsla(0, 0%, 100%, 0.2), 0 0 20px hsla(0, 0%, 100%, 0.15);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform: translate(-50%, 10px);
+  opacity: 0;
+  animation: notification-in 0.2s ease-in forwards;
+}
+@keyframes notification-in {
+  from { transform: translate(-50%, 10px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.notification h2 { font-size: 14px; font-weight: 600; color: #fcfcfb; }
+.notification p { font-size: 13px; line-height: 18px; color: #a3a29e; }
+.notification kbd {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #464544;
+  background: #1a1a1a;
+  color: #fcfcfb;
+}
 `;
 
 /** Their typing indicator markup (styled above). */
@@ -399,6 +438,9 @@ export function Overlay() {
   const seconds = String(elapsed % 60).padStart(2, "0");
   const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const meta = recording ? `${minutes}:${seconds}` : null;
+  /** Their paste-failure notification shows only for the clipboard-fallback error. */
+  const clipboardFallback =
+    event.state === "error" && /clipboard/i.test(event.error ?? "");
 
   const liveText =
     event.state === "listening"
@@ -411,6 +453,7 @@ export function Overlay() {
     <>
       <style>{PILL_CSS}</style>
       <div className="pill-zone">
+        {!clipboardFallback && (
         <div className="pill-card" data-state={pillState} data-interactive="true">
           <div className="mini-row">
             {recording && <span className="rec-dot" />}
@@ -441,7 +484,20 @@ export function Overlay() {
             </div>
           </div>
         </div>
+        )}
       </div>
+      {clipboardFallback && (
+        /* Their notification card: when the paste couldn't land, say so with
+         * the clipboard rescue instead of leaving the text stranded. */
+        <div className="notification" data-interactive="true">
+          <h2>Couldn't paste — text is on your clipboard</h2>
+          <p>
+            WhisperFlow tried to type your dictation into the focused window and it
+            didn’t land (some apps block synthetic input). The full text is on your
+            clipboard right now — press <kbd>Ctrl</kbd>+<kbd>V</kbd> to put it there.
+          </p>
+        </div>
+      )}
     </>
   );
 }

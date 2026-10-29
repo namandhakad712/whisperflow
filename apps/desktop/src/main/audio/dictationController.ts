@@ -144,6 +144,7 @@ export class DictationController {
       clearTimeout(this.hideTimer);
       this.hideTimer = null;
     }
+    this.deps.windows.resizeOverlay(120);
     try {
       const cfg = await this.deps.engine.getConfig().catch(() => null);
       const meeting = Boolean(cfg?.general?.meetingMode) || opts.recorder;
@@ -206,6 +207,7 @@ export class DictationController {
     this.session = null;
 
     this.broadcast({ state: "transcribing", recording: this.recording }); // renderer stops the mic on this
+    let capturedError: unknown = null;
     try {
       const result = await session.stop();
       if (result && result.final && result.action !== "undo") {
@@ -220,15 +222,27 @@ export class DictationController {
     } catch (err) {
       log("dictation: failed:", err);
       this.broadcast({ state: "error", error: String(err) });
+      capturedError = err;
     } finally {
-      // Collapse the pill in every outcome — the renderer morphs to the rest
-      // dash, and the window hides (and is released) a beat later. Nothing
-      // can leave the overlay stuck on screen, not even an injection failure.
-      // Cancellable: a rapid next dictation revives the pill before this fires.
-      this.hideTimer = setTimeout(() => {
-        this.hideTimer = null;
-        this.deps.windows.hideOverlay();
-      }, 900);
+      // Their paste-failure notification: the card is 200px tall, so the
+      // overlay window grows to fit it and it stays long enough to read
+      // (6s) before collapsing — no finally timer can snatch it away.
+      if (capturedError !== null && /clipboard/i.test(String(capturedError))) {
+        this.deps.windows.resizeOverlay(240);
+        this.hideTimer = setTimeout(() => {
+          this.hideTimer = null;
+          this.deps.windows.resizeOverlay(120);
+          this.deps.windows.hideOverlay();
+        }, 6000);
+      } else {
+        // Collapse the pill in every other outcome — the renderer morphs to
+        // the rest dash, and the window hides (and is released) a beat later.
+        // Cancellable: a rapid next dictation revives the pill first.
+        this.hideTimer = setTimeout(() => {
+          this.hideTimer = null;
+          this.deps.windows.hideOverlay();
+        }, 900);
+      }
       if (this.recording) this.flushRecording();
       this.recording = false;
       this.deps.hotkeys.unbindEscape();
