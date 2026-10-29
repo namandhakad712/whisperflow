@@ -76,12 +76,31 @@ Implemented from this corpus (see CHANGELOG):
 - the **per-action shortcut map**: `paste_last_text` / `copy_last_text` with
   their Windows defaults (Shift+Alt+Z / Shift+Alt+X), rebindable in Settings —
   [07]
+- the **persistent docked resting bar** (their flow-bar rest dash): a 30×6
+  edge-docked click-through dash that morphs into the mini dictation pill on
+  hover (their exact rest/mini geometry and spring easing), driven by
+  `general.dockEdge` (none/left/right/bottom) — [02]. Meeting mode itself is
+  shipped (session held across pauses, per-utterance insertion), but the
+  overlay has no dedicated meeting-state pill yet — see the backlog.
 - daily backups, per-dictation app attribution, paste failure surfacing —
   [03]/[05]/[06]
 
-Remaining backlog (in priority order): the 18-state Flow Bar state machine and
-dock behavior [02] — our state coverage is equivalent but the names/transitions
-aren't ported as such; moving the paste itself from SendKeys+clipboard onto a
-UIA insertion path — verification is already ported
-(`matchesBeforePasteAndAfter` in `editDistance.ts`), but the write needs a
-native helper analogous to their `roots.exe`.
+Remaining backlog (in priority order):
+
+1. **The 18-state Flow Bar state machine, as such** [02] — our overlay covers
+   the equivalent states (rest/mini/card/l4, generating shimmer), but their
+   full state names and transition tables aren't ported 1:1. Port the names
+   and the timer constants (150/400/600/2000/6000/6e5) so behavior — not just
+   geometry — matches.
+2. **The meeting-mode pill** [02]/[04] — their state machine has dedicated
+   meeting/recording pill states; ours runs meeting mode through the ordinary
+   dictation pill.
+3. **A native UIA paste write-path** [06] — moving the paste itself from
+   SendKeys+clipboard onto a UIA insertion path, analogous to their
+   `roots.exe`. Verification is already ported (`matchesBeforePasteAndAfter`
+   in `editDistance.ts`); the write is what's missing.
+
+In flight (parallel work, not from this corpus): slimming the ~400 MB Windows
+installer, and a re-audit of the cloud STT/polish presets in
+`packages/shared/src/config.ts` (per-provider limits re-verified 2026-10-29,
+dead ids and unverifiable marketing numbers dropped).
