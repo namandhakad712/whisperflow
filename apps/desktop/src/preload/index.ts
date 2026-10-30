@@ -95,10 +95,15 @@ const extras = {
     click: () => ipcRenderer.invoke("status/click"),
     contextMenu: () => ipcRenderer.invoke("status/contextMenu"),
   },
+  lens: {
+    submit: (instruction: string) => ipcRenderer.invoke("lens/submit", instruction),
+    dismiss: () => ipcRenderer.invoke("lens/dismiss"),
+    onText: (cb: (ev: { text: string }) => void) => subscribe("lens/text", cb),
+  },
   app: {
     setLaunchAtLogin: (enabled: boolean) => ipcRenderer.invoke("app/setLaunchAtLogin", enabled),
     rebindHotkey: (accelerator: string) => ipcRenderer.invoke("app/rebindHotkey", accelerator),
-    rebindShortcut: (action: "pasteLast" | "copyLast", accelerator: string) =>
+    rebindShortcut: (action: "pasteLast" | "copyLast" | "lens", accelerator: string) =>
       ipcRenderer.invoke("app/rebindShortcut", { action, accelerator }),
     checkForUpdates: () => ipcRenderer.invoke("app/checkForUpdates") as Promise<{ message: string }>,
     exportBackup: () => ipcRenderer.invoke("app/exportBackup") as Promise<{ exported: boolean; path?: string }>,

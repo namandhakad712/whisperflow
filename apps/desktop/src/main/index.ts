@@ -8,6 +8,7 @@ import { HotkeyManager } from "./hotkeys/hotkeys";
 import { DictationController } from "./audio/dictationController";
 import { registerIpc } from "./ipc/register";
 import { createEnginePort, resolveEngineDirs } from "./engine/enginePort";
+import { copyFocusedSelection } from "./injection/windowsInjector";
 import { HoldToTalkWatcher, hookAvailable, parseAccelerator, type KeyboardHookEvents } from "./hotkeys/holdToTalk";
 import { applyLaunchAtLogin } from "./lifecycle/autostart";
 import { initUpdater } from "./lifecycle/updater";
@@ -36,7 +37,7 @@ function resolvePreloadPath(): string {
   return join(dir, "index.mjs");
 }
 
-function resolveRenderer(page: "settings" | "overlay" | "status"): string | null {
+function resolveRenderer(page: "settings" | "overlay" | "status" | "lens"): string | null {
   const devUrl = process.env["ELECTRON_RENDERER_URL"];
   return devUrl ? `${devUrl}/${page}.html` : null;
 }
@@ -59,10 +60,37 @@ async function bootstrap(): Promise<void> {
   // The controller is created after the windows (it needs the manager), so the
   // busy signal reaches WindowManager through this late-bound handle.
   const busyRef: { fn?: () => boolean } = {};
+  // Live config snapshot (set once the config loads below; refreshed by
+  // onConfigChanged) so the free-float providers read the freshest position.
+  let liveConfig: WhisperFlowConfig | null = null;
+  // Debounced persistence of dragged pill positions.
+  let posTimer: NodeJS.Timeout | null = null;
+  const persistPos = (patch: Record<string, unknown>): void => {
+    if (posTimer) clearTimeout(posTimer);
+    posTimer = setTimeout(() => {
+      posTimer = null;
+      void engine.setConfig(patch as Parameters<typeof engine.setConfig>[0]).catch(() => {});
+    }, 600);
+  };
+
   const windows = new WindowManager({
     preloadPath: resolvePreloadPath(),
     resolveRenderer,
     isDictationBusy: () => busyRef.fn?.() ?? false,
+    freePosProvider: () => liveConfig?.general?.overlayFreePos ?? null,
+    onOverlayMoved: ({ x, y }) => {
+      // Dragging the pill makes the free-float position authoritative.
+      if (liveConfig) {
+        liveConfig = { ...liveConfig, general: { ...liveConfig.general, overlayPosition: "free", overlayFreePos: { x, y } } };
+      }
+      persistPos({ general: { overlayPosition: "free", overlayFreePos: { x, y } } });
+    },
+    onStatusMoved: ({ x, y }) => {
+      if (liveConfig) {
+        liveConfig = { ...liveConfig, general: { ...liveConfig.general, statusFreePos: { x, y } } };
+      }
+      persistPos({ general: { statusFreePos: { x, y } } });
+    },
   });
   windowsRef = windows;
   const hotkeys = new HotkeyManager({
@@ -70,6 +98,7 @@ async function bootstrap(): Promise<void> {
     onCancel: () => controllerCancel(),
     onPasteLast: () => void controllerPasteLast(),
     onCopyLast: () => void controllerCopyLast(),
+    onLens: () => void controllerLens(),
   });
   // The controller is created before the tray; it reaches the tray through this
   // late-bound handle (both sides only call each other after bootstrap).
@@ -95,6 +124,19 @@ async function bootstrap(): Promise<void> {
   }
   function controllerCopyLast(): void {
     void controller.copyLast();
+  }
+  /** Their `lens` action: copy the current selection → open the AI edit bar. */
+  async function controllerLens(): Promise<void> {
+    try {
+      const text = await copyFocusedSelection();
+      if (!text.trim()) {
+        log("lens: nothing selected — nothing to edit");
+        return;
+      }
+      windows.openLensWithSelection(text.trim());
+    } catch (err) {
+      log("lens: selection read failed:", String(err).slice(0, 140));
+    }
   }
 
   const config = await engine.getConfig();
@@ -145,6 +187,7 @@ async function bootstrap(): Promise<void> {
     hotkeys.bindActions(cfg.hotkey?.shortcuts ?? {});
   }
   applyHotkeyConfig(config);
+  liveConfig = config;
 
   // Their per-action shortcuts (paste_last / copy_last) register whenever the
   // hotkey config is applied; bindActions is idempotent.
@@ -186,6 +229,7 @@ async function bootstrap(): Promise<void> {
     onQuit: () => app.quit(),
     onConfigChanged: () => {
       void engine.getConfig().then((cfg) => {
+        liveConfig = cfg;
         applyHotkeyConfig(cfg);
         const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
         if (!holdWanted(cfg) && hotkeys.current !== accelerator) hotkeys.bindMain(accelerator);

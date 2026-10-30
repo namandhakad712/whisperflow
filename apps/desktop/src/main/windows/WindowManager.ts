@@ -16,15 +16,23 @@ export class WindowManager {
   private settingsWindow: BrowserWindow | null = null;
   private overlayWindow: BrowserWindow | null = null;
   private statusWindow: BrowserWindow | null = null;
+  private lensWindow: BrowserWindow | null = null;
+  /** The selection the lens is editing (set just before the window opens). */
+  private lensText = "";
   private overlayRecovery: SurfaceRecovery | null = null;
   private settingsRecovery: SurfaceRecovery | null = null;
 
   constructor(
     private readonly opts: {
       preloadPath: string;
-      resolveRenderer: (page: "settings" | "overlay" | "status") => string | null; // dev URL or null → file
+      resolveRenderer: (page: "settings" | "overlay" | "status" | "lens") => string | null; // dev URL or null → file
       /** True while a dictation is mid-flight — recovery must defer then. */
       isDictationBusy?: () => boolean;
+      /** Last free-float pill position (from config) for the "free" anchor. */
+      freePosProvider?: () => { x: number; y: number } | null;
+      /** Fires (debounced by the caller) when the pill/status pill is dragged. */
+      onOverlayMoved?: (bounds: { x: number; y: number }) => void;
+      onStatusMoved?: (bounds: { x: number; y: number }) => void;
     },
   ) {}
 
@@ -134,14 +142,18 @@ export class WindowManager {
     const size = win.getSize();
     const cursor = near ?? screen.getCursorScreenPoint();
     const display = screen.getDisplayNearestPoint(cursor);
+    // Free-float: the last place the user dragged the pill (persisted by the
+    // caller via the move handler; null until the first drag).
+    const freePos = position === "free" ? this.opts.freePosProvider?.() ?? null : null;
     this.overlayAnchor = position;
     this.overlayDisplayId = display.id;
 
     const bounds = computeOverlayBounds(
       position,
-      { width: size[0] ?? 440, height: size[1] ?? 120 },
+      { width: size[0] ?? 440, height: size[1] ?? 400 },
       display.workArea,
       cursor,
+      freePos ?? undefined,
     );
     win.setBounds(bounds, false);
     log(
@@ -230,7 +242,7 @@ export class WindowManager {
   /**
    * Grows/shrinks the overlay window while keeping the pill bottom-anchored —
    * used for their notification card (200px) on a paste failure. The default
-   * height (120) fits the pill states.
+   * height (400) fits the pill states including l4.
    */
   resizeOverlay(height: number): void {
     const win = this.overlayWindow;
@@ -266,6 +278,85 @@ export class WindowManager {
     return this.statusWindow?.isDestroyed() === false ? this.statusWindow.webContents : null;
   }
 
+  /**
+   * The lens window — a small command bar for AI-editing the current text
+   * selection (their "lens" feature). Unlike the overlay it MUST accept typing,
+   * so it's focusable and anchored near the caret/cursor.
+   */
+  ensureLensWindow(): BrowserWindow {
+    if (this.lensWindow?.isDestroyed() === false) return this.lensWindow;
+    const win = new BrowserWindow({
+      width: 480,
+      height: 84,
+      show: false,
+      frame: false,
+      transparent: true,
+      backgroundColor: "#00000000",
+      hasShadow: false,
+      type: process.platform === "darwin" ? "panel" : "toolbar",
+      fullscreenable: false,
+      maximizable: false,
+      minimizable: false,
+      closable: false,
+      resizable: false,
+      movable: false,
+      skipTaskbar: true,
+      focusable: true,
+      alwaysOnTop: true,
+      webPreferences: {
+        preload: this.opts.preloadPath,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+    win.setAlwaysOnTop(true, "screen-saver");
+    const target = this.opts.resolveRenderer("lens");
+    if (target) void win.loadURL(target);
+    else void win.loadFile(join(__dirname, "../renderer/lens.html"));
+    this.lensWindow = win;
+    return win;
+  }
+
+  /** Shows the lens near the given point (or the cursor) and focuses it. */
+  showLens(near?: { x: number; y: number }): void {
+    const win = this.ensureLensWindow();
+    const cursor = near ?? screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(cursor);
+    const wa = display.workArea;
+    // Park it at the bottom of the work area, inset like the overlay anchor.
+    const x = Math.min(Math.max(wa.x + 14, cursor.x - 240), wa.x + wa.width - 494);
+    const y = Math.min(cursor.y + 24, wa.y + wa.height - 98);
+    win.setBounds({ x, y, width: 480, height: 84 }, false);
+    win.show();
+    win.focus();
+  }
+
+  hideLens(): void {
+    if (this.lensWindow?.isDestroyed() === false) {
+      this.lensWindow.hide();
+      this.lensWindow.destroy();
+    }
+    this.lensWindow = null;
+    this.lensText = "";
+  }
+
+  /** Opens the lens with the given selection text. */
+  openLensWithSelection(text: string): void {
+    this.lensText = text;
+    this.showLens();
+    this.sendToLens("lens/text", { text });
+  }
+
+  /** The selection the open lens is editing (empty when none). */
+  lensSelection(): string {
+    return this.lensText;
+  }
+
+  sendToLens(channel: string, payload: unknown): void {
+    if (this.lensWindow?.isDestroyed() === false) this.lensWindow.webContents.send(channel, payload);
+  }
+
   sendToStatus(channel: string, payload: unknown): void {
     this.statusWeb()?.send(channel, payload);
   }
@@ -286,10 +377,12 @@ export class WindowManager {
   private ensureOverlay(): BrowserWindow {
     if (this.overlayWindow?.isDestroyed() === false) return this.overlayWindow;
     const win = new BrowserWindow({
-      // The reference pill: 416×48 (mini) / 416×80 (card) / 416×322 (l4), plus
-      // room for the badge and the drop shadow. Their window hugs the bar.
+      // Big enough for every pill state while staying bottom-anchored: the
+      // pill is 48px (mini) / 80px (card) / 322px (l4) tall, plus the badge
+      // straddling the top edge. Growing upward from the bottom means one
+      // window serves every state with nothing clipped.
       width: 440,
-      height: 120,
+      height: 400,
       show: false,
       frame: false,
       transparent: true,
@@ -330,6 +423,12 @@ export class WindowManager {
       // Re-assert the default after (re)load so a fresh page can't leave the
       // overlay swallowing clicks.
       if (!win.isDestroyed()) win.setIgnoreMouseEvents(true, { forward: true });
+    });
+    // Drag free-float: persist wherever the user drops the pill.
+    win.on("moved", () => {
+      if (win.isDestroyed()) return;
+      const b = win.getBounds();
+      this.opts.onOverlayMoved?.({ x: b.x, y: b.y });
     });
     this.overlayRecovery = this.attachRecovery(win, "overlay");
     this.overlayWindow = win;
@@ -377,6 +476,12 @@ export class WindowManager {
       win.setAlwaysOnTop(true, "screen-saver");
       // Click-through until the renderer reports the pointer is over the dash.
       win.setIgnoreMouseEvents(true, { forward: true });
+      // Drag free-float: persist wherever the user drops the resting pill.
+      win.on("moved", () => {
+        if (win.isDestroyed()) return;
+        const b = win.getBounds();
+        this.opts.onStatusMoved?.({ x: b.x, y: b.y });
+      });
       const target = this.opts.resolveRenderer("status");
       if (target) void win.loadURL(target);
       else void win.loadFile(join(__dirname, "../renderer/status.html"));

@@ -35,27 +35,45 @@ import { ScratchpadTab } from "./tabs/ScratchpadTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { Onboarding } from "./Onboarding";
 
-/** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius. */
-const MAIN = [
+/** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius.
+ *  Grouped so the five things everyone touches sit apart from the collections and
+ *  the system tools — the flat 13-item list read as one wall of options. */
+const ESSENTIALS = [
   { id: "general", label: "Dictation", icon: Mic },
   { id: "audio", label: "Audio", icon: Volume2 },
   { id: "models", label: "Models", icon: Cpu },
   { id: "overlay", label: "Overlay", icon: AppWindow },
+  { id: "advanced", label: "Style", icon: Sparkles },
+] as const;
+
+const COLLECTIONS = [
   { id: "dictionary", label: "Dictionary", icon: Book },
   { id: "commands", label: "Snippets", icon: TextSelect },
-  { id: "advanced", label: "Style", icon: Sparkles },
   { id: "history", label: "History", icon: History },
   { id: "insights", label: "Insights", icon: BarChart3 },
   { id: "scratchpad", label: "Scratchpad", icon: StickyNote },
 ] as const;
 
-const SECONDARY = [
+const SYSTEM = [
   { id: "shortcuts", label: "Shortcuts", icon: Keyboard },
   { id: "privacy", label: "Privacy", icon: ShieldCheck },
   { id: "about", label: "Help", icon: CircleHelp },
 ] as const;
 
-type TabId = (typeof MAIN)[number]["id"] | (typeof SECONDARY)[number]["id"];
+const RAIL_GROUPS = [
+  { label: "Essentials", items: ESSENTIALS },
+  { label: "Your stuff", items: COLLECTIONS },
+  { label: "System", items: SYSTEM },
+] as const;
+
+type TabId =
+  | (typeof ESSENTIALS)[number]["id"]
+  | (typeof COLLECTIONS)[number]["id"]
+  | (typeof SYSTEM)[number]["id"];
+
+/** Rail render groups (Essentials first, then collections + system). */
+const MAIN = ESSENTIALS;
+const SECONDARY = [...COLLECTIONS, ...SYSTEM];
 
 function currentRoute(): string {
   return window.location.hash.replace(/^#\/?/, "") || "general";
@@ -123,7 +141,7 @@ export function App() {
   }, [loadConfig]);
 
   if (route === "onboarding") return <Onboarding />;
-  const allTabs: Array<{ id: string }> = [...MAIN, ...SECONDARY];
+  const allTabs: Array<{ id: string }> = RAIL_GROUPS.flatMap((g) => [...g.items]);
   const tab = (allTabs.find((t) => t.id === route)?.id ?? "general") as TabId;
 
   const cycleSkin = () => {

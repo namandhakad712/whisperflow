@@ -80,6 +80,11 @@ export interface WhisperFlowEngine {
   polish: {
     /** Sends a one-token probe to the configured cloud polish endpoint. */
     testCloud(): Promise<{ ok: boolean; message: string }>;
+    /**
+     * Ad-hoc AI edit of text the user selected elsewhere (their "lens"
+     * feature). Runs the active polish provider with a free-form instruction.
+     */
+    transform(text: string, instruction: string): Promise<string>;
   };
   dispose(): Promise<void>;
 }
@@ -299,6 +304,31 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         } catch (err) {
           return { ok: false, message: String(err).slice(0, 200) };
         }
+      },
+      /** Their "lens": AI-edit arbitrary selected text with an instruction. */
+      async transform(text: string, instruction: string) {
+        const cfg = config.get();
+        const provider = activePolish();
+        if (!provider) {
+          throw new Error("AI formatting is off — enable a polish engine in Settings → Advanced.");
+        }
+        // The lens is an EDIT, not a dictation cleanup: feed the instruction
+        // through the custom-tone channel with no cleanup rules of our own.
+        let out = "";
+        for await (const chunk of provider.polish({
+          raw: text,
+          tone: "custom",
+          modelId: cfg.polish.modelId,
+          dictionary: cfg.dictionary.map((d) => d.term),
+          instructions: instruction.trim() || "Edit this text: fix grammar, spelling, clarity and formatting while keeping the meaning and the original language.",
+          cleanup: "none",
+          format: "formatted",
+        })) {
+          out += chunk;
+        }
+        const trimmed = out.trim();
+        if (!trimmed) throw new Error("The polish model returned an empty edit — try again or reword the instruction.");
+        return trimmed;
       },
     },
     async dispose() {

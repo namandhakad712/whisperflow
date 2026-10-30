@@ -10,10 +10,15 @@ declare global {
         click(): Promise<void>;
         contextMenu(): Promise<void>;
       };
+      lens: {
+        submit(instruction: string): Promise<void>;
+        dismiss(): Promise<void>;
+        onText(cb: (ev: { text: string }) => void): () => void;
+      };
       app: {
         setLaunchAtLogin(enabled: boolean): Promise<void>;
         rebindHotkey(accelerator: string): Promise<{ ok: boolean }>;
-        rebindShortcut(action: "pasteLast" | "copyLast", accelerator: string): Promise<{ ok: boolean }>;
+        rebindShortcut(action: "pasteLast" | "copyLast" | "lens", accelerator: string): Promise<{ ok: boolean }>;
         checkForUpdates(): Promise<{ message: string }>;
         exportBackup(): Promise<{ exported: boolean; path?: string }>;
         onNavigate(cb: (route: string) => void): () => void;

@@ -11,6 +11,7 @@ import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { applyLaunchAtLogin } from "../lifecycle/autostart";
 import { checkForUpdatesNow, installDownloadedUpdate } from "../lifecycle/updater";
 import { hookAvailable, hookUnavailableReason } from "../hotkeys/holdToTalk";
+import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
@@ -187,7 +188,7 @@ export function registerIpc(deps: {
     if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator, toggleMode: true } });
     return { ok };
   });
-  ipcMain.handle("app/rebindShortcut", async (_e, req: { action: "pasteLast" | "copyLast"; accelerator: string }) => {
+  ipcMain.handle("app/rebindShortcut", async (_e, req: { action: "pasteLast" | "copyLast" | "lens"; accelerator: string }) => {
     const ok = hotkeys.bindActions({ [req.action]: req.accelerator }).ok;
     if (ok) {
       const config = await engine.getConfig();
@@ -252,6 +253,29 @@ export function registerIpc(deps: {
   ipcMain.handle("status/contextMenu", () => {
     windows.createSettingsWindow();
   });
+
+  // ---- lens (AI-edit the current selection) ------------------------------------
+  ipcMain.handle("lens/dismiss", () => {
+    windows.hideLens();
+    return { ok: true };
+  });
+  // Submit transforms the selection with the instruction, then writes the
+  // result back over it: the selection is still highlighted after our Ctrl+C,
+  // so the paste replaces exactly what the user picked.
+  ipcMain.handle("lens/submit", async (_e, instruction: string) => {
+    const text = windows.lensSelection();
+    if (!text) throw new Error("Nothing selected — highlight some text first.");
+    try {
+      const result = await engine.transformText(text, instruction);
+      log(`lens: edited ${text.length}→${result.length} chars (${instruction.slice(0, 40)})`);
+      await injectText(result).catch((err) => log("lens: paste failed:", String(err).slice(0, 120)));
+      windows.hideLens();
+    } catch (err) {
+      log("lens: transform failed:", String(err).slice(0, 160));
+      throw err;
+    }
+  });
+
   ipcMain.handle(IPC.AppOpenLogsFolder, () => {
     void shell.openPath(join(app.getPath("userData"), "logs"));
   });

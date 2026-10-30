@@ -23,7 +23,7 @@ function acceleratorFrom(e: KeyboardEvent): string | null {
 export function ShortcutsTab() {
   const config = useSettings((s) => s.config);
   const patch = useSettings((s) => s.patchConfig);
-  const [recording, setRecording] = useState<"main" | "pasteLast" | "copyLast" | null>(null);
+  const [recording, setRecording] = useState<"main" | "pasteLast" | "copyLast" | "lens" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [hook, setHook] = useState<{ available: boolean; reason?: string } | null>(null);
 
@@ -36,7 +36,7 @@ export function ShortcutsTab() {
    * Their capture protocol generalized: bind any action, then persist the
    * accelerator through the same path the main hotkey uses.
    */
-  const captureFor = (action: "main" | "pasteLast" | "copyLast") => (e: React.KeyboardEvent) => {
+  const captureFor = (action: "main" | "pasteLast" | "copyLast" | "lens") => (e: React.KeyboardEvent) => {
     e.preventDefault();
     const accel = acceleratorFrom(e.nativeEvent);
     if (!accel) return;
@@ -61,7 +61,7 @@ export function ShortcutsTab() {
   const bindRow = (
     label: string,
     value: string,
-    action: "main" | "pasteLast" | "copyLast",
+    action: "main" | "pasteLast" | "copyLast" | "lens",
     hint?: string,
   ) => (
     <Row label={label} hint={hint}>
@@ -140,6 +140,12 @@ export function ShortcutsTab() {
           config.hotkey.shortcuts?.copyLast ?? "Shift+Alt+X",
           "copyLast",
           "Their copy_last_text — puts the same text on the clipboard without typing.",
+        )}
+        {bindRow(
+          "AI-edit selection (Lens)",
+          config.hotkey.shortcuts?.lens ?? "Ctrl+Super+Alt",
+          "lens",
+          "Highlight any text, press this, and tell the AI what to change — 'make it shorter', 'translate to French', 'fix the tone'. The result replaces your selection.",
         )}
         <Row label="Cancel shortcut">
           <Kbd>Esc</Kbd>

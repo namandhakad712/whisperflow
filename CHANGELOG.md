@@ -2,6 +2,41 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.14] — 2026-10-30
+
+### Added — Lens: AI-edit any selection (their signature feature)
+- **Highlight text in any app → `Ctrl+Super+Alt+L` → type what you want** ("make it shorter",
+  "translate to French", "fix the tone") — the active polish engine rewrites it and the result is
+  pasted back over your selection. Rebindable in Settings → Shortcuts. Their binding is
+  Ctrl+Win+Alt (modifier-only, which Electron can't register), so ours is that combo + L.
+- **Free-float overlay positioning**: drag the pill's avatar to place it anywhere — the position
+  persists and a new "Free float" anchor keeps it there. The docked resting pill drags the same way.
+- **Speaking indicator**: a green waveform across the pill bottom tracks mic levels while you talk.
+
+### Fixed — live UI findings
+- **The pill no longer clips**: the overlay window is now tall enough for every state (mini 48 /
+  card 80 / l4 322), bottom-anchored so it grows upward; the drop shadow (which read as a hard
+  clipped rectangle on the transparent window) is gone.
+- **Hotkey registration can never crash the app**: `globalShortcut.register` throws on
+  modifier-only accelerators (it killed boot once); registration is now guarded and reports
+  failures as "taken/invalid" instead of raising.
+- **Settings hub regrouped** into Essentials / Your stuff / System so the wall of 13 options reads
+  as the five things you touch, then your collections, then system tools.
+
+## [0.1.13] — 2026-10-29
+
+### Added
+- **Their exact paste-failure notification card** — when injection falls back to the clipboard, the
+  pill is replaced by their 400×200 shade-black card (radius 11, vast-900 border, dual white glow,
+  10px slide-in) with the Ctrl+V rescue message in keycaps. The overlay grows to fit it and holds
+  the card 6 s before collapsing.
+
+## [0.1.12] — 2026-10-29
+
+### Fixed
+- **Their exact typing-dots indicator** (1.4s ease-in-out, .2s stagger, −4px bounce) replaces the
+  "typing…" text; the rec dot is plain as in the reference (our pulse animation was invented).
+
 ## [0.1.11] — 2026-10-29
 
 ### Fixed — exactness pass on the pill (every deviation from their compiled CSS)

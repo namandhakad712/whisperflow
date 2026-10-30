@@ -3,7 +3,7 @@ import { useSettings } from "../store";
 import { Button, Card, PageHeader, Row, TextInput, Toggle } from "../../shared/ui";
 
 type Shape = "pill" | "rect" | "blob";
-type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom";
+type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom" | "free";
 
 const SHAPES: Array<{ id: Shape; label: string; className: string }> = [
   { id: "pill", label: "Pill", className: "rounded-2xl" },
@@ -22,6 +22,11 @@ const POSITIONS: Array<{ id: Position; label: string; hint: string }> = [
   { id: "top-right", label: "Top right", hint: "Pinned to the corner; re-clamped when monitors change" },
   { id: "top", label: "Top center", hint: "Fixed to the top center of your display" },
   { id: "bottom", label: "Bottom center", hint: "Fixed to the bottom center — out of the way" },
+  {
+    id: "free",
+    label: "Free float",
+    hint: "Grab the avatar on the pill and drag it anywhere — it stays there",
+  },
 ];
 
 export function OverlayTab() {

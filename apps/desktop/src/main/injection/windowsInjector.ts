@@ -139,6 +139,50 @@ function sendPaste(): Promise<void> {
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Copies the user's current text selection (Ctrl+C via SendKeys) and returns
+ * it. Used by the lens ("AI-edit selection"): read what the user highlighted,
+ * transform it, write the result back over the same selection.
+ */
+export async function copyFocusedSelection(): Promise<string> {
+  const snapshot = await snapshotClipboard();
+  try {
+    await sendKeys("^c");
+    await delay(120);
+    return clipboard.readText();
+  } finally {
+    // The user's clipboard is restored right after we read the selection —
+    // the lens must never clobber what they had there.
+    await restoreClipboard(snapshot).catch(() => {});
+  }
+}
+
+/** Raw SendKeys for synthetic key sequences (used for Ctrl+C above). */
+function sendKeys(keys: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${keys}')`,
+      ],
+      { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] },
+    );
+    let stderr = "";
+    proc.stderr?.on("data", (d: Buffer) => {
+      stderr += d.toString();
+    });
+    proc.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`SendKeys(${keys}) exit ${code}${stderr ? `: ${stderr.trim().slice(0, 160)}` : ""}`));
+    });
+    proc.on("error", reject);
+    setTimeout(() => reject(new Error(`SendKeys(${keys}) timed out`)), 1500);
+  });
+}
+
 /** Same sink as the rest of the main process (logs go to userData/logs). */
 const logInjection = (msg: string): void => {
   try {

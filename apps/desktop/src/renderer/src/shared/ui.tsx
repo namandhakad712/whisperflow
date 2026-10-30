@@ -1,8 +1,85 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div className={`rounded-2xl border border-line bg-surface/60 p-5 ${className}`}>{children}</div>
+  );
+}
+
+/**
+ * A card with a titled header — the consistent way to name a group of rows.
+ * One short hint line max; anything longer belongs in the row hints.
+ */
+export function SettingGroup({
+  title,
+  hint,
+  actions,
+  children,
+  className = "",
+}: {
+  title: string;
+  hint?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={className}>
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold">{title}</h3>
+          {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
+        </div>
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+/**
+ * Progressive disclosure: expert settings stay one click away but out of the
+ * default scan path. State is intentionally local — open it, use it, it folds
+ * back on the next visit so the simple path stays the default.
+ */
+export function Disclosure({
+  title,
+  hint,
+  defaultOpen = false,
+  children,
+  className = "",
+}: {
+  title: string;
+  hint?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={`rounded-2xl border border-line bg-surface/60 ${className}`}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-surface-2/40"
+      >
+        <ChevronRight
+          size={15}
+          strokeWidth={2.2}
+          aria-hidden="true"
+          className={`shrink-0 text-ink-dim transition-transform ${open ? "rotate-90" : ""}`}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{title}</p>
+          {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-line/60 px-5 pb-4 pt-3">{children}</div>
+      )}
+    </div>
   );
 }
 

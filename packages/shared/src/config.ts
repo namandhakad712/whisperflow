@@ -35,6 +35,12 @@ export const HotkeyConfigSchema = z.object({
       pasteLast: z.string().min(1).default("Shift+Alt+Z"),
       /** Their `copy_last_text` — put the last dictation on the clipboard. */
       copyLast: z.string().min(1).default("Shift+Alt+X"),
+      /**
+       * Their `lens` — AI-edit the current text selection. Their binding is
+       * Ctrl+Win+Alt (modifier-only); Electron needs a main key, so ours is
+       * that combo + L. Rebindable in Settings → Shortcuts.
+       */
+      lens: z.string().min(1).default("Ctrl+Super+Alt+L"),
     })
     .prefault({}),
 });
@@ -394,11 +400,27 @@ export const GeneralConfigSchema = z.object({
     /**
      * Overlay anchor. `floating` parks it in the bottom-right corner of the
      * active display's work area (14 px inset, like the app this mirrors);
-     * `top-left`/`top-right` pin it to a corner and re-clamp on monitor changes.
+     * `top-left`/`top-right` pin it to a corner and re-clamp on monitor changes;
+     * `free` puts it wherever the user last dragged it (see overlayFreePos).
      */
     overlayPosition: z
-      .enum(["cursor", "floating", "top-left", "top-right", "top", "bottom"])
+      .enum(["cursor", "floating", "top-left", "top-right", "top", "bottom", "free"])
       .default("cursor"),
+    /** Last free-float position of the pill (persisted on every drag). */
+    overlayFreePos: z
+      .object({
+        x: z.number().int(),
+        y: z.number().int(),
+        displayId: z.number().int().optional(),
+      })
+      .optional(),
+    /** Last free-float position of the resting pill (persisted on every drag). */
+    statusFreePos: z
+      .object({
+        x: z.number().int(),
+        y: z.number().int(),
+      })
+      .optional(),
     /** Meeting mode: keep the session open across pauses and insert each
      *  utterance as soon as it's transcribed (meetings, lectures, interviews). */
     meetingMode: z.boolean().default(false),

@@ -11,8 +11,7 @@ const BAR_HISTORY_MS = 28;
  * below is theirs, sources noted inline).
  *
  *   rest  → 30×6 dash, rgba(0,0,0,.5) bg, hsla(0,0%,100%,.5) border
- *   mini  → 416×48, radius 16, #1f1f1f, 1.5px #30302f border,
- *           shadow 0 8px 32px rgba(0,0,0,.38)
+ *   mini  → 416×48, radius 16, #1f1f1f, 1.5px #30302f border
  *   card  → 416×80, column content, status line with a 6×6 #10b981 dot
  *   l4    → 416×322 (expanded transcript)
  * All morphs run on their exact spring easing at 0.42s.
@@ -32,10 +31,11 @@ const PILL_CSS = `
 html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Figtree", "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 body { font-feature-settings: "salt" on; }
 
-.pill-zone { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 428px; height: 54px; display: flex; align-items: flex-end; justify-content: center; }
-.pill-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 428px; height: 54px; background: rgba(0, 0, 0, 0.004); }
+.pill-zone { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 428px; height: 428px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.pill-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 428px; height: 54px; background: rgba(0, 0, 0, 0.004); pointer-events: auto; }
 
-/* The card — their exact pill geometry. */
+/* The card — their pill geometry (shadow dropped on user request: it read as
+ * a hard clipped rectangle on the transparent window). */
 .pill-card {
   position: relative;
   width: 416px;
@@ -43,16 +43,15 @@ body { font-feature-settings: "salt" on; }
   border-radius: 16px;
   background: var(--pill-bg, #1f1f1f);
   border: 1.5px solid var(--pill-border, #30302f);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
   transition:
     width 0.42s var(--spring-easing),
     height 0.42s var(--spring-easing),
     border-radius 0.42s var(--spring-easing),
     background-color 0.3s ease,
     border-color 0.3s ease,
-    box-shadow 0.3s ease,
     opacity 0.3s ease;
   overflow: hidden;
+  pointer-events: auto;
 }
 .pill-card[data-state="card"] { height: 80px; }
 .pill-card[data-state="l4"] { height: 322px; }
@@ -83,7 +82,8 @@ body { font-feature-settings: "salt" on; }
 .pill-card[data-state="mini"] .mini-row { opacity: 1; pointer-events: auto; transition: opacity 0.18s ease 0.1s; }
 .pill-card[data-peek="true"] .mini-row { opacity: 0; }
 
-/* Frosted avatar circle (their 24px, hsla white .15 + blur 8px). */
+/* Frosted avatar circle (their 24px, hsla white .15 + blur 8px). It doubles
+ * as the drag handle — grab it to move the pill anywhere. */
 .avatar {
   flex: none;
   width: 24px;
@@ -98,7 +98,10 @@ body { font-feature-settings: "salt" on; }
   font-size: 11px;
   font-weight: 700;
   letter-spacing: -0.02em;
+  cursor: grab;
+  -webkit-app-region: drag;
 }
+.avatar:active { cursor: grabbing; }
 
 /* Live text: 15px/20px, weight 500, sand-50, single line with a right-edge
  * fade (their 20px mask). */
@@ -156,6 +159,33 @@ body { font-feature-settings: "salt" on; }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+
+/* Speaking indicator — a waveform strip across the pill's bottom edge
+ * (user-requested: visible proof the mic is hearing you). Mini state only. */
+.waveform {
+  position: absolute;
+  bottom: 5px;
+  left: 14px;
+  right: 70px;
+  height: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.waveform span {
+  flex: 1;
+  height: 12px;
+  border-radius: 2px;
+  background: #10b981;
+  transform: scaleY(0.08);
+  transform-origin: bottom;
+  transition: transform 40ms linear;
+}
+.pill-card[data-state="card"] .waveform,
+.pill-card[data-state="l4"] .waveform,
+.pill-card[data-state="rest"] .waveform { display: none; }
 
 /* Card content: column, 16px/12px padding. */
 .card-content {
@@ -305,6 +335,9 @@ export function Overlay() {
   const startingRef = useRef(false);
   const [elapsed, setElapsed] = useState(0);
   const startedAtRef = useRef<number | null>(null);
+  /** Mic levels for the speaking-indicator waveform. */
+  const levelsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0.04));
+  const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
 
   const readConfig = useCallback(async () => {
     const c = (await window.whisperflow.settings.get()) as {
@@ -388,7 +421,12 @@ export function Overlay() {
       startCapture({
         deviceId: micIdRef.current,
         onChunk: (pcm) => window.whisperflow.capture.sendPcm(pcm),
-        onLevel: () => {},
+        onLevel: (rms) => {
+          // Feed the speaking-indicator waveform (user-requested: visible
+          // feedback that the mic is live and picking up speech).
+          levelsRef.current.push(Math.min(1, rms * 6));
+          if (levelsRef.current.length > BAR_COUNT) levelsRef.current.shift();
+        },
       })
         .then((cap) => {
           captureRef.current = cap;
@@ -416,6 +454,22 @@ export function Overlay() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [recording]);
+
+  // Speaking indicator: mic levels drive the waveform bars while listening.
+  useEffect(() => {
+    if (event.state !== "listening") {
+      levelsRef.current = new Array(BAR_COUNT).fill(0.04);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      const levels = levelsRef.current;
+      for (let i = 0; i < BAR_COUNT; i++) {
+        const el = barsRef.current[i];
+        if (el) el.style.transform = `scaleY(${Math.max(0.08, levels[Math.min(i, levels.length - 1)] ?? 0.04)})`;
+      }
+    }, BAR_HISTORY_MS);
+    return () => window.clearInterval(timer);
+  }, [event.state]);
 
   if (event.state === "idle" || event.state === "cancelled") return null;
 
@@ -455,6 +509,13 @@ export function Overlay() {
       <div className="pill-zone">
         {!clipboardFallback && (
         <div className="pill-card" data-state={pillState} data-interactive="true">
+          {event.state === "listening" && (
+            <div className="waveform" aria-hidden="true">
+              {Array.from({ length: BAR_COUNT }, (_, i) => (
+                <span key={i} ref={(el) => { barsRef.current[i] = el; }} />
+              ))}
+            </div>
+          )}
           <div className="mini-row">
             {recording && <span className="rec-dot" />}
             <span className="avatar">W</span>

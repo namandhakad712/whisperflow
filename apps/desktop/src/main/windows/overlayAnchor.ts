@@ -12,7 +12,7 @@ import type { Rectangle } from "electron";
  *
  * Kept free of Electron runtime imports so it can be unit-tested.
  */
-export type OverlayAnchor = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom";
+export type OverlayAnchor = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom" | "free";
 
 /** Inset used by the corner anchors (matches the reference app: 14 px). */
 export const ANCHOR_INSET = 14;
@@ -29,6 +29,8 @@ export function computeOverlayBounds(
   size: { width: number; height: number },
   workArea: WorkAreaLike,
   cursor?: { x: number; y: number },
+  /** Last free-float position (required when anchor === "free"). */
+  freePos?: { x: number; y: number },
 ): Rectangle {
   const inset = ANCHOR_INSET;
   const width = Math.max(1, Math.min(Math.round(size.width), workArea.width));
@@ -37,6 +39,18 @@ export function computeOverlayBounds(
   let x: number;
   let y: number;
   switch (anchor) {
+    case "free": {
+      // The user dragged the pill here — restore exactly, or fall back to the
+      // floating corner on a first run / monitor change.
+      if (freePos) {
+        x = freePos.x;
+        y = freePos.y;
+        break;
+      }
+      x = workArea.x + workArea.width - width - inset;
+      y = workArea.y + workArea.height - height - inset;
+      break;
+    }
     case "floating":
       x = workArea.x + workArea.width - width - inset;
       y = workArea.y + workArea.height - height - inset;
