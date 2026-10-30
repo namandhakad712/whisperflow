@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.16] — 2026-10-30
+
+### Fixed — the resting pill was invisible/misplaced (two root causes)
+- **The status window painted an opaque settings-theme background**: the status bundle imported
+  `styles.css` (the settings app's sheet), which fills `body` and covered the whole transparent
+  window — the dash and capsule were hidden behind it. The status renderer now ships only its own
+  inline CSS. (Captured: an opaque light bar where the dash should be → centered dash after the fix.)
+- **The dash sat at the top of the window, not the middle**: `#root` had no height, so the zone's
+  `height:100%` collapsed. `#root { width:100%; height:100% }` added; the dash and the hover
+  capsule now center exactly.
+
 ## [0.1.15] — 2026-10-30
 
 ### Fixed — second live-UI pass

@@ -19,6 +19,9 @@ const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; background: transparent; overflow: hidden;
   font-family: "Inter", "Figtree", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+/* #root must carry the full height or the zone's height:100% collapses and
+ * the dash/capsule render at the top of the window instead of the middle. */
+#root { width: 100%; height: 100%; }
 
 .zone { position: relative; width: 100%; height: 100%; cursor: pointer;
   display: flex; align-items: center; justify-content: center; }
