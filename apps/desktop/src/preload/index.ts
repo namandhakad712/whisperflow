@@ -100,6 +100,10 @@ const extras = {
     dismiss: () => ipcRenderer.invoke("lens/dismiss"),
     onText: (cb: (ev: { text: string }) => void) => subscribe("lens/text", cb),
   },
+  system: {
+    theme: () => ipcRenderer.invoke("system/theme/get") as Promise<{ dark: boolean }>,
+    onTheme: (cb: (ev: { dark: boolean }) => void) => subscribe("system/theme", cb),
+  },
   app: {
     setLaunchAtLogin: (enabled: boolean) => ipcRenderer.invoke("app/setLaunchAtLogin", enabled),
     rebindHotkey: (accelerator: string) => ipcRenderer.invoke("app/rebindHotkey", accelerator),
@@ -120,6 +124,8 @@ const extras = {
   overlay: {
     /** Tell main whether the pointer is over a control (drives click-through). */
     setInteractive: (interactive: boolean) => ipcRenderer.send("overlay/setInteractive", interactive),
+    /** Which edge the overlay hangs from (top anchors grow downward). */
+    onAlign: (cb: (ev: { edge: "top" | "bottom" }) => void) => subscribe("overlay/align", cb),
   },
 };
 contextBridge.exposeInMainWorld("whisperflowExtras", extras);

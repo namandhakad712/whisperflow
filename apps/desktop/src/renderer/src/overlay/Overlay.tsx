@@ -33,6 +33,10 @@ body { font-feature-settings: "salt" on; }
 
 .pill-zone { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 428px; height: 428px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
 .pill-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 428px; height: 54px; background: rgba(0, 0, 0, 0.004); pointer-events: auto; }
+/* Top anchors: the window hangs from the top, so the pill (and everything
+ * else) grows DOWNWARD instead of upward. */
+body[data-align="top"] .pill-zone { bottom: auto; top: 6px; align-items: flex-start; }
+body[data-align="top"] .pill-zone::after { bottom: auto; top: 0; }
 
 /* The card — their pill geometry (shadow dropped on user request: it read as
  * a hard clipped rectangle on the transparent window). */
@@ -160,47 +164,52 @@ body { font-feature-settings: "salt" on; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
 
-/* Speaking indicator — a waveform strip across the pill's bottom edge
- * (user-requested: visible proof the mic is hearing you). Mini state only. */
+/* Speaking indicator — a live voice meter across the pill: bars track the
+ * mic level in real time (user-requested: visible proof the system is
+ * hearing you while you hold to talk). Mini state only. */
 .waveform {
   position: absolute;
-  bottom: 5px;
-  left: 14px;
-  right: 70px;
-  height: 12px;
+  top: 8px;
+  bottom: 8px;
+  left: 44px;
+  right: 74px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 2px;
   pointer-events: none;
-  opacity: 0.85;
 }
 .waveform span {
   flex: 1;
-  height: 12px;
-  border-radius: 2px;
+  height: 100%;
+  max-height: 30px;
+  min-height: 3px;
+  border-radius: 3px;
   background: #10b981;
-  transform: scaleY(0.08);
-  transform-origin: bottom;
+  transform: scaleY(0.1);
+  transform-origin: center;
   transition: transform 40ms linear;
+  opacity: 0.9;
 }
 .pill-card[data-state="card"] .waveform,
 .pill-card[data-state="l4"] .waveform,
 .pill-card[data-state="rest"] .waveform { display: none; }
 
-/* Card content: column, 16px/12px padding. */
+/* Card content: column. Their card is 80px tall — the status row (36px) plus
+ * one transcript line (18px) plus tight padding must fit inside it or the
+ * text clips (that was the "half-cut heading" bug). */
 .card-content {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
+  padding: 10px 12px;
   gap: 0;
   opacity: 0;
   transition: opacity 0.18s ease 0.1s;
 }
 .pill-card[data-state="card"] .card-content,
 .pill-card[data-state="l4"] .card-content { display: flex; opacity: 1; }
-.card-row { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.card-row { display: flex; align-items: center; gap: 8px; height: 36px; flex: none; }
 .status-line { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; min-width: 0; }
 
 /* l4 transcript body (rules L65-L85). */
@@ -260,9 +269,8 @@ body { font-feature-settings: "salt" on; }
 /* Error text — their destructive-400 #f87171. */
 .error-text { color: #f87171; }
 
-/* Their notification card (exact): 400px wide, 200px min/max height, 20px
- * padding, shade-black bg, radius 11, vast-900 border, the dual white glow,
- * entering with a 10px slide + .2s ease-in (pillcss @744286). */
+/* Their notification card — geometry only (its dual-white-glow shadow reads
+ * as a harsh rectangle on the transparent window; dropped on user request). */
 .notification {
   position: absolute;
   left: 50%;
@@ -274,7 +282,6 @@ body { font-feature-settings: "salt" on; }
   background: #000;
   border-radius: 11px;
   border: 1px solid #30302f;
-  box-shadow: 0 3px 30px -6px hsla(0, 0%, 100%, 0.2), 0 0 20px hsla(0, 0%, 100%, 0.15);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -283,6 +290,7 @@ body { font-feature-settings: "salt" on; }
   opacity: 0;
   animation: notification-in 0.2s ease-in forwards;
 }
+body[data-align="top"] .notification { bottom: auto; top: 0; }
 @keyframes notification-in {
   from { transform: translate(-50%, 10px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
@@ -338,6 +346,22 @@ export function Overlay() {
   /** Mic levels for the speaking-indicator waveform. */
   const levelsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0.04));
   const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
+  /** OS theme from main (matchMedia lags the OS in Electron). */
+  const [systemDark, setSystemDark] = useState(true);
+
+  useEffect(() => {
+    void window.whisperflowExtras.system.theme().then((t) => setSystemDark(t.dark));
+    const unsub = window.whisperflowExtras.system.onTheme((t) => setSystemDark(t.dark));
+    return unsub;
+  }, []);
+
+  // Which edge the overlay hangs from — top anchors grow downward.
+  useEffect(() => {
+    const unsub = window.whisperflowExtras.overlay.onAlign((ev) => {
+      document.body.dataset["align"] = ev.edge;
+    });
+    return unsub;
+  }, []);
 
   const readConfig = useCallback(async () => {
     const c = (await window.whisperflow.settings.get()) as {
@@ -354,10 +378,9 @@ export function Overlay() {
     micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
     void micId;
     // Custom tint + OS theme sync: the pill recolors from config (their colors
-    // stay the default). `prefers-color-scheme` is the OS theme signal.
+    // stay the default). The real OS signal comes from main (nativeTheme).
     const follow = Boolean(c.general?.overlayFollowSystemTheme);
-    const systemLight =
-      follow && typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches;
+    const systemLight = follow && !systemDark;
     const tint = c.general?.overlayTint?.trim() || "";
     document.documentElement.style.setProperty("--pill-bg", tint || (systemLight ? "#fcfcfb" : "#1f1f1f"));
     document.documentElement.style.setProperty(
@@ -365,8 +388,8 @@ export function Overlay() {
       systemLight && !tint ? "rgba(0,0,0,0.1)" : "#30302f",
     );
     document.documentElement.style.setProperty("--pill-ink", systemLight && !tint ? "#1a1a1a" : "#fcfcfb");
-    document.documentElement.style.setProperty("--pill-meta", systemLight && !tint ? "#71716e" : "#71716e");
-  }, [micId]);
+    document.documentElement.style.setProperty("--pill-meta", "#71716e");
+  }, [micId, systemDark]);
 
   // Click-through by default (like the reference overlay): the window ignores the
   // mouse so it never blocks the app underneath; we only make it interactive
@@ -509,7 +532,7 @@ export function Overlay() {
       <div className="pill-zone">
         {!clipboardFallback && (
         <div className="pill-card" data-state={pillState} data-interactive="true">
-          {event.state === "listening" && (
+          {event.state === "listening" && recording && !event.partial && (
             <div className="waveform" aria-hidden="true">
               {Array.from({ length: BAR_COUNT }, (_, i) => (
                 <span key={i} ref={(el) => { barsRef.current[i] = el; }} />

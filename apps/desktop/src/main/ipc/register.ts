@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, shell, type Tray } from "electron";
+import { app, dialog, ipcMain, nativeTheme, shell, type Tray } from "electron";
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -253,6 +253,9 @@ export function registerIpc(deps: {
   ipcMain.handle("status/contextMenu", () => {
     windows.createSettingsWindow();
   });
+
+  // ---- system signals ------------------------------------------------------------
+  ipcMain.handle("system/theme/get", () => ({ dark: nativeTheme.shouldUseDarkColors }));
 
   // ---- lens (AI-edit the current selection) ------------------------------------
   ipcMain.handle("lens/dismiss", () => {

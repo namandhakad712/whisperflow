@@ -2,6 +2,18 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.15] — 2026-10-30
+
+### Fixed — second live-UI pass
+- **Card state no longer clips its headings**: the transcribing/polishing card is 80px tall; its content (36px status row + 18px transcript line + 10px padding) now fits inside (was ~102px in an 80px box). Verified with a DOM probe + capture.
+- **Theme sync works for real now**: the OS light/dark signal comes from `nativeTheme` in main and is pushed to the overlay (the old `matchMedia` path lagged the OS in Electron and never fired).
+- **Top anchors grow downward**: for "top"/"top-left"/"top-right" positions, the window tells the renderer which edge it hangs from (`overlay/align`) and the pill + notification card flip to top-anchored. The 400px window no longer parks the pill 400px below a top anchor.
+- **Resting pill capsule stops clipping**: the status hit window widened 56→80px (the hover capsule grows to 54 CSS px, which overflowed at 125% DPI — the "cut-off animation").
+- **Notification card's white-glow shadow removed** (same reason as the pill's: reads as a harsh rectangle on the transparent window).
+
+### Changed
+- **The speaking meter is a real voice bar now**: while recording with no transcript yet (the hold-to-talk moment), a row of green bars spans the pill tracking live mic levels; once words arrive, the transcript takes over the space.
+
 ## [0.1.14] — 2026-10-30
 
 ### Added — Lens: AI-edit any selection (their signature feature)

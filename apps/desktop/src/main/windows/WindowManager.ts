@@ -163,6 +163,9 @@ export class WindowManager {
       win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     }
     this.watchDisplayChanges(win);
+    // Tell the renderer which edge it hangs from: top anchors must grow
+    // DOWNWARD (the pill sits at the window's top), everything else upward.
+    win.webContents.send?.("overlay/align", { edge: position.startsWith("top") ? "top" : "bottom" });
     win.showInactive();
   }
 
@@ -449,8 +452,10 @@ export class WindowManager {
     if (this.statusWindow?.isDestroyed()) this.statusWindow = null;
     if (!this.statusWindow) {
       const win = new BrowserWindow({
-        width: 56,
-        height: 56,
+        // 80px (not 56): the hover capsule grows to 54 CSS px wide and at
+        // 125% DPI that overflowed a 56px window — the capsule visibly clipped.
+        width: 80,
+        height: 80,
         show: true,
         frame: false,
         transparent: true,
@@ -497,8 +502,10 @@ export class WindowManager {
   /** Edge-anchors the status hit zone (flush to the edge, vertically centered). */
   private dockStatusBar(win: BrowserWindow, edge: "left" | "right" | "bottom"): void {
     const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
-    const w = 56;
-    const h = 56;
+    const w = 80;
+    const h = 80;
+    // Keep at least 2px onscreen: insets are small but never zero, so the dash
+    // remains visible without the hit zone eating desktop space.
     const bounds =
       edge === "left"
         ? { x: area.x + 2, y: area.y + Math.round((area.height - h) / 2), width: w, height: h }

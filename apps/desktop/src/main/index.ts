@@ -1,4 +1,4 @@
-import { app, session } from "electron";
+import { app, nativeTheme, session } from "electron";
 import type { WhisperFlowConfig } from "@whisperflow/shared";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -199,6 +199,12 @@ async function bootstrap(): Promise<void> {
   // Their persistent resting "flow bar" — the 30×6 dash docked on a screen
   // edge. Off by default (their `hideFlowBarPermanently` equivalent).
   windows.applyStatusBar(config.general?.dockEdge ?? "none");
+
+  // OS theme: push the real light/dark signal to the overlay (the renderer's
+  // matchMedia follows Chromium's notion, which lags the OS in Electron).
+  const pushTheme = () => windows.sendToOverlay("system/theme", { dark: nativeTheme.shouldUseDarkColors });
+  pushTheme();
+  nativeTheme.on("updated", pushTheme);
 
   const tray = createTray({
     toggleDictation: () => void controller.toggle(),

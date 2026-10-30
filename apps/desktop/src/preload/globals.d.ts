@@ -15,6 +15,10 @@ declare global {
         dismiss(): Promise<void>;
         onText(cb: (ev: { text: string }) => void): () => void;
       };
+      system: {
+        theme(): Promise<{ dark: boolean }>;
+        onTheme(cb: (ev: { dark: boolean }) => void): () => void;
+      };
       app: {
         setLaunchAtLogin(enabled: boolean): Promise<void>;
         rebindHotkey(accelerator: string): Promise<{ ok: boolean }>;
@@ -31,7 +35,10 @@ declare global {
         }): Promise<{ canceled: boolean; path?: string; content?: string }>;
       };
       settings: { onChanged(cb: () => void): () => void };
-      overlay: { setInteractive(interactive: boolean): void };
+      overlay: {
+        setInteractive(interactive: boolean): void;
+        onAlign(cb: (ev: { edge: "top" | "bottom" }) => void): () => void;
+      };
     };
   }
 }
