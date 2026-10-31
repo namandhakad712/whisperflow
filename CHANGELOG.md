@@ -2,6 +2,30 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.18] — 2026-10-31
+
+### Fixed — human-reviewer pass (blockers)
+- **Hold-to-talk can no longer get stuck.** Releasing the key during the ~5 s cold-start window used
+  to leave the dictation permanently armed: `finish()` saw no session yet and no-oped, so the mic
+  stayed live and the keyboard hook counted every keystroke for 40+ minutes (reproduced from logs).
+  `finish()` now flags a pending release and the session finishes the instant it exists.
+- **Rapid hotkey presses can no longer interleave sessions.** `start()`'s guard only checked
+  `this.session`, which is assigned after the async work — double-presses spawned parallel sessions
+  (leaked mic, one session's collapse hiding the other's pill). A `starting` gate plus a
+  mode-aware `toggle()` close the race.
+
+### Fixed — reviewer majors
+- **A listening indicator in the default config.** The voice meter and the pill's state were gated on
+  the audio-saving mode, so a normal dictation showed *no* sign of listening — and the placeholder
+  literally read "Press the hotkey and speak" after you'd just pressed it. The meter now shows
+  whenever the app is listening (until words arrive) and the copy says "Listening…".
+- **The resting dash is visible on dark desktops.** Pure black-on-black left zero non-black pixels
+  over a dark window; it's now a mid-gray pill with a light inner ring (pixel-checked: ~300
+  non-black pixels where there were ~0). The false "hover it to see the hotkey" hint now describes
+  what the hover capsule actually does.
+- **Foreground-app attribution failures are logged** instead of vanishing (per-app stats and history
+  filters silently lost data).
+
 ## [0.1.17] — 2026-10-31
 
 ### Fixed — hold-to-talk was unusable

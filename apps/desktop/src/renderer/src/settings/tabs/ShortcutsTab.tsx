@@ -34,8 +34,8 @@ export function ShortcutsTab() {
   if (!config) return null;
 
   /**
-   * Their capture protocol generalized: bind any action, then persist the
-   * accelerator through the same path the main hotkey uses.
+   * Capture protocol: bind any action, then persist the accelerator through
+   * the same path the main hotkey uses.
    */
   const captureFor = (action: "main" | "pasteLast" | "copyLast" | "lens") => (e: React.KeyboardEvent) => {
     e.preventDefault();

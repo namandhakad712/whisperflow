@@ -3,8 +3,8 @@ import { POLISH_CLOUD_PRESETS, type PolishCloudProviderId, type WhisperFlowConfi
 import { useSettings } from "../store";
 import { Button, Card, PageHeader, Row, Select, TextInput, Toggle } from "../../shared/ui";
 
-/** Style contexts — reference app's "Make it sound like you" board, mapped to our config:
- *  each context picks the polish tone; custom instructions override per context. */
+/** Style contexts: each context picks the polish tone; custom instructions
+ *  override per context. */
 const CONTEXTS = ["Personal messages", "Work messages", "Email", "Other"] as const;
 type Context = (typeof CONTEXTS)[number];
 
@@ -47,7 +47,7 @@ export function AdvancedTab() {
         </Row>
         <Row
           label="Cleanup strength"
-          hint='Their five levels, verbatim: None transcribes exactly what you said; Light cleans up filler words and grammar; Medium edits for clarity and conciseness.'
+          hint='Five levels: None transcribes exactly what you said; Light cleans up filler words and grammar; Medium edits for clarity and conciseness.'
         >
           <Select
             value={config.polish.cleanup}

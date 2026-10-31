@@ -58,7 +58,9 @@ export class DictationController {
   }
 
   async toggle(): Promise<void> {
-    if (this.session) await this.finish();
+    // `starting` counts as active too — a rapid double-press must not start a
+    // second, interleaved session (leaked mic, cross-session hide timers).
+    if (this.session || this.starting) await this.finish();
     else await this.start();
   }
 
@@ -69,6 +71,11 @@ export class DictationController {
   /** Pending overlay collapse — cleared whenever a new dictation starts. */
   private hideTimer: NodeJS.Timeout | null = null;
   private recordingCapWarn: NodeJS.Timeout | null = null;
+  /** True while start() resolves config/UIA/engine — gates re-entrancy. */
+  private starting = false;
+  /** A finish() that arrived during `starting` — honored the moment the
+   *  session exists (hold-mode release during the cold-start window). */
+  private finishRequested = false;
   private armRecordingCap(maxMs: number): void {
     if (this.recordingCap) {
       clearTimeout(this.recordingCap);
@@ -134,11 +141,18 @@ export class DictationController {
 
   /** True while a dictation is mid-flight — their deferred-recovery gate. */
   get busy(): boolean {
-    return this.session !== null || this.finishing;
+    return this.session !== null || this.finishing || this.starting;
   }
 
   async start(opts: { recorder?: boolean } = {}): Promise<void> {
-    if (this.session) return;
+    // Blockers fixed here: (a) a second start() while the first is still
+    // resolving config/UIA used to slip past `if (this.session)` and interleave
+    // two sessions (leaked mic, cross-session hide timers); (b) in hold mode,
+    // releasing the key DURING that ~5s cold-start window left the session
+    // permanently stuck — finish() saw no session yet and no-oped, and nothing
+    // else could ever finish it.
+    if (this.session || this.starting) return;
+    this.starting = true;
     // The pill is coming back — cancel any pending collapse from the last turn.
     if (this.hideTimer) {
       clearTimeout(this.hideTimer);
@@ -163,7 +177,12 @@ export class DictationController {
       // history filters) — the reference app stores this too. The type drives
       // per-app formatting: signature in email apps, no trailing period in
       // chat, cleanup skipped in AI apps.
-      const fg = await getForegroundApp().catch(() => null);
+      const fg = await getForegroundApp().catch((e) => {
+        // Swallowing this silently lost per-app stats/history attribution —
+        // surface it so a broken foreground probe doesn't go unnoticed.
+        log("dictation: foreground app unavailable:", String(e).slice(0, 120));
+        return null;
+      });
       // UIA gives us the real browser URL (their GetActiveAppInfo url field) —
       // a much stronger classification signal than the window title.
       const uia = await getFocusedElementInfo().catch(() => null);
@@ -184,6 +203,15 @@ export class DictationController {
       );
       this.session = session;
       this.finishing = false;
+      this.starting = false;
+      // Hold-mode race: if the user released the key while start() was still
+      // resolving (the ~5s cold-start window), finish() already ran and
+      // no-oped — flagging means we finish NOW instead of hanging forever.
+      if (this.finishRequested) {
+        this.finishRequested = false;
+        void this.finish();
+        return;
+      }
       this.deps.hotkeys.bindEscape();
       this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor");
       this.armRecordingCap(cfg?.audio?.maxRecordingLengthMs ?? 0);
@@ -199,6 +227,8 @@ export class DictationController {
     } catch (err) {
       log("dictation: failed to start:", err);
       this.broadcast({ state: "error", error: String(err) });
+    } finally {
+      this.starting = false;
     }
   }
 
@@ -209,6 +239,14 @@ export class DictationController {
   }
 
   async finish(): Promise<void> {
+    // start() is mid-flight (config/UIA/engine still resolving): remember the
+    // release and finish as soon as the session exists — otherwise a hold-mode
+    // release during the cold-start window strands the dictation forever.
+    if (!this.session && this.starting) {
+      this.finishRequested = true;
+      log("dictation: finish requested before the session was ready — will finish on start");
+      return;
+    }
     const session = this.session;
     if (!session || this.finishing) return;
     this.finishing = true;

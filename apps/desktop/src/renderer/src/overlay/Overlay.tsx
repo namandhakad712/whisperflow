@@ -521,7 +521,9 @@ export function Overlay() {
 
   const liveText =
     event.state === "listening"
-      ? event.partial || (recording ? "" : "Press the hotkey and speak")
+      ? // Once words arrive they take the space; until then "Listening…" sits
+        // under the voice meter (NOT "press the hotkey" — the user just did).
+        event.partial || "Listening…"
       : event.state === "error"
         ? event.error ?? "Something went wrong"
         : event.partial || `${STATE_LABEL[event.state]}…`;
@@ -532,7 +534,10 @@ export function Overlay() {
       <div className="pill-zone">
         {!clipboardFallback && (
         <div className="pill-card" data-state={pillState} data-interactive="true">
-          {event.state === "listening" && recording && !event.partial && (
+          {/* The voice meter shows whenever the app is listening and no words
+           * have arrived yet — not only when audio saving is on (the reviewer
+           * found the default config had NO listening indicator at all). */}
+          {event.state === "listening" && !event.partial && (
             <div className="waveform" aria-hidden="true">
               {Array.from({ length: BAR_COUNT }, (_, i) => (
                 <span key={i} ref={(el) => { barsRef.current[i] = el; }} />

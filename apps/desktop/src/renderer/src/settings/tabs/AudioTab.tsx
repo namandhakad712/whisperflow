@@ -3,9 +3,8 @@ import { useSettings } from "../store";
 import { Card, Row, PageHeader, Select } from "../../shared/ui";
 
 /**
- * A compact version of their language list — the codes whisper.cpp accepts
- * natively. Their picker carries 30+ (with a Hinglish tile); ours opens with
- * the common ones and can be extended without a schema change.
+ * The codes whisper.cpp accepts natively. Opens with the common ones and
+ * can be extended without a schema change.
  */
 const SUPPORTED_LANGUAGES: [code: string, name: string][] = [
   ["en", "English"],
@@ -85,7 +84,7 @@ export function AudioTab() {
         </Row>
         <Row
           label="Max dictation length (minutes)"
-          hint="Their default is 20 minutes (a warning fires one minute before). 0 = unlimited."
+          hint="Default is 20 minutes (a warning fires one minute before). 0 = unlimited."
         >
           <input
             type="number"
@@ -105,7 +104,7 @@ export function AudioTab() {
       <Card className="mt-5">
         <Row
           label="Automatic language detection"
-          hint="Flow will detect your language automatically. Make sure all the languages you speak are selected."
+          hint="WhisperFlow will detect your language automatically. Make sure all the languages you speak are selected."
         >
           <Select
             value={config.stt.autoDetect === false ? "off" : "on"}

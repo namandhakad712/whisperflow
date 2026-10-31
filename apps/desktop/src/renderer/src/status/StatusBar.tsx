@@ -26,13 +26,17 @@ html, body { width: 100%; height: 100%; background: transparent; overflow: hidde
 .zone { position: relative; width: 100%; height: 100%; cursor: pointer;
   display: flex; align-items: center; justify-content: center; }
 
-/* Rest dash — their exact values (rotated for side docks via data-edge). */
+/* Rest dash (rotated for side docks via data-edge). */
 .dash {
   width: 30px;
   height: 6px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1.5px solid hsla(0, 0%, 100%, 0.5);
+  /* Visible on light AND dark desktops: mid-gray fill with a light inner ring
+   * — the pure black-on-black version was effectively invisible (a human
+   * reviewer found zero non-black pixels over a dark window). */
+  background: rgba(38, 38, 37, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6);
   transition: all 0.42s var(--spring-easing);
 }
 .zone[data-edge="left"] .dash, .zone[data-edge="right"] .dash {

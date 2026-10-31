@@ -90,7 +90,7 @@ export function OverlayTab() {
 
         <Row
           label="Resting bar"
-          hint="A small dash docked on a screen edge (their flow bar) — hover it to see the hotkey, click it to dictate, right-click for Settings."
+          hint="A small dash docked on a screen edge — hover to expand it, click it to start a dictation, right-click for Settings."
         >
           <div className="flex gap-2">
             {([
@@ -117,7 +117,7 @@ export function OverlayTab() {
 
         <Row
           label="Custom pill color"
-          hint="Paint the pill any color — leave blank for the reference look (#1f1f1f)."
+          hint="Paint the pill any color — leave blank for the default dark look (#1f1f1f)."
         >
           <div className="flex items-center gap-2">
             <input
@@ -143,7 +143,7 @@ export function OverlayTab() {
 
         <Row
           label="Sync with system theme"
-          hint="The pill follows light/dark mode and flips its card and text. Off = the reference dark pill."
+          hint="The pill follows light/dark mode and flips its card and text. Off = always the dark pill."
         >
           <Toggle
             checked={Boolean(g.overlayFollowSystemTheme)}
