@@ -8,6 +8,7 @@ import { readdirSync, statSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pcmToWav } from "../../audio/wav.js";
+import { stripWhisperTokens } from "../../text/whisperTokens.js";
 
 export interface TranscribeOpts {
   /** On-disk ggml weights file — required here (cloud adapters pass none). */
@@ -125,7 +126,7 @@ export class WhisperCppProvider {
         transcription?: Array<{ text?: string }>;
       };
       const text = (parsed.transcription ?? [])
-        .map((seg) => (seg.text ?? "").trim())
+        .map((seg) => stripWhisperTokens(seg.text ?? ""))
         .join(" ")
         .replace(/\s+/g, " ")
         .trim();
@@ -134,7 +135,7 @@ export class WhisperCppProvider {
       /* fall through to txt */
     }
     try {
-      return readFileSync(outPrefix + ".txt", "utf-8").replace(/\s+/g, " ").trim();
+      return stripWhisperTokens(readFileSync(outPrefix + ".txt", "utf-8").replace(/\s+/g, " ").trim());
     } catch {
       return "";
     }

@@ -20,6 +20,7 @@ import { resample } from "../audio/resampler.js";
 import { fuzzyCorrect } from "../text/dictionary.js";
 import { applyCommand, detectCommand } from "../text/commands.js";
 import { offlinePolish } from "../text/cleanup.js";
+import { isEmptyTranscript, stripWhisperTokens } from "../text/whisperTokens.js";
 import type { PolishInput, PolishProvider } from "../providers/polish/PolishProvider.js";
 import type { HistoryStore } from "../history/historyStore.js";
 
@@ -241,7 +242,11 @@ export class DictationSession {
         language: resolveSttLanguage(config.stt),
         prompt,
       });
-      if (this.cancelled || !text) return;
+      // whisper.cpp prints bracketed tags ([BLANK_AUDIO], [NOISE], …) when a
+      // segment has no speech; strip them at the choke point so no adapter —
+      // local, cloud, or test mock — can leak one into polish/paste/history.
+      const cleaned = stripWhisperTokens(text);
+      if (this.cancelled || isEmptyTranscript(cleaned)) return;
       if (this.deps.appendMode) {
         // Insert this utterance now; keep accumulating for the final transcript.
         const clean = offlinePolish(fuzzyCorrect(text, config.dictionary).corrected);

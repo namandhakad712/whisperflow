@@ -145,6 +145,13 @@ export class DictationController {
       this.hideTimer = null;
     }
     this.deps.windows.resizeOverlay(120);
+    // Show the pill the INSTANT the combo registers — before any awaits. The
+    // UIA classification probe can cold-start PowerShell for seconds on first
+    // use, and hold-to-talk users must see the listening pill while they're
+    // still holding, not when classification finishes (was: hold → nothing →
+    // release → pill flashes and dies). Repositioned once config loads below.
+    this.broadcast({ state: "listening", recording: false });
+    this.deps.windows.showOverlay(undefined, "cursor");
     try {
       const cfg = await this.deps.engine.getConfig().catch(() => null);
       const meeting = Boolean(cfg?.general?.meetingMode) || opts.recorder;
