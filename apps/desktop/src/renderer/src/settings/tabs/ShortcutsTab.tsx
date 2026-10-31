@@ -132,7 +132,7 @@ export function ShortcutsTab() {
           "Paste last dictation",
           config.hotkey.shortcuts?.pasteLast ?? "Shift+Alt+Z",
           "pasteLast",
-          "Their paste_last_text — type your most recent dictation again, wherever the cursor is.",
+          "Type your most recent dictation again, wherever the cursor is.",
         )}
         {bindRow(
           "Copy last dictation",
