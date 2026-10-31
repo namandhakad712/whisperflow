@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import type { DictationMode } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Button, Card, Kbd, Row, SectionTitle, Toggle } from "../../shared/ui";
+import { Button, Card, Kbd, Row, SectionTitle, Segmented } from "../../shared/ui";
 
 /** Turns a KeyboardEvent into an Electron accelerator string. */
 function acceleratorFrom(e: KeyboardEvent): string | null {
@@ -87,34 +88,31 @@ export function ShortcutsTab() {
     <section>
       <SectionTitle
         title="Shortcuts"
-        hint="Global keys that work in any application. Press once to start, again to finish; Esc cancels."
+        hint="Global keys that work in any application. The dictation mode decides how the hotkey behaves; Esc cancels an active dictation."
       />
       <Card>
         {bindRow("Dictation hotkey", config.hotkey.pushToTalk, "main")}
         <Row
-          label="Toggle mode"
-          hint="On: one press starts, next press finishes. Off: the session also auto-finishes after silence."
-        >
-          <Toggle
-            checked={config.hotkey.toggleMode}
-            onChange={(v) => void patch({ hotkey: { toggleMode: v } })}
-          />
-        </Row>
-        <Row
-          label="Hold to talk"
+          label="Dictation mode"
           hint={
-            hook?.available
+            config.hotkey.mode === "hold"
               ? "Press and hold the hotkey to talk; release to finish. Also detects typing mid-dictation and holds the session open."
-              : "Needs the global keyboard hook, which isn't available in this build — toggling on has no effect until it is."
+              : "One press starts; the next press — or falling silent — finishes."
           }
         >
-          <Toggle
-            checked={config.hotkey.holdMode}
-            disabled={!hook?.available}
-            onChange={(v) => void patch({ hotkey: { holdMode: v } })}
+          <Segmented<DictationMode>
+            value={config.hotkey.mode}
+            onChange={(v) => void patch({ hotkey: { mode: v } })}
+            options={[
+              // Hold needs the global keyboard hook; without it the app falls
+              // back to toggle behavior, so the option is disabled (not hidden)
+              // to say why it won't work here.
+              { value: "hold", label: "Hold to talk", disabled: !hook?.available },
+              { value: "toggle", label: "Press to toggle" },
+            ]}
           />
         </Row>
-        {config.hotkey.holdMode && hook && (
+        {config.hotkey.mode === "hold" && hook && (
           <p className="border-t border-line/60 px-1 pt-3 text-xs leading-5 text-ink-dim">
             {hook.available ? (
               <>
@@ -124,7 +122,8 @@ export function ShortcutsTab() {
               </>
             ) : (
               <span className="text-red-400">
-                Keyboard hook unavailable{hook.reason ? `: ${hook.reason}` : ""}.
+                Keyboard hook unavailable{hook.reason ? `: ${hook.reason}` : ""} — dictation is
+                running in press-to-toggle mode until it is.
               </span>
             )}
           </p>

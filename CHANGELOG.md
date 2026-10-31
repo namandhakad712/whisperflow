@@ -2,6 +2,27 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.17] — 2026-10-31
+
+### Fixed — hold-to-talk was unusable
+- **The pill now appears the INSTANT the hotkey registers.** `start()` only showed the overlay after
+  the UIA classification probe finished — which cold-starts PowerShell for seconds on first use —
+  so in hold mode you held the combo, saw nothing, released, and watched the pill flash in and die.
+  The pill now shows cursor-anchored before any `await` and repositions once config loads.
+- **Hold vs toggle is now ONE mode, not two flags.** Settings shows a single segmented control
+  ("Hold to talk" / "Press to toggle") backed by a new `hotkey.mode` field; the legacy
+  `holdMode`/`toggleMode` booleans are derived from it (mutually consistent by construction, old
+  configs migrate with tests). Also fixed: rebinding the hotkey silently force-set `toggleMode`
+  and kicked you out of hold-to-talk — it now only persists the binding.
+- **`[BLANK_AUDIO]` no longer gets pasted into your document.** whisper.cpp prints bracketed
+  pseudo-tags on silent segments; every tag is now stripped at the engine choke point (local,
+  cloud and mock STT all pass through it) and a segment left empty is dropped instead of stored —
+  nothing tag-shaped can reach polish, paste, or history. 8 new engine tests.
+
+### Changed
+- **The avatar is a mic icon now**, not the letter "W" (it doubles as the drag handle — drag it to
+  move the pill anywhere).
+
 ## [0.1.16] — 2026-10-30
 
 ### Fixed — the resting pill was invisible/misplaced (two root causes)

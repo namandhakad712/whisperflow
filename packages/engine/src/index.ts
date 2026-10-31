@@ -105,6 +105,8 @@ export {
   STOPWORDS,
 } from "./text/learnFromEdits.js";
 export type { LearnedCandidate } from "./text/learnFromEdits.js";
+// whisper.cpp special-tag handling ([BLANK_AUDIO], [NOISE], …) for the host.
+export { isEmptyTranscript, stripWhisperTokens } from "./text/whisperTokens.js";
 
 export async function createEngine(opts: { dirs: EngineDirs; configPath?: string }): Promise<WhisperFlowEngine> {
   const logger = (msg: string) => console.debug(`[engine] ${msg}`);

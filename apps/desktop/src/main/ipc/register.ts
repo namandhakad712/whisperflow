@@ -185,7 +185,10 @@ export function registerIpc(deps: {
   });
   ipcMain.handle("app/rebindHotkey", (_e, accelerator: string) => {
     const ok = hotkeys.bindMain(accelerator);
-    if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator, toggleMode: true } });
+    // Only the binding is persisted — the dictation mode owns how the hotkey
+    // behaves, so it must not be touched here. Forcing toggleMode here used
+    // to silently switch users out of hold-to-talk after a rebind.
+    if (ok) void engine.setConfig({ hotkey: { pushToTalk: accelerator } });
     return { ok };
   });
   ipcMain.handle("app/rebindShortcut", async (_e, req: { action: "pasteLast" | "copyLast" | "lens"; accelerator: string }) => {

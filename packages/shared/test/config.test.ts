@@ -47,3 +47,57 @@ describe("WhisperFlowConfigSchema", () => {
     ).toThrow();
   });
 });
+
+describe("hotkey.mode (single source of truth)", () => {
+  it("defaults to toggle: one press starts, silence or the next press finishes", () => {
+    const config: WhisperFlowConfig = WhisperFlowConfigSchema.parse({});
+    expect(config.hotkey.mode).toBe("toggle");
+    expect(config.hotkey.holdMode).toBe(false);
+    expect(config.hotkey.toggleMode).toBe(true);
+  });
+
+  it("reads a legacy holdMode:true config as hold", () => {
+    const config = WhisperFlowConfigSchema.parse({ hotkey: { holdMode: true } });
+    expect(config.hotkey.mode).toBe("hold");
+    expect(config.hotkey.holdMode).toBe(true);
+    expect(config.hotkey.toggleMode).toBe(false);
+  });
+
+  it("reads legacy toggleMode (true or false) as toggle", () => {
+    for (const toggleMode of [true, false]) {
+      const config = WhisperFlowConfigSchema.parse({ hotkey: { toggleMode } });
+      expect(config.hotkey.mode).toBe("toggle");
+      expect(config.hotkey.holdMode).toBe(false);
+      expect(config.hotkey.toggleMode).toBe(true);
+    }
+  });
+
+  it("mode drives the derived flags, so the pair can never disagree", () => {
+    const hold = WhisperFlowConfigSchema.parse({ hotkey: { mode: "hold" } });
+    expect(hold.hotkey).toMatchObject({ mode: "hold", holdMode: true, toggleMode: false });
+    const toggle = WhisperFlowConfigSchema.parse({ hotkey: { mode: "toggle" } });
+    expect(toggle.hotkey).toMatchObject({ mode: "toggle", holdMode: false, toggleMode: true });
+  });
+
+  it("mode wins over contradictory legacy flags (stale patch merged over an old file)", () => {
+    // e.g. deepMerge({holdMode: true}, {mode: "toggle"}) — the newer intent wins.
+    const config = WhisperFlowConfigSchema.parse({ hotkey: { holdMode: true, mode: "toggle" } });
+    expect(config.hotkey.mode).toBe("toggle");
+    expect(config.hotkey.holdMode).toBe(false);
+    const flipped = WhisperFlowConfigSchema.parse({ hotkey: { holdMode: false, mode: "hold" } });
+    expect(flipped.hotkey.mode).toBe("hold");
+    expect(flipped.hotkey.toggleMode).toBe(false);
+  });
+
+  it("drops a bogus mode instead of rejecting the whole config", () => {
+    const config = WhisperFlowConfigSchema.parse({ hotkey: { mode: "scream", pushToTalk: "Alt+Q" } });
+    expect(config.hotkey.mode).toBe("toggle");
+    expect(config.hotkey.pushToTalk).toBe("Alt+Q");
+  });
+
+  it("round-trips mode and the derived flags through JSON", () => {
+    const config = WhisperFlowConfigSchema.parse({ hotkey: { mode: "hold" } });
+    const revived = WhisperFlowConfigSchema.parse(JSON.parse(JSON.stringify(config)));
+    expect(revived).toEqual(config);
+  });
+});

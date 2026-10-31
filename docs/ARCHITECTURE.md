@@ -154,7 +154,8 @@ hidden when idle; positioned near caret/cursor; states: `listening` (waveform + 
 
 ```ts
 {
-  hotkey: { pushToTalk: "Control+Shift+Space", toggleMode: false },
+  hotkey: { pushToTalk: "Control+Shift+Space", mode: "toggle" | "hold" },  // mode is the source of
+             // truth; legacy holdMode/toggleMode booleans are derived from it (back-compat)
   audio: { deviceId: "default", vad: { kind: "rms" | "silero", sensitivity: 0.5, silenceMs: 700 } },
   stt: { provider: "whispercpp-local", modelId: "whisper-small", language: "auto" },
   polish: { provider: "llama-local" | "openai-compat" | "none", modelId: "qwen2.5-3b-instruct-q4",

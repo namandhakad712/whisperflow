@@ -177,7 +177,8 @@ export class DictationController {
           ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, url) } : {}),
           ...(appType === "email" ? { skipSignature: this.skipSignature } : {}),
           // Their transcriptCommand: hold-to-talk is ptt, the one-press toggle is popo.
-          ...(fg ? { triggerSource: cfg?.hotkey?.holdMode ? "ptt" : "popo" } : {}),
+          // hotkey.mode is the single source of truth (legacy flags are derived from it).
+          ...(fg ? { triggerSource: cfg?.hotkey?.mode === "hold" ? "ptt" : "popo" } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
         },
       );

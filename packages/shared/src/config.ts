@@ -11,16 +11,42 @@ import type { DictionaryEntry, VoiceCommand } from "./entities.js";
 /** Polish tone presets. `custom` uses `polish.customInstructions`. */
 export type ToneId = "neutral" | "casual" | "professional" | "custom";
 
-/** Global push-to-talk hotkey. */
-export const HotkeyConfigSchema = z.object({
+/**
+ * The dictation interaction model — exactly one at a time.
+ *
+ * - `"hold"` — press & hold the hotkey to talk; releasing it finishes.
+ * - `"toggle"` — one press starts; the next press — or falling silent —
+ *   finishes.
+ *
+ * `"toggle"` is the default: it works with Electron's global shortcuts alone,
+ * while `"hold"` needs the optional global keyboard hook (see `holdMode`).
+ */
+export type DictationMode = "hold" | "toggle";
+
+/** zod form of {@link DictationMode}. */
+export const DictationModeSchema = z.enum(["hold", "toggle"]);
+
+/**
+ * The hotkey fields. `mode` is THE source of truth for the interaction model;
+ * `toggleMode`/`holdMode` below are derived from it and exist only so builds
+ * from before `mode` was introduced keep reading config.json.
+ */
+const HotkeyFieldsSchema = z.object({
   /** Accelerator string, e.g. `"Control+Shift+Space"`. */
   pushToTalk: z.string().min(1).default("Control+Shift+Space"),
-  /** `false` = hold-to-talk, `true` = press to start / press to stop. */
-  toggleMode: z.boolean().default(false),
+  /** The one interaction mode — see {@link DictationMode}. */
+  mode: DictationModeSchema.default("toggle"),
   /**
-   * Hold-to-talk needs a global keyboard hook (uiohook-napi) to see key-up
-   * events; Electron's globalShortcut only fires on key-down. When the hook is
-   * unavailable this silently falls back to toggle mode.
+   * Legacy `true` = press to start / press to stop. Derived: `mode ===
+   * "toggle"`. Never set this directly — it is always rewritten from `mode`
+   * during parsing so the pair can never disagree.
+   */
+  toggleMode: z.boolean().default(true),
+  /**
+   * Legacy hold-to-talk flag. Derived: `mode === "hold"`. Hold-to-talk needs a
+   * global keyboard hook (uiohook-napi) to see key-up events; Electron's
+   * globalShortcut only fires on key-down. When the hook is unavailable this
+   * silently falls back to toggle behavior.
    */
   holdMode: z.boolean().default(false),
   /**
@@ -44,6 +70,37 @@ export const HotkeyConfigSchema = z.object({
     })
     .prefault({}),
 });
+
+/**
+ * Normalizes the interaction model into `hotkey.mode` and keeps the legacy
+ * boolean pair in sync with it. This is the ONLY place either legacy flag is
+ * written, which is what makes the modes mutually exclusive:
+ *
+ * - `mode` present and valid → it wins, and both flags are rewritten to match
+ *   (a contradictory `{ holdMode: true, mode: "toggle" }` — hand-edited JSON
+ *   or a stale patch merged over an old file — always resolves to `mode`).
+ * - `mode` absent (configs saved by builds before it existed) → derived from
+ *   the legacy flags: `holdMode: true` → `"hold"` (hold won when both were
+ *   set, because that is what the main process actually honored), everything
+ *   else → `"toggle"`. That includes `{holdMode: false, toggleMode: false}`,
+ *   the pre-`mode` default: one press starts, silence finishes.
+ * - `mode` present but bogus → dropped, not thrown, so a typo in config.json
+ *   cannot reset the whole file.
+ */
+export const HotkeyConfigSchema = z.preprocess((raw) => {
+  if (raw === undefined || raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    return raw;
+  }
+  const obj = raw as Record<string, unknown>;
+  const declared = obj["mode"];
+  const mode: DictationMode =
+    declared === "hold" || declared === "toggle"
+      ? declared
+      : obj["holdMode"] === true
+        ? "hold"
+        : "toggle";
+  return { ...obj, mode, holdMode: mode === "hold", toggleMode: mode !== "hold" };
+}, HotkeyFieldsSchema);
 export type HotkeyConfig = z.infer<typeof HotkeyConfigSchema>;
 
 /** Voice-activity-detector selection and tuning. */

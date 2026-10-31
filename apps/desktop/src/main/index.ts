@@ -144,7 +144,8 @@ async function bootstrap(): Promise<void> {
 
   // Hold-to-talk: a global keyboard hook sees key-up, which globalShortcut
   // cannot. When armed it owns the main hotkey; otherwise the normal toggle
-  // registration is used.
+  // registration is used. `hotkey.mode` is the single source of truth — the
+  // legacy holdMode/toggleMode flags are derived from it in the shared schema.
   let holdWatcher: HoldToTalkWatcher | null = null;
   const holdEvents: KeyboardHookEvents = {
     onHoldStart: () => void controller.start(),
@@ -156,7 +157,7 @@ async function bootstrap(): Promise<void> {
     onFirstKey: (keycode) => log(`hotkey: hook is live — first keycode ${keycode}`),
   };
 
-  const holdWanted = (cfg: WhisperFlowConfig) => Boolean(cfg.hotkey?.holdMode) && hookAvailable();
+  const holdWanted = (cfg: WhisperFlowConfig) => cfg.hotkey?.mode === "hold" && hookAvailable();
   function applyHotkeyConfig(cfg: WhisperFlowConfig): void {
     const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
     if (holdWanted(cfg)) {

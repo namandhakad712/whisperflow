@@ -186,7 +186,20 @@ describe("ConfigStore", () => {
     s.set({ hotkey: { pushToTalk: "Alt+Q" } });
     const reopened = new ConfigStore(join(dir, "config.json"));
     expect(reopened.get().hotkey.pushToTalk).toBe("Alt+Q");
-    expect(reopened.get().hotkey.toggleMode).toBe(false); // default survived
+    expect(reopened.get().hotkey.mode).toBe("toggle"); // default survived
+    expect(reopened.get().hotkey.holdMode).toBe(false);
+  });
+
+  it("keeps the dictation mode exclusive: setting mode rewrites the legacy flags", () => {
+    const { s } = store();
+    s.set({ hotkey: { mode: "hold" } });
+    expect(s.get().hotkey).toMatchObject({ mode: "hold", holdMode: true, toggleMode: false });
+    s.set({ hotkey: { mode: "toggle" } });
+    expect(s.get().hotkey).toMatchObject({ mode: "toggle", holdMode: false, toggleMode: true });
+    // A stale legacy-flag patch (an older build's write) loses to the stored
+    // mode — mode is the authority, never the legacy booleans.
+    s.set({ hotkey: { holdMode: true } });
+    expect(s.get().hotkey).toMatchObject({ mode: "toggle", holdMode: false, toggleMode: true });
   });
 
   it("rejects invalid patches without corrupting stored state", () => {

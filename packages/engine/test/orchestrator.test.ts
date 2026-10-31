@@ -134,4 +134,40 @@ describe("DictationSession", () => {
     expect(result.raw).toBe("");
     expect(result.final).toBe("");
   });
+
+  it("drops a whisper.cpp [BLANK_AUDIO]-only segment instead of pasting the tag", async () => {
+    const deps = makeDeps({
+      stt: {
+        async transcribe() {
+          return "[BLANK_AUDIO]";
+        },
+        modelPathFor: () => "/models/fake.bin",
+      },
+    });
+    const session = new DictationSession(deps);
+    speakAndPause(session);
+    const result = await session.stop();
+    // Nothing was said: no text to paste, and no empty history row.
+    expect(result.raw).toBe("");
+    expect(result.final).toBe("");
+    expect(result.transcriptId).toBeUndefined();
+    expect(deps.history!.list()).toEqual([]);
+  });
+
+  it("strips whisper.cpp tags embedded in otherwise-good text", async () => {
+    const deps = makeDeps({
+      stt: {
+        async transcribe() {
+          return "[BEG] hello [NOISE] wishperflow [END]";
+        },
+        modelPathFor: () => "/models/fake.bin",
+      },
+    });
+    const session = new DictationSession(deps);
+    speakAndPause(session);
+    const result = await session.stop();
+    expect(result.raw).toBe("hello wishperflow");
+    expect(result.final).toBe("POLISHED");
+    expect(deps.history!.list()[0]!.rawText).toBe("hello wishperflow");
+  });
 });

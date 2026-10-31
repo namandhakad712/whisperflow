@@ -193,6 +193,39 @@ export function TextInput({
   );
 }
 
+/**
+ * Mutually-exclusive option picker — the control for "pick exactly one of
+ * these". The selected segment mirrors PageHeader's accent pill.
+ */
+export function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: Array<{ value: T; label: string; disabled?: boolean }>;
+}) {
+  return (
+    <div className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={o.value === value}
+          disabled={o.disabled}
+          onClick={() => onChange(o.value)}
+          className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+            o.value === value ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Select({
   value,
   onChange,

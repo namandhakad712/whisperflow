@@ -199,8 +199,9 @@ export class DictationSession {
     if (!this.deps.config.general.historyEnabled || !this.deps.history) return undefined;
     // Nothing was said — don't store an empty entry. History is for things
     // actually dictated; a "dictation: done (0 chars)" turn must not end up
-    // as a blank row the user then has to clean out.
-    if (!rawText.trim() && !finalText.trim()) return undefined;
+    // as a blank row the user then has to clean out. The check runs on the
+    // tag-stripped text so a `[BLANK_AUDIO]`-only turn is dropped here too.
+    if (isEmptyTranscript(rawText) && isEmptyTranscript(finalText)) return undefined;
     return this.deps.history.add({
       app: this.deps.app,
       ...(this.deps.triggerSource ? { triggerSource: this.deps.triggerSource } : {}),
@@ -249,13 +250,13 @@ export class DictationSession {
       if (this.cancelled || isEmptyTranscript(cleaned)) return;
       if (this.deps.appendMode) {
         // Insert this utterance now; keep accumulating for the final transcript.
-        const clean = offlinePolish(fuzzyCorrect(text, config.dictionary).corrected);
-        this.raw = this.raw ? `${this.raw} ${text}` : text;
+        const clean = offlinePolish(fuzzyCorrect(cleaned, config.dictionary).corrected);
+        this.raw = this.raw ? `${this.raw} ${cleaned}` : cleaned;
         this.appendedText = this.appendedText ? `${this.appendedText} ${clean}` : clean;
         this.emit("listening", this.raw, clean);
         return;
       }
-      this.raw = this.raw ? `${this.raw} ${text}` : text;
+      this.raw = this.raw ? `${this.raw} ${cleaned}` : cleaned;
       if (this.state === "listening") this.emit("listening", this.raw);
     }).catch((err) => this.deps.logger?.(`stt segment failed: ${String(err)}`));
   }
