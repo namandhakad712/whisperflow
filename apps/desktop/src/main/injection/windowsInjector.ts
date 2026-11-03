@@ -133,7 +133,11 @@ function sendPaste(): Promise<void> {
       else reject(new Error(`SendKeys exit ${code}${stderr ? `: ${stderr.trim().slice(0, 160)}` : ""}`));
     });
     proc.on("error", reject);
-    setTimeout(() => reject(new Error("SendKeys timed out")), 1500); // never hang
+    // 5 s, not 1.5: `Add-Type` (.NET assembly load) cold-starts in 2–4 s on a
+    // loaded machine and the shorter timeout was the actual "SendKeys timed
+    // out" failure seen in the wild — a paste that merely needed patience got
+    // thrown to the clipboard fallback instead.
+    setTimeout(() => reject(new Error("SendKeys timed out")), 5000);
   });
 }
 
@@ -179,7 +183,8 @@ function sendKeys(keys: string): Promise<void> {
       else reject(new Error(`SendKeys(${keys}) exit ${code}${stderr ? `: ${stderr.trim().slice(0, 160)}` : ""}`));
     });
     proc.on("error", reject);
-    setTimeout(() => reject(new Error(`SendKeys(${keys}) timed out`)), 1500);
+    // 5 s — see sendPaste(): .NET cold-start dominated the old 1.5 s cap.
+    setTimeout(() => reject(new Error(`SendKeys(${keys}) timed out`)), 5000);
   });
 }
 
