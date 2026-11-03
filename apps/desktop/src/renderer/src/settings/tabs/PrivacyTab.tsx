@@ -123,6 +123,11 @@ export function PrivacyTab() {
         endpoint. The source code (Apache-2.0) is the proof — audit it, or watch the app work behind a
         firewall.
       </p>
+      <p className="mt-2 rounded-xl border border-line bg-surface-2/40 px-4 py-3 text-xs leading-5 text-ink-dim">
+        <span className="font-medium text-ink">The failure contract:</span> if a cloud polish call ever
+        fails, your locally transcribed text is what gets pasted — never an error, never nothing. A
+        failed AI edit changes nothing.
+      </p>
     </section>
   );
 }
