@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
-import { Button, Card, PageHeader, Row, TextInput, Toggle } from "../../shared/ui";
+import { Button, Card, PageHeader, Row, Segmented, TextInput, Toggle } from "../../shared/ui";
 
 type Shape = "pill" | "rect" | "blob";
 type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom" | "free";
@@ -51,22 +51,11 @@ export function OverlayTab() {
 
       <Card className="mb-5">
         <Row label="Shape" hint="The silhouette of the floating pill.">
-          <div className="flex gap-2">
-            {SHAPES.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => void patch({ general: { overlayStyle: s.id } })}
-                className={`rounded-lg border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
-                  g.overlayStyle === s.id
-                    ? "border-accent/70 bg-accent/10 text-ink"
-                    : "border-line bg-surface-2/60 text-ink-dim hover:border-accent/40"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          <Segmented<Shape>
+            value={g.overlayStyle}
+            onChange={(v) => void patch({ general: { overlayStyle: v } })}
+            options={SHAPES.map((s) => ({ value: s.id, label: s.label }))}
+          />
         </Row>
 
         <Row label="Position" hint="Where the pill appears when you start dictating.">
@@ -92,27 +81,16 @@ export function OverlayTab() {
           label="Resting bar"
           hint="A small dash docked on a screen edge — hover to expand it, click it to start a dictation, right-click for Settings."
         >
-          <div className="flex gap-2">
-            {([
-              { id: "none", label: "Off" },
-              { id: "left", label: "Left" },
-              { id: "right", label: "Right" },
-              { id: "bottom", label: "Bottom" },
-            ] as const).map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => void patch({ general: { dockEdge: p.id } })}
-                className={`rounded-lg border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
-                  g.dockEdge === p.id
-                    ? "border-accent/70 bg-accent/10 text-ink"
-                    : "border-line bg-surface-2/60 text-ink-dim hover:border-accent/40"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <Segmented<"none" | "left" | "right" | "bottom">
+            value={g.dockEdge}
+            onChange={(v) => void patch({ general: { dockEdge: v } })}
+            options={[
+              { value: "none", label: "Off" },
+              { value: "left", label: "Left" },
+              { value: "right", label: "Right" },
+              { value: "bottom", label: "Bottom" },
+            ]}
+          />
         </Row>
 
         <Row

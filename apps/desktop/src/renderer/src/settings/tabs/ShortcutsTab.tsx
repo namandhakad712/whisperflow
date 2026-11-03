@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DictationMode } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Button, Card, Kbd, Row, SectionTitle, Segmented } from "../../shared/ui";
+import { Button, Card, Kbd, PageHeader, Row, Segmented } from "../../shared/ui";
 
 /** Turns a KeyboardEvent into an Electron accelerator string. */
 function acceleratorFrom(e: KeyboardEvent): string | null {
@@ -86,9 +86,9 @@ export function ShortcutsTab() {
 
   return (
     <section>
-      <SectionTitle
+      <PageHeader
         title="Shortcuts"
-        hint="Global keys that work in any application. The dictation mode decides how the hotkey behaves; Esc cancels an active dictation."
+        explainer="Global keys that work in any application. Esc cancels an active dictation."
       />
       <Card>
         {bindRow("Dictation hotkey", config.hotkey.pushToTalk, "main")}

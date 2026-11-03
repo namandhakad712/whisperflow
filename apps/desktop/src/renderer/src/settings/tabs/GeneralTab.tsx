@@ -89,15 +89,15 @@ function SetupChecklist() {
 /** Settings anatomy: rows of [label + value] with a Change button. */
 function ChangeRow({ label, value, onChange }: { label: string; value: React.ReactNode; onChange: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-6 px-5 py-5">
+    <div className="flex items-center justify-between gap-6 px-5 py-4">
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold">{label}</p>
-        <p className="mt-1 truncate text-sm text-ink-dim">{value}</p>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-0.5 truncate text-xs leading-5 text-ink-dim">{value}</p>
       </div>
       <button
         type="button"
         onClick={onChange}
-        className="shrink-0 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink transition-opacity hover:opacity-90"
+        className="shrink-0 rounded-lg border border-line bg-surface-2 px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-150 hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         Change
       </button>
@@ -156,10 +156,10 @@ export function GeneralTab() {
           value={languageSummary(config.stt)}
           onChange={() => go("audio")}
         />
-        <div className="flex items-center justify-between gap-6 px-5 py-5">
+        <div className="flex items-center justify-between gap-6 px-5 py-4">
           <div>
-            <p className="text-[15px] font-semibold">App theme</p>
-            <p className="mt-1 text-sm text-ink-dim">Nocturne (dark) · Dawn (light) · Classic</p>
+            <p className="text-sm font-medium">App theme</p>
+            <p className="mt-0.5 text-xs leading-5 text-ink-dim">Nocturne (dark) · Dawn (light) · Classic</p>
           </div>
           <select
             value={(() => {
@@ -200,10 +200,10 @@ export function GeneralTab() {
           value="Shape · position · backdrop · meeting mode · recorder"
           onChange={() => go("overlay")}
         />
-        <div className="flex items-center justify-between gap-6 px-5 py-5">
+        <div className="flex items-center justify-between gap-6 px-5 py-4">
           <div>
-            <p className="text-[15px] font-semibold">Save dictation history</p>
-            <p className="mt-1 text-sm text-ink-dim">Stored locally only. Never synced.</p>
+            <p className="text-sm font-medium">Save dictation history</p>
+            <p className="mt-0.5 text-xs leading-5 text-ink-dim">Stored locally only. Never synced.</p>
           </div>
           <Toggle
             checked={config.general.historyEnabled}

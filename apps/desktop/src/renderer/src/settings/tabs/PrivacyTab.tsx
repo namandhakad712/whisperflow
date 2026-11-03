@@ -1,5 +1,5 @@
 import { useSettings } from "../store";
-import { Button, Card, Row, SectionTitle, Toggle } from "../../shared/ui";
+import { Button, Card, PageHeader, Row, SectionTitle, Toggle } from "../../shared/ui";
 
 export function PrivacyTab() {
   const config = useSettings((s) => s.config);
@@ -8,7 +8,11 @@ export function PrivacyTab() {
 
   return (
     <section>
-      <SectionTitle title="Privacy" hint="WhisperFlow ships with zero telemetry. These switches make the guarantees visible." />
+      <PageHeader
+        title="Privacy"
+        tagline="Zero telemetry, by default."
+        explainer="WhisperFlow ships with no telemetry. These switches make the guarantees visible."
+      />
       <Card>
         <Row
           label="Local-only lock"

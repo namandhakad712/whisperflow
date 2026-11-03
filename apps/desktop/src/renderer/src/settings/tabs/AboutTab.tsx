@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Card, SectionTitle } from "../../shared/ui";
+import { Button, Card, PageHeader, SectionTitle } from "../../shared/ui";
 
 export function AboutTab() {
   const [version, setVersion] = useState("");
@@ -9,7 +9,7 @@ export function AboutTab() {
 
   return (
     <section>
-      <SectionTitle title="About" />
+      <PageHeader title="About" tagline="Open-source, local-first AI voice dictation." />
       <Card>
         <div className="flex items-center gap-3">
           <svg viewBox="0 0 64 64" className="h-10 w-10" aria-hidden="true">

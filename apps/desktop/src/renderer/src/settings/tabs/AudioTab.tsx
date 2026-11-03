@@ -50,7 +50,7 @@ export function AudioTab() {
             ]}
           />
         </Row>
-        <Row label="Voice detection" hint="Energy VAD is built-in; Silero is a small optional model upgrade.">
+        <Row label="Voice detection" hint="Energy is built-in; Silero is a small optional model.">
           <Select
             value={config.audio.vad.kind}
             onChange={(v) => void patch({ audio: { vad: { kind: v as "rms" | "silero" } } })}
@@ -84,7 +84,7 @@ export function AudioTab() {
         </Row>
         <Row
           label="Max dictation length (minutes)"
-          hint="Default is 20 minutes (a warning fires one minute before). 0 = unlimited."
+          hint="0 = unlimited. A warning fires one minute before the cap."
         >
           <input
             type="number"
@@ -104,7 +104,7 @@ export function AudioTab() {
       <Card className="mt-5">
         <Row
           label="Automatic language detection"
-          hint="WhisperFlow will detect your language automatically. Make sure all the languages you speak are selected."
+          hint="Add every language you speak — they're used as detection hints."
         >
           <Select
             value={config.stt.autoDetect === false ? "off" : "on"}
@@ -117,7 +117,7 @@ export function AudioTab() {
         </Row>
         <Row
           label="My languages"
-          hint="One selected language is used explicitly; several act as detection hints. Auto-detect off + one language = never auto-detect."
+          hint="One language is used explicitly; several act as detection hints."
         >
           <div className="flex max-w-[55%] flex-wrap gap-1.5">
             {SUPPORTED_LANGUAGES.map(([code, name]) => {
