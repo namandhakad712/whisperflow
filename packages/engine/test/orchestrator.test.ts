@@ -170,4 +170,27 @@ describe("DictationSession", () => {
     expect(result.final).toBe("POLISHED");
     expect(deps.history!.list()[0]!.rawText).toBe("hello wishperflow");
   });
+
+  it("auto-ends a toggle-mode turn on silence, never a hold-mode one", async () => {
+    function run(triggerSource: "ptt" | "popo") {
+      const deps = makeDeps({
+        config: WhisperFlowConfigSchema.parse({
+          audio: { vad: { silenceMs: 300, autoStopMs: 500 } },
+          general: { historyEnabled: true },
+        }),
+        triggerSource,
+      });
+      let autoEnded = 0;
+      deps.onAutoEnd = () => autoEnded++;
+      const session = new DictationSession(deps);
+      speakAndPause(session);
+      // Keep feeding silence past the autoStopMs budget (500 ms ≈ 8 frames).
+      for (let i = 0; i < 30; i++) session.feed(silenceFrame());
+      return { autoEnded, session };
+    }
+    const toggle = run("popo");
+    expect(toggle.autoEnded).toBe(1); // exactly once; stop() still ends the turn
+    const hold = run("ptt");
+    expect(hold.autoEnded).toBe(0); // hold ends on key release, not silence
+  });
 });
