@@ -59,14 +59,16 @@ body[data-align="top"] .pill-zone::after { bottom: auto; top: 0; }
 }
 .pill-card[data-state="card"] { height: 80px; }
 .pill-card[data-state="l4"] { height: 322px; }
-/* Their rest state — the pill collapses to a 30×6 dash (exact values). */
+/* The rest state — the pill collapses to a 30×6 dash (exact size). Visible on
+ * light AND dark desktops: mid-gray fill with a light inner ring (pure
+ * black-on-black was effectively invisible over a dark window). */
 .pill-card[data-state="rest"] {
   width: 30px;
   height: 6px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.5);
-  border-color: hsla(0, 0%, 100%, 0.5);
-  box-shadow: none;
+  background: rgba(38, 38, 37, 0.85);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6);
 }
 .pill-card:focus-visible { outline: 2px solid #10b981; outline-offset: 3px; }
 /* Mini content row: flex, 8px gap, 12px side padding, single line. */
@@ -348,10 +350,23 @@ export function Overlay() {
   const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
   /** OS theme from main (matchMedia lags the OS in Electron). */
   const [systemDark, setSystemDark] = useState(true);
+  /** Resting mode: main keeps the window alive between turns and tells the
+   *  renderer to show the small dash (click it to dictate, drag it to move). */
+  const [resting, setResting] = useState(false);
+  /** Hover over the resting dash morphs it to the mini pill (their status-bar
+   *  capsule behavior) so the click target and drag handle are easy to hit. */
+  const [hovered, setHovered] = useState(false);
+  /** The hotkey hint shown on the resting pill hover. */
+  const [hotkey, setHotkey] = useState("");
 
   useEffect(() => {
     void window.whisperflowExtras.system.theme().then((t) => setSystemDark(t.dark));
     const unsub = window.whisperflowExtras.system.onTheme((t) => setSystemDark(t.dark));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = window.whisperflowExtras.overlay.onRest((ev) => setResting(ev.resting));
     return unsub;
   }, []);
 
@@ -389,6 +404,8 @@ export function Overlay() {
     );
     document.documentElement.style.setProperty("--pill-ink", systemLight && !tint ? "#1a1a1a" : "#fcfcfb");
     document.documentElement.style.setProperty("--pill-meta", "#71716e");
+    // The hotkey hint for the hovered rest dash.
+    setHotkey(c.hotkey?.pushToTalk ?? "");
   }, [micId, systemDark]);
 
   // Click-through by default (like the reference overlay): the window ignores the
@@ -500,9 +517,15 @@ export function Overlay() {
   const card = processing;
   // Their state machine: listening → mini; processing → card; long
   // transcripts get the 322px l4 expansion; done collapses back to the rest
-  // dash (the window then hides — no "inserted!" debug text hangs around).
-  const pillState =
-    event.state === "done"
+  // dash. In rest mode (overlayRestBar) the dash persists between turns;
+  // otherwise the window hides a beat after done.
+  const pillState = resting
+    ? // Hovering the dash morphs it to the mini pill (their capsule behavior)
+      // so the click target is easy to hit; click starts a dictation.
+      hovered
+      ? "mini"
+      : "rest"
+    : event.state === "done"
       ? "rest"
       : event.state === "listening"
         ? "mini"
@@ -533,7 +556,18 @@ export function Overlay() {
       <style>{PILL_CSS}</style>
       <div className="pill-zone">
         {!clipboardFallback && (
-        <div className="pill-card" data-state={pillState} data-interactive="true">
+        <div
+          className="pill-card"
+          data-state={pillState}
+          data-interactive="true"
+          onMouseEnter={() => resting && setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onClick={() => {
+            // The rest dash is a dictation button: click to start talking
+            // (their status-bar behavior). Never fires mid-dictation.
+            if (resting) void window.whisperflow.dictation.start();
+          }}
+        >
           {/* The voice meter shows whenever the app is listening and no words
            * have arrived yet — not only when audio saving is on (the reviewer
            * found the default config had NO listening indicator at all). */}
@@ -561,7 +595,13 @@ export function Overlay() {
             >
               {liveText}
             </p>
-            {typing && !recording ? TYPING_DOTS : meta ? <span className="meta">{meta}</span> : null}
+            {resting && hovered ? (
+              <span className="meta">{hotkey ? `Press ${hotkey} or click to dictate` : "Click to dictate"}</span>
+            ) : typing && !recording ? (
+              TYPING_DOTS
+            ) : meta ? (
+              <span className="meta">{meta}</span>
+            ) : null}
           </div>
           <div className="card-content">
             <div className="card-row">

@@ -2,6 +2,25 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.19] — 2026-11-03
+
+### Changed — one position model, the overlay and the rest pill are the same thing
+- **The resting dash now lives inside the overlay window.** There is no separate docked status
+  window and no `dockEdge` anymore: the dash parks wherever the overlay is positioned and morphs
+  in place at the end of each turn (`overlayRestBar`). Old configs migrate — `dockEdge` maps to the
+  nearest anchor and turns the resting bar on. Hover the dash and it expands to the mini pill with
+  the hotkey hint; click it to start a dictation; drag it to move it.
+- **Cloud presets repaired:** Groq's `llama-3.3-70b-versatile` / `llama-3.1-8b-instant` went
+  Enterprise-only, so a free key silently couldn't use the polish models — replaced with
+  `qwen/qwen3.8-27b` (verified against Groq's live model list, 2026-11-03).
+- **Settings got a design pass:** premium switch control, one shared focus-ring system, grouped and
+  labelled rail, quiet secondary buttons instead of five primaries on the General page, segmented
+  choices where a toggle was wrong, and the wall-of-text hints shortened. The Privacy tab now
+  states the failure contract: if cloud polish fails, your local transcript is what gets pasted.
+- **Paste reliability:** the SendKeys timeout went 1.5 s → 5 s — .NET's cold start beat the old cap,
+  which was itself the "SendKeys timed out" failure that dropped real pastes to the clipboard
+  fallback.
+
 ## [0.1.18] — 2026-10-31
 
 ### Fixed — human-reviewer pass (blockers)

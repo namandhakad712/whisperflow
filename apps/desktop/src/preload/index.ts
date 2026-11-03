@@ -126,6 +126,8 @@ const extras = {
     setInteractive: (interactive: boolean) => ipcRenderer.send("overlay/setInteractive", interactive),
     /** Which edge the overlay hangs from (top anchors grow downward). */
     onAlign: (cb: (ev: { edge: "top" | "bottom" }) => void) => subscribe("overlay/align", cb),
+    /** Resting mode: main morphs the window to the small dash between turns. */
+    onRest: (cb: (ev: { resting: boolean }) => void) => subscribe("overlay/rest", cb),
   },
 };
 contextBridge.exposeInMainWorld("whisperflowExtras", extras);

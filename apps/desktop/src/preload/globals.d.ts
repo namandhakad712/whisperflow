@@ -38,6 +38,7 @@ declare global {
       overlay: {
         setInteractive(interactive: boolean): void;
         onAlign(cb: (ev: { edge: "top" | "bottom" }) => void): () => void;
+        onRest(cb: (ev: { resting: boolean }) => void): () => void;
       };
     };
   }

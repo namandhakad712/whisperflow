@@ -3,6 +3,7 @@ import type { WhisperFlowConfig } from "@whisperflow/shared";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { WindowManager } from "./windows/WindowManager";
+import { resolveRestAnchor } from "./windows/restBar";
 import { createTray, trayUsable } from "./tray/tray";
 import { HotkeyManager } from "./hotkeys/hotkeys";
 import { DictationController } from "./audio/dictationController";
@@ -197,13 +198,17 @@ async function bootstrap(): Promise<void> {
     log(`hotkey: "${shortcutResult.failed}" shortcut is taken by another app — rebind in Settings → Shortcuts`);
   }
 
-  // Their persistent resting "flow bar" — the 30×6 dash docked on a screen
-  // edge. Off by default (their `hideFlowBarPermanently` equivalent).
-  windows.applyStatusBar(config.general?.dockEdge ?? "none");
+  // Their persistent resting "flow bar" — the 30×6 dash. It is the OVERLAY's
+  // rest state now (one window, one position model): the dash lives wherever
+  // the overlay is anchored. A legacy `dockEdge` was already migrated into
+  // `overlayRestBar` + `overlayPosition` by the shared schema on parse.
+  windows.applyRest(config.general?.overlayRestBar === true, resolveRestAnchor(config.general ?? {}));
 
   // OS theme: push the real light/dark signal to the overlay (the renderer's
   // matchMedia follows Chromium's notion, which lags the OS in Electron).
-  const pushTheme = () => windows.sendToOverlay("system/theme", { dark: nativeTheme.shouldUseDarkColors });
+  // WindowManager buffers the value and replays it whenever the overlay
+  // renderer (re)loads, so a push before it was listening is never lost.
+  const pushTheme = () => windows.setOverlayTheme(nativeTheme.shouldUseDarkColors);
   pushTheme();
   nativeTheme.on("updated", pushTheme);
 
@@ -240,6 +245,9 @@ async function bootstrap(): Promise<void> {
         applyHotkeyConfig(cfg);
         const accelerator = cfg.hotkey?.pushToTalk || "Control+Shift+Space";
         if (!holdWanted(cfg) && hotkeys.current !== accelerator) hotkeys.bindMain(accelerator);
+        // The resting dash follows the overlay position / enabled state, so
+        // a settings change re-parks (or removes) it without a relaunch.
+        windows.applyRest(cfg.general?.overlayRestBar === true, resolveRestAnchor(cfg.general ?? {}));
       });
     },
   });

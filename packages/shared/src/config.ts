@@ -454,7 +454,35 @@ export const PrivacyConfigSchema = z.object({
 });
 export type PrivacyConfig = z.infer<typeof PrivacyConfigSchema>;
 
-export const GeneralConfigSchema = z.object({
+/**
+ * Legacy `dockEdge` → the closest overlay anchor.
+ *
+ * The resting "flow bar" used to be a separate window docked on a screen edge.
+ * It now lives inside the overlay window itself, so it is positioned by the
+ * SAME `overlayPosition` anchor (see apps/desktop WindowManager). A config
+ * saved before that merge still has `dockEdge` set; the schema preprocess
+ * below migrates it once, on parse, so old files keep working untouched:
+ *
+ *   dockEdge "bottom" → overlayPosition "bottom" (same spot, centered)
+ *   dockEdge "left"   → overlayPosition "top-left"  (nearest corner anchor)
+ *   dockEdge "right"  → overlayPosition "top-right" (nearest corner anchor)
+ *
+ * and the resting bar is turned on (`overlayRestBar: true`), because a
+ * non-`none` dockEdge meant "show the resting bar".
+ */
+export const DOCK_EDGE_TO_ANCHOR = {
+  left: "top-left",
+  right: "top-right",
+  bottom: "bottom",
+} as const satisfies Record<"left" | "right" | "bottom", GeneralFieldsShape["overlayPosition"]>;
+
+/**
+ * The general section fields. `overlayRestBar` is the resting-bar switch: with
+ * the position model unified, the resting dash simply lives wherever the
+ * overlay is positioned (`overlayPosition`) — there is no separate dock to
+ * configure. `dockEdge` remains in the schema only so old configs migrate.
+ */
+const GeneralFieldsSchema = z.object({
   launchAtLogin: z.boolean().default(true),
   historyEnabled: z.boolean().default(true),
   overlayFollowsCursor: z.boolean().default(true),
@@ -471,6 +499,8 @@ export const GeneralConfigSchema = z.object({
     overlayPosition: z
       .enum(["cursor", "floating", "top-left", "top-right", "top", "bottom", "free"])
       .default("cursor"),
+  /** Show the resting dash between dictations, where the overlay lives. */
+  overlayRestBar: z.boolean().default(false),
     /** Last free-float position of the pill (persisted on every drag). */
     overlayFreePos: z
       .object({
@@ -494,9 +524,10 @@ export const GeneralConfigSchema = z.object({
     /** Recordings folder. Empty = `<userData>/recordings`. */
     recordingsDir: z.string().default(""),
     /**
-     * Their resting "flow bar" dock. `none` hides the persistent resting pill
-     * (their `hideFlowBarPermanently`); otherwise the 30×6 dash sits on the
-     * chosen screen edge and morphs to the dictation pill on hover.
+     * Legacy resting-"flow-bar" dock. Superseded by `overlayRestBar` +
+     * `overlayPosition`; kept so pre-merge configs migrate transparently (the
+     * preprocess below rewrites a non-`none` edge into those two fields).
+     * `none` (the default) means the resting bar follows `overlayRestBar`.
      */
     dockEdge: z.enum(["none", "left", "right", "bottom"]).default("none"),
     /**
@@ -510,6 +541,35 @@ export const GeneralConfigSchema = z.object({
      */
     overlayFollowSystemTheme: z.boolean().default(false),
 });
+/** Pre-migration shape — lets `DOCK_EDGE_TO_ANCHOR` reference the anchor type. */
+type GeneralFieldsShape = z.input<typeof GeneralFieldsSchema>;
+
+/**
+ * Normalizes the legacy resting-bar dock into the unified position model —
+ * the ONLY place `dockEdge` is interpreted. Mirrors the HotkeyConfigSchema
+ * migration: the parsed config always carries a `none` dockEdge plus an
+ * explicit `overlayRestBar`, whether the file on disk is old or new.
+ */
+export const GeneralConfigSchema = z.preprocess((raw) => {
+  if (raw === undefined || raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    return raw;
+  }
+  const obj = raw as Record<string, unknown>;
+  const dock = obj["dockEdge"];
+  if (dock === "left" || dock === "right" || dock === "bottom") {
+    const mapped = DOCK_EDGE_TO_ANCHOR[dock];
+    return {
+      ...obj,
+      dockEdge: "none",
+      // The legacy dock was ON — keep it on unless the flag says otherwise…
+      overlayRestBar: obj["overlayRestBar"] ?? true,
+      // …and park the resting dash at the nearest anchor when the user never
+      // picked an overlay position themselves.
+      overlayPosition: obj["overlayPosition"] ?? mapped,
+    };
+  }
+  return obj;
+}, GeneralFieldsSchema);
 export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 
 export const UpdatesConfigSchema = z.object({

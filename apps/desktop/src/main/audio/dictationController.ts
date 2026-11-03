@@ -284,16 +284,16 @@ export class DictationController {
         this.deps.windows.resizeOverlay(240);
         this.hideTimer = setTimeout(() => {
           this.hideTimer = null;
-          this.deps.windows.resizeOverlay(120);
-          this.deps.windows.hideOverlay();
+          this.deps.windows.dismissOverlay();
         }, 6000);
       } else {
         // Collapse the pill in every other outcome — the renderer morphs to
-        // the rest dash, and the window hides (and is released) a beat later.
-        // Cancellable: a rapid next dictation revives the pill first.
+        // the rest dash, and the window either parks there (rest mode on) or
+        // hides and is released (rest mode off) a beat later. Cancellable: a
+        // rapid next dictation revives the pill first.
         this.hideTimer = setTimeout(() => {
           this.hideTimer = null;
-          this.deps.windows.hideOverlay();
+          this.deps.windows.dismissOverlay();
         }, 900);
       }
       if (this.recording) this.flushRecording();
@@ -355,7 +355,7 @@ export class DictationController {
     }
     this.chunks = [];
     this.recording = false;
-    this.deps.windows.hideOverlay();
+    this.deps.windows.dismissOverlay();
     this.deps.hotkeys.unbindEscape();
     if (this.recordingCap) {
       clearTimeout(this.recordingCap);

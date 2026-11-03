@@ -3,24 +3,44 @@ import type { Display, WebContents } from "electron";
 import { join } from "node:path";
 import { log } from "../lib/log";
 import { computeOverlayBounds, type OverlayAnchor } from "./overlayAnchor";
+import { resolveRestAnchor } from "./restBar";
 import { SurfaceRecovery, type RecoverableSurface } from "./surfaceRecovery";
 
 export type { OverlayAnchor };
 
+/** Canonical dictation geometry: tall enough for every pill state (the pill
+ *  is bottom-anchored, so the window grows upward from the dash). */
+const OVERLAY_SIZE = { width: 440, height: 400 };
+/** Resting geometry: wide enough for the hover-expanded mini pill, short
+ *  enough that the always-on-top window is a sliver, not a strip. */
+const REST_SIZE = { width: 440, height: 64 };
+
 /**
  * Owns every window in the app:
  *  - settings: full app window (settings tabs, history, onboarding)
- *  - overlay:  the frameless dictation pill shown near the cursor while listening
+ *  - overlay:  the frameless pill — shown near the cursor while listening and
+ *              kept alive (morphed to the small resting dash) between turns
+ *              when the resting bar is enabled
  */
 export class WindowManager {
   private settingsWindow: BrowserWindow | null = null;
   private overlayWindow: BrowserWindow | null = null;
+  /** @deprecated separate status window — superseded by the in-overlay rest
+   *  dash (applyRest). Kept so the old path can be revived if the merge ever
+   *  regresses; nothing creates this window anymore. */
   private statusWindow: BrowserWindow | null = null;
   private lensWindow: BrowserWindow | null = null;
   /** The selection the lens is editing (set just before the window opens). */
   private lensText = "";
   private overlayRecovery: SurfaceRecovery | null = null;
   private settingsRecovery: SurfaceRecovery | null = null;
+  /** Resting-bar mode: whether the overlay window morphs to the dash instead
+   *  of hiding when a dictation ends, and where the dash parks. */
+  private restMode = false;
+  private restAnchor: OverlayAnchor = "bottom";
+  /** Last theme pushed from main; replayed to a freshly loaded overlay so a
+   *  push that arrives before the renderer is listening is never lost. */
+  private overlayThemeDark: boolean | null = null;
 
   constructor(
     private readonly opts: {
@@ -139,7 +159,11 @@ export class WindowManager {
    */
   showOverlay(near?: { x: number; y: number }, position: OverlayAnchor = "cursor"): void {
     const win = this.ensureOverlay();
-    const size = win.getSize();
+    // Always restore the full dictation geometry — the window may be shrinking
+    // from the rest dash or a notification card, and the pill sits at the
+    // window's bottom edge, so re-anchoring at the canonical size keeps the
+    // dash itself stationary no matter which transient size it had.
+    const size = OVERLAY_SIZE;
     const cursor = near ?? screen.getCursorScreenPoint();
     const display = screen.getDisplayNearestPoint(cursor);
     // Free-float: the last place the user dragged the pill (persisted by the
@@ -150,14 +174,14 @@ export class WindowManager {
 
     const bounds = computeOverlayBounds(
       position,
-      { width: size[0] ?? 440, height: size[1] ?? 400 },
+      size,
       display.workArea,
       cursor,
       freePos ?? undefined,
     );
     win.setBounds(bounds, false);
     log(
-      `overlay: anchor=${position} size=${size[0]}x${size[1]} → bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`,
+      `overlay: anchor=${position} size=${size.width}x${size.height} → bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`,
     );
     if (process.platform === "darwin") {
       win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -166,6 +190,9 @@ export class WindowManager {
     // Tell the renderer which edge it hangs from: top anchors must grow
     // DOWNWARD (the pill sits at the window's top), everything else upward.
     win.webContents.send?.("overlay/align", { edge: position.startsWith("top") ? "top" : "bottom" });
+    // A dictation is starting — the renderer must exit the resting-dash mode
+    // even if the state event that usually does it is still in flight.
+    win.webContents.send?.("overlay/rest", { resting: false });
     win.showInactive();
   }
 
@@ -243,6 +270,76 @@ export class WindowManager {
   }
 
   /**
+   * End-of-turn dismissal: morph the pill to the resting dash and KEEP the
+   * window alive (rest mode on), or hide and release it (rest mode off —
+   * the pre-rest behavior). The renderer already shows the dash on the
+   * "done" state event; this shrinks the window around it without moving
+   * the dash on screen.
+   */
+  dismissOverlay(): void {
+    if (this.restMode) {
+      this.restOverlay(this.restAnchor, { keepPosition: true });
+    } else {
+      this.hideOverlay();
+    }
+  }
+
+  /**
+   * Turns the overlay window into the small resting dash. With
+   * `keepPosition` the dash stays exactly where the dictation pill was
+   * (end-of-turn morph); otherwise it parks at the rest anchor (startup,
+   * settings change) — effectively "wherever the overlay is positioned".
+   */
+  restOverlay(anchor: OverlayAnchor, opts: { keepPosition?: boolean } = {}): void {
+    const win = this.ensureOverlay();
+    this.restAnchor = anchor;
+    let bounds: Electron.Rectangle;
+    if (opts.keepPosition && !win.isDestroyed()) {
+      // Shrink around the dash: it sits 6 px above the window's bottom edge
+      // (top-anchored windows: 6 px below the top edge).
+      const b = win.getBounds();
+      const topAnchored = this.overlayAnchor.startsWith("top");
+      bounds = {
+        x: b.x,
+        y: topAnchored ? b.y : b.y + b.height - REST_SIZE.height,
+        width: REST_SIZE.width,
+        height: REST_SIZE.height,
+      };
+    } else {
+      const cursor = screen.getCursorScreenPoint();
+      const display = screen.getDisplayNearestPoint(cursor);
+      const freePos = anchor === "free" ? this.opts.freePosProvider?.() ?? null : null;
+      bounds = computeOverlayBounds(anchor, REST_SIZE, display.workArea, cursor, freePos ?? undefined);
+      this.overlayAnchor = anchor;
+      this.overlayDisplayId = display.id;
+    }
+    if (!win.isDestroyed()) {
+      win.setBounds(bounds, false);
+      // Which edge the dash hangs from (top anchors grow downward), and…
+      win.webContents.send?.("overlay/align", { edge: this.overlayAnchor.startsWith("top") ? "top" : "bottom" });
+      // …enter rest mode: the renderer shows the dash even in idle/done.
+      win.webContents.send?.("overlay/rest", { resting: true });
+      win.showInactive();
+      log(`overlay: resting at ${bounds.x},${bounds.y} (anchor=${anchor})`);
+    }
+  }
+
+  /**
+   * Applies the resting-bar setting: shows/parks the resting dash, or removes
+   * it (hiding the window — only when nothing is being dictated, so a live
+   * pill is never yanked mid-turn; the stored mode takes effect at dismiss).
+   */
+  applyRest(enabled: boolean, anchor: OverlayAnchor): void {
+    this.restMode = enabled;
+    if (!enabled) {
+      if (!this.busy() && this.isOverlayVisible()) this.hideOverlay();
+      return;
+    }
+    if (this.busy()) return; // morph at the end of the turn, not mid-flight
+    this.restOverlay(anchor);
+  }
+
+  /**
    * Grows/shrinks the overlay window while keeping the pill bottom-anchored —
    * used for their notification card (200px) on a paste failure. The default
    * height (400) fits the pill states including l4.
@@ -275,6 +372,18 @@ export class WindowManager {
 
   sendToOverlay(channel: string, payload: unknown): void {
     this.overlayWeb()?.send(channel, payload);
+  }
+
+  /**
+   * Pushes the OS light/dark signal to the overlay (main is the only one that
+   * sees the real `nativeTheme` — Chromium's matchMedia lags the OS). The
+   * value is buffered and replayed on the overlay's `did-finish-load`, so a
+   * push that lands before the (rebuilt/reloading) renderer is listening is
+   * never lost.
+   */
+  setOverlayTheme(dark: boolean): void {
+    this.overlayThemeDark = dark;
+    this.overlayWeb()?.send("system/theme", { dark });
   }
 
   statusWeb(): WebContents | null {
@@ -384,8 +493,7 @@ export class WindowManager {
       // pill is 48px (mini) / 80px (card) / 322px (l4) tall, plus the badge
       // straddling the top edge. Growing upward from the bottom means one
       // window serves every state with nothing clipped.
-      width: 440,
-      height: 400,
+      ...OVERLAY_SIZE,
       show: false,
       frame: false,
       transparent: true,
@@ -426,6 +534,9 @@ export class WindowManager {
       // Re-assert the default after (re)load so a fresh page can't leave the
       // overlay swallowing clicks.
       if (!win.isDestroyed()) win.setIgnoreMouseEvents(true, { forward: true });
+      // Replay the buffered theme so a renderer that mounted after the last
+      // push still starts in the right mode.
+      if (this.overlayThemeDark !== null) win.webContents.send("system/theme", { dark: this.overlayThemeDark });
     });
     // Drag free-float: persist wherever the user drops the pill.
     win.on("moved", () => {
@@ -439,6 +550,12 @@ export class WindowManager {
   }
 
   /**
+   * @deprecated The separate resting "flow bar" window. The resting dash now
+   *  lives inside the overlay window itself (applyRest / restOverlay), so the
+   *  pill and its resting state share one position model. This path is kept
+   *  intact (window creation, docking, IPC, renderer) so it can be revived if
+   *  the merge ever regresses — but nothing in the app calls it anymore.
+   *
    * Their persistent resting "flow bar": a 30×6 dash docked on a screen edge.
    * The window is a 56×56 invisible hit zone centered on the dash; the renderer
    * draws the dash and morphs it on hover. `edge: "none"` closes it.

@@ -12,6 +12,7 @@ import { applyLaunchAtLogin } from "../lifecycle/autostart";
 import { checkForUpdatesNow, installDownloadedUpdate } from "../lifecycle/updater";
 import { hookAvailable, hookUnavailableReason } from "../hotkeys/holdToTalk";
 import { injectText } from "../injection/windowsInjector";
+import { resolveRestAnchor } from "../windows/restBar";
 import { log } from "../lib/log";
 
 type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
@@ -57,12 +58,12 @@ export function registerIpc(deps: {
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
   ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
     const next = await engine.setConfig(patch ?? {});
-    // Live windows (overlay, status bar) re-read config so shape/position/
-    // backdrop/dock changes apply without a relaunch; main re-evaluates
-    // hold-to-talk vs toggle.
+    // Live windows re-read config so shape/position/backdrop/theme changes
+    // apply without a relaunch; main re-evaluates hold-to-talk vs toggle and
+    // re-parks the resting dash (it follows the overlay position now — the
+    // legacy `dockEdge` was already normalized away by the schema on parse).
     windows.sendToOverlay(IPC.SettingsChanged, null);
-    windows.sendToStatus(IPC.SettingsChanged, null);
-    windows.applyStatusBar(next.general?.dockEdge ?? "none");
+    windows.applyRest(next.general?.overlayRestBar === true, resolveRestAnchor(next.general ?? {}));
     deps.onConfigChanged();
     return next;
   });
