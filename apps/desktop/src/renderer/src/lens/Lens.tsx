@@ -65,7 +65,10 @@ export function Lens() {
   }, []);
 
   const submit = (instruction: string) => {
-    if (!instruction.trim() || working) return;
+    // Nothing was selected — there's no text to edit. The hint already says
+    // what to do; submitting an edit against empty text would be a no-op at
+    // best and a confusing paste at worst.
+    if (!instruction.trim() || working || !textRef.current.trim()) return;
     setWorking(true);
     setError(null);
     window.whisperflowExtras.lens
@@ -90,10 +93,17 @@ export function Lens() {
           ) : (
             <>
               <span className="dot" />
-              {count !== null && <span className="count">{count} words</span>}
+              {count !== null && count > 0 && <span className="count">{count} words</span>}
+              {count === 0 && <span className="count" style={{ color: "#f87171" }}>nothing selected</span>}
               <input
                 ref={inputRef}
-                placeholder={count === null ? "Select some text, then press the lens hotkey" : "Ask AI — 'make it shorter', 'translate', 'fix tone'…"}
+                placeholder={
+                  count === null
+                    ? "Select some text, then press the lens hotkey"
+                    : count === 0
+                      ? "Highlight the text to edit, then press the hotkey again"
+                      : "Ask AI — 'make it shorter', 'translate', 'fix tone'…"
+                }
                 disabled={working}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") submit((e.target as HTMLInputElement).value);

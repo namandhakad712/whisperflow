@@ -131,7 +131,11 @@ async function bootstrap(): Promise<void> {
     try {
       const text = await copyFocusedSelection();
       if (!text.trim()) {
-        log("lens: nothing selected — nothing to edit");
+        // A silent no-op is the worst response to a shortcut press — open the
+        // bar anyway and tell the user what to do (their app shows the bar
+        // unconditionally; ours teaches the gesture).
+        log("lens: nothing selected — opening the bar with a hint");
+        windows.openLensWithSelection("");
         return;
       }
       windows.openLensWithSelection(text.trim());
