@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { VoiceCommand } from "@whisperflow/shared";
 import { useSettings, addCommand, removeCommand } from "../store";
-import { Button, EmptyState, PageHeader, Select, TextInput } from "../../shared/ui";
+import { Button, EmptyState, PageHeader, Select, SettingGroup, TextInput } from "../../shared/ui";
 
 const ACTIONS: Array<{ value: VoiceCommand["action"]; label: string }> = [
   { value: "insert", label: "Insert text" },
@@ -9,6 +9,7 @@ const ACTIONS: Array<{ value: VoiceCommand["action"]; label: string }> = [
   { value: "undo", label: "Undo — discard dictation" },
 ];
 
+/** One worked example per column: phrase you say → text that gets typed. */
 const SHOWCASE: Array<[string, string]> = [
   ["“my email”", "you@example.com"],
   ["“sign off”", "Best regards"],
@@ -18,9 +19,9 @@ const SHOWCASE: Array<[string, string]> = [
 export function CommandsTab() {
   const config = useSettings((s) => s.config);
   const loadConfig = useSettings((s) => s.loadConfig);
-  const [filter, setFilter] = useState("All");
   const [phrase, setPhrase] = useState("");
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
   const [action, setAction] = useState<VoiceCommand["action"]>("insert");
   const [payload, setPayload] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -87,51 +88,55 @@ export function CommandsTab() {
     setTimeout(() => setNotice(null), 5000);
   };
 
-  const commands = config.commands.filter((c) => {
-    if (filter === "Personal" && c.phrase.startsWith("team:")) return false;
-    return (
+  const commands = config.commands.filter(
+    (c) =>
       !search ||
       c.phrase.toLowerCase().includes(search.toLowerCase()) ||
-      (c.payload ?? "").toLowerCase().includes(search.toLowerCase())
-    );
-  });
+      (c.payload ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <section>
       <PageHeader
         title="Snippets"
         actions={<><Button variant="ghost" onClick={() => void importJson()}>Import</Button><Button onClick={add}>Add new</Button></>}
-        segmented={["All", "Personal"]}
-        activeSeg={filter}
-        onSegChange={setFilter}
         tagline="The stuff you shouldn't have to re-type."
-        explainer="Save text you type often — an email, intro, or prompt — then say a word to drop it in instantly."
+        explainer="Save text you type often — an email, intro, or prompt — then say a word to drop it in."
       />
 
-      {/* showcase: phrase → expansion */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        {SHOWCASE.map(([p, v]) => (
-          <div key={p} className="rounded-xl border border-dashed border-line bg-surface/60 p-4">
-            <p className="text-sm font-medium">{p}</p>
-            <p className="mt-1 text-ink-dim">↓</p>
-            <p className="mt-1 whitespace-pre-wrap text-[13px] leading-5 text-ink-dim">{v}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mb-5 space-y-2 rounded-2xl border border-line bg-surface/60 p-4">
-        <TextInput value={phrase} onChange={setPhrase} placeholder="Spoken phrase, e.g. “sign off”" />
-        <div className="flex gap-2">
-          <Select value={action} onChange={(v) => setAction(v as VoiceCommand["action"])} options={ACTIONS} />
-          {action !== "undo" && (
-            <TextInput value={payload} onChange={setPayload} placeholder="Text to insert / replace with" />
-          )}
+      <SettingGroup title="How snippets work" hint="Say the phrase mid-dictation; the expansion is typed where your cursor is.">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {SHOWCASE.map(([p, v]) => (
+            <div key={p} className="rounded-xl border border-line bg-surface-2/50 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">You say</p>
+              <p className="mt-1 text-sm font-medium">{p}</p>
+              <p className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim">WhisperFlow types</p>
+              <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-ink-dim">{v}</p>
+            </div>
+          ))}
         </div>
-        <TextInput value={search} onChange={setSearch} placeholder="Search snippets…" className="w-56" />
-      </div>
+      </SettingGroup>
+
+      <SettingGroup title="New snippet" hint="The phrase you'll say, and what happens when you do." className="mt-5">
+        <div className="space-y-2">
+          <TextInput value={phrase} onChange={setPhrase} placeholder="Spoken phrase, e.g. “sign off”" />
+          <div className="flex flex-wrap gap-2">
+            <Select value={action} onChange={(v) => setAction(v as VoiceCommand["action"])} options={ACTIONS} />
+            {action !== "undo" && (
+              <TextInput
+                value={payload}
+                onChange={setPayload}
+                placeholder="Text to insert / replace with"
+                className="min-w-0 flex-1"
+              />
+            )}
+          </div>
+          <TextInput value={search} onChange={setSearch} placeholder="Search snippets…" className="w-56" />
+        </div>
+      </SettingGroup>
 
       {notice && (
-        <p className="mb-5 rounded-lg border border-line bg-surface-2/60 px-4 py-3 text-sm text-ink-dim">
+        <p className="mt-4 rounded-lg border border-line bg-surface-2/60 px-4 py-3 text-sm text-ink-dim">
           {notice}
         </p>
       )}
@@ -146,7 +151,7 @@ export function CommandsTab() {
           }
         />
       ) : (
-        <div className="space-y-2.5">
+        <div className="mt-5 space-y-2.5">
           {commands.map((command) => (
             <div
               key={command.id}

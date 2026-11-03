@@ -15,7 +15,11 @@ import { injectText } from "../injection/windowsInjector";
 import { resolveRestAnchor } from "../windows/restBar";
 import { log } from "../lib/log";
 
-type TrayWithRefresh = Tray & { refresh?: (launchAtLogin: boolean) => void };
+type TrayWithRefresh = Tray & {
+  refresh?: (launchAtLogin: boolean) => void;
+  /** Rebuild the tray's Model submenu (set by main). */
+  setModelsRefresh?: () => void;
+};
 
 /**
  * Registers every IPC channel from the contract (packages/shared ipc.ts).
@@ -145,7 +149,12 @@ export function registerIpc(deps: {
     engine.downloadModel(req.id, (p) => windows.sendToSettings(IPC.ModelsProgress, p)),
   );
   ipcMain.handle(IPC.ModelsDelete, (_e, req: { id: string }) => engine.deleteModel(req.id));
-  ipcMain.handle(IPC.ModelsSetActive, (_e, req: { role: "stt" | "polish"; id: string }) => engine.setActiveModel(req.role, req.id));
+  ipcMain.handle(IPC.ModelsSetActive, async (_e, req: { role: "stt" | "polish"; id: string }) => {
+    const result = await engine.setActiveModel(req.role, req.id);
+    // The tray's Model submenu reflects the active model — refresh it now.
+    deps.tray.setModelsRefresh?.();
+    return result;
+  });
   ipcMain.handle(IPC.ModelsRecommend, () => engine.recommendModels());
   ipcMain.handle(IPC.ModelsDeleteUnused, () => engine.deleteUnusedModels());
 

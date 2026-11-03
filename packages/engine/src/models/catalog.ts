@@ -20,6 +20,7 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["low", "mid", "high"],
     license: "MIT",
     notes: "Required on Windows for local transcription. Downloads once, ~9 MB. Pinned to release b5454.",
+    badges: ["Required"],
   },
   {
     id: "whisper-base-en",
@@ -33,6 +34,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["low"],
     license: "MIT",
     notes: "Fast, English-only. ~148 MB.",
+    speed: "Fastest",
+    quality: "Good (EN)",
+    badges: ["English-only", "Light tier"],
   },
   {
     id: "whisper-small",
@@ -46,6 +50,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["low", "mid", "high"],
     license: "MIT",
     notes: "Good balance, 100+ languages. ~488 MB. Default.",
+    speed: "Fast",
+    quality: "Good",
+    badges: ["Multilingual", "Best balance"],
   },
   {
     id: "whisper-large-v3-turbo",
@@ -59,6 +66,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["high"],
     license: "MIT",
     notes: "Best accuracy, needs RAM to spare. ~1.6 GB.",
+    speed: "Slower",
+    quality: "Best accuracy",
+    badges: ["Multilingual", "Most accurate"],
   },
   {
     id: "whisper-large-v3-turbo-q5_0",
@@ -72,6 +82,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["mid"],
     license: "MIT",
     notes: "Turbo accuracy at 1/3 the download. Quantization loss noticeable on non-English — keep whisper-small for those. ~574 MB.",
+    speed: "Fast",
+    quality: "Near turbo",
+    badges: ["Multilingual", "Smaller download"],
   },
   {
     id: "qwen3.5-4b-q4",
@@ -86,6 +99,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     license: "Apache-2.0",
     notes:
       "Larger polish model — only worth the download if you want heavier rewriting than text cleanup; the 2B default handles filler removal, punctuation, and casing fine. Use the text path only (don't load the mmproj vision file). ~2.7 GB.",
+    speed: "Slower",
+    quality: "Heavier rewrites",
+    badges: ["Max control"],
   },
   {
     id: "qwen3.5-2b-q4",
@@ -100,6 +116,9 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     license: "Apache-2.0",
     notes:
       "Default polish model — 2B is plenty for text cleanup (filler words, punctuation, casing), and it is half the download of the 4B. Recommended for every hardware tier. ~1.3 GB.",
+    speed: "Fast",
+    quality: "Great for cleanup",
+    badges: ["Recommended", "Every tier"],
   },
   {
     id: "silero-vad",
@@ -113,6 +132,7 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["low", "mid", "high"],
     license: "MIT",
     notes: "Optional upgrade over the built-in energy VAD. ~2 MB.",
+    badges: ["Optional upgrade"],
   },
 ];
 

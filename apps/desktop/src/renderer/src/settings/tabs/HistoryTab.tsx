@@ -17,19 +17,21 @@ export function HistoryTab() {
   return (
     <section>
       <PageHeader title="History" tagline="Everything you said, only on your machine." explainer="Every dictation, stored locally. Never synced anywhere." />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         <TextInput
           value={query}
           onChange={setQuery}
           placeholder="Search transcripts…"
           onKeyDown={(e) => e.key === "Enter" && search()}
+          className="min-w-0 flex-1"
         />
-        <Button variant="ghost" onClick={search}>
+        <Button variant="ghost" onClick={search} className="shrink-0">
           Search
         </Button>
         <Button
           variant="danger"
           onClick={() => void window.whisperflow.history.clear().then(() => loadHistory())}
+          className="shrink-0"
         >
           Clear all
         </Button>

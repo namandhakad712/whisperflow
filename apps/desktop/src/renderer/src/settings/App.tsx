@@ -233,8 +233,8 @@ export function App() {
           </div>
         </aside>
 
-        <main className="h-full flex-1 overflow-y-auto bg-bg px-8 py-7">
-          <div className="mx-auto max-w-2xl">
+        <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-bg px-8 py-7">
+          <div className="mx-auto min-w-0 max-w-2xl">
             {tab === "general" && <GeneralTab />}
             {tab === "shortcuts" && <ShortcutsTab />}
             {tab === "audio" && <AudioTab />}

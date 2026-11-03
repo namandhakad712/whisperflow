@@ -230,11 +230,40 @@ async function bootstrap(): Promise<void> {
     },
     checkForUpdates: () => log("updater: manual check requested"),
     quit: () => app.quit(),
+    setSttModel: (id) => engine.setActiveModel("stt", id),
   }) as Electron.Tray & {
     refresh?: (v: boolean) => void;
     setActivity?: (active: boolean, recording: boolean) => void;
+    setModels?: (m: import("./tray/tray").TraySttModel[]) => void;
+    setModelsRefresh?: () => void;
   };
   trayHandle.setActivity = (active, recording) => tray.setActivity?.(active, recording);
+  tray.setModelsRefresh = () => void refreshTrayModels();
+
+  /** Refreshes the tray's Model submenu from catalog + on-disk status. */
+  const refreshTrayModels = async () => {
+    try {
+      const [catalog, statuses, cfg] = await Promise.all([
+        engine.modelCatalog(),
+        engine.modelStatus(),
+        engine.getConfig(),
+      ]);
+      const byId = new Map(statuses.map((s) => [s.entryId, s.state]));
+      tray.setModels?.(
+        catalog
+          .filter((e) => e.role === "stt" && e.format === "ggml")
+          .map((e) => ({
+            id: e.id,
+            name: e.name.replace(/^Whisper\s*/i, ""),
+            active: cfg.stt.modelId === e.id,
+            downloaded: byId.get(e.id) === "downloaded",
+          })),
+      );
+    } catch (err) {
+      log("tray: model list failed:", String(err).slice(0, 120));
+    }
+  };
+  void refreshTrayModels();
 
   registerIpc({
     engine,

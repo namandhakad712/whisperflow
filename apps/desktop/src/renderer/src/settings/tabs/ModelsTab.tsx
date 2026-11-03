@@ -73,12 +73,16 @@ export function ModelsTab() {
       (id): id is string => Boolean(id),
     ),
   );
+  /** Card-level "Recommended" badge — the hardware pick per role (binary excluded; it's required, not recommended). */
+  const badgeIds = new Set(
+    [recommendation?.stt, recommendation?.polish, recommendation?.vad].filter((id): id is string => Boolean(id)),
+  );
   const downloadRecommended = () => {
     for (const id of recommendedIds) if (!downloaded(id)) void downloadOne(id);
   };
 
   return (
-    <section>
+    <section className="min-w-0 max-w-full overflow-x-hidden">
       <PageHeader
         title="Models"
         tagline="Open weights, straight to your machine."
@@ -206,6 +210,7 @@ export function ModelsTab() {
             title="Engine binary"
             hint="The whisper.cpp program that transcribes locally — required, ~9 MB."
             entries={ranked("binary")}
+            recommendedIds={badgeIds}
             {...{ progress, downloaded, isActive, canActivate, downloadOne, loadModels, loadConfig }}
           />
 
@@ -213,6 +218,7 @@ export function ModelsTab() {
             title="Transcription models"
             hint="Whisper GGML weights from HuggingFace."
             entries={showAll ? ranked("stt") : ranked("stt").slice(0, 3)}
+            recommendedIds={badgeIds}
             {...{ progress, downloaded, isActive, canActivate, downloadOne, loadModels, loadConfig }}
           />
 
@@ -220,6 +226,7 @@ export function ModelsTab() {
             title="Polish models"
             hint="Small instruct LLMs (GGUF) that clean up your text — or use a cloud model below."
             entries={showAll ? ranked("polish") : ranked("polish").slice(0, 2)}
+            recommendedIds={badgeIds}
             {...{ progress, downloaded, isActive, canActivate, downloadOne, loadModels, loadConfig }}
           />
 
@@ -332,6 +339,10 @@ function BestPracticesCard() {
 function HardwareCard() {
   const hardware = useSettings((s) => s.hardware);
   if (!hardware) return null;
+  // getGPUInfo can return nothing ("unknown") or throw ("unavailable") — neither
+  // is a fact about the user's PC, so never show the raw word.
+  const gpu = hardware.gpu?.trim() ?? "";
+  const gpuKnown = gpu !== "" && gpu !== "unknown" && gpu !== "unavailable";
   return (
     <Card className="mb-6">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -353,7 +364,13 @@ function HardwareCard() {
         </div>
         <div>
           <p className="text-[11px] uppercase tracking-wider text-ink-dim">Graphics</p>
-          <p className="text-sm font-medium">{hardware.gpu}</p>
+          {gpuKnown ? (
+            <p className="text-sm font-medium">{gpu}</p>
+          ) : (
+            <p className="text-sm font-medium text-ink-dim/70" title="GPU info unavailable in this session">
+              Not available
+            </p>
+          )}
         </div>
       </div>
     </Card>
@@ -591,6 +608,8 @@ interface ModelGroupProps {
   title: string;
   hint: string;
   entries: ModelCatalogEntry[];
+  /** Catalog ids the hardware recommendation picked — badge these cards. */
+  recommendedIds: Set<string>;
   progress: ReturnType<typeof useSettings.getState>["progress"];
   downloaded: (id: string) => boolean;
   isActive: (e: ModelCatalogEntry) => boolean;
@@ -600,10 +619,164 @@ interface ModelGroupProps {
   loadConfig: () => Promise<void>;
 }
 
+/**
+ * One model as a card — the Hex-inspired layout: name, a compact
+ * `Speed · Size · quality` stat row, a recommended-for badge, inline download
+ * progress, and exactly one primary action. Everything wraps at narrow panel
+ * widths (min-w-0 + flex-wrap) so the card never forces a horizontal scrollbar.
+ */
+function ModelCard({
+  entry,
+  recommended,
+  progress,
+  downloaded,
+  isActive,
+  canActivate,
+  downloadOne,
+  loadModels,
+  loadConfig,
+}: {
+  entry: ModelCatalogEntry;
+  recommended: boolean;
+  progress: ModelGroupProps["progress"];
+  downloaded: (id: string) => boolean;
+  isActive: (e: ModelCatalogEntry) => boolean;
+  canActivate: (e: ModelCatalogEntry) => boolean;
+  downloadOne: (id: string) => void;
+  loadModels: () => Promise<void>;
+  loadConfig: () => Promise<void>;
+}) {
+  const prog = progress[entry.id];
+  const busy = prog?.state === "downloading";
+  const active = isActive(entry);
+  const pct = prog
+    ? Math.min(100, (prog.receivedBytes / (prog.totalBytes ?? entry.sizeBytes ?? 1)) * 100 || 0)
+    : 0;
+
+  /** Speed · Size · quality — the three things people actually compare. */
+  const stats: Array<{ label: string; value: string }> = [];
+  if (entry.speed) stats.push({ label: "Speed", value: entry.speed });
+  if (entry.sizeBytes) stats.push({ label: "Size", value: formatBytes(entry.sizeBytes) });
+  if (entry.quality) stats.push({ label: "Quality", value: entry.quality });
+
+  return (
+    <Card className={`min-w-0 max-w-full overflow-hidden ${active ? "border-accent/60" : ""}`}>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0 flex-1 basis-[200px]">
+          <p className="flex min-w-0 flex-wrap items-center gap-2 font-medium">
+            <span className="truncate">{entry.name}</span>
+            {active && (
+              <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                ACTIVE
+              </span>
+            )}
+            {recommended && !active && (
+              <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent ring-1 ring-inset ring-accent/25">
+                Recommended
+              </span>
+            )}
+            {downloaded(entry.id) && !active && (
+              <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">
+                on disk
+              </span>
+            )}
+            {entry.custom && (
+              <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">custom</span>
+            )}
+          </p>
+          {stats.length > 0 && (
+            <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+              {stats.map((s, i) => (
+                <span key={s.label} className="inline-flex items-center gap-1 whitespace-nowrap">
+                  {i > 0 && <span className="text-ink-dim/50" aria-hidden="true">·</span>}
+                  <span className="text-ink-dim/70">{s.label}</span>
+                  <span className="font-medium text-ink-dim">{s.value}</span>
+                </span>
+              ))}
+              {entry.license && (
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <span className="text-ink-dim/50" aria-hidden="true">·</span>
+                  <span className="text-ink-dim/70">{entry.license}</span>
+                </span>
+              )}
+            </div>
+          )}
+          {entry.badges && entry.badges.length > 0 && (
+            <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
+              {entry.badges.map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent ring-1 ring-inset ring-accent/20"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          )}
+          {entry.notes && <p className="mt-2 text-xs leading-5 text-ink-dim/80">{entry.notes}</p>}
+          <p className="mt-1 truncate text-[11px] text-ink-dim/60">{entry.repo}</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {busy ? (
+            <span className="text-xs font-medium text-accent">{Math.round(pct)}%</span>
+          ) : downloaded(entry.id) ? (
+            <>
+              {canActivate(entry) && !active && (
+                <Button
+                  onClick={() =>
+                    void window.whisperflow.models
+                      .setActive({ role: entry.role, id: entry.id })
+                      .then(loadConfig)
+                  }
+                >
+                  Use this
+                </Button>
+              )}
+              {canActivate(entry) && active && (
+                <Button variant="ghost" disabled>
+                  In use
+                </Button>
+              )}
+              <Button
+                variant="danger"
+                onClick={() =>
+                  void window.whisperflow.models.delete({ id: entry.id }).then(loadModels).then(loadConfig)
+                }
+              >
+                Delete
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => downloadOne(entry.id)}>Download</Button>
+          )}
+        </div>
+      </div>
+      {busy && (
+        <div className="mt-3">
+          <div className="mb-1 flex items-center justify-between text-[11px] text-ink-dim">
+            <span>Downloading…</span>
+            <span className="tabular-nums">{Math.round(pct)}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-accent transition-[width]"
+              style={{ width: `${Math.max(2, pct)}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {prog?.state === "error" && (
+        <p className="mt-2 text-xs text-red-400">Download failed: {prog.error ?? "unknown error"}</p>
+      )}
+    </Card>
+  );
+}
+
 function ModelGroup({
   title,
   hint,
   entries,
+  recommendedIds,
   progress,
   downloaded,
   isActive,
@@ -614,88 +787,18 @@ function ModelGroup({
 }: ModelGroupProps) {
   if (entries.length === 0) return null;
   return (
-    <div className="mb-8">
+    <div className="mb-8 min-w-0">
       <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-dim">{title}</h3>
       <p className="mb-3 text-xs text-ink-dim/80">{hint}</p>
       <div className="space-y-3">
-        {entries.map((entry) => {
-          const prog = progress[entry.id];
-          const busy = prog?.state === "downloading";
-          const active = isActive(entry);
-          return (
-            <Card key={entry.id} className={active ? "border-accent/60" : ""}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-medium">
-                    {entry.name}
-                    {active && (
-                      <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent">
-                        ACTIVE
-                      </span>
-                    )}
-                    {downloaded(entry.id) && !active && (
-                      <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">
-                        downloaded
-                      </span>
-                    )}
-                    {entry.custom && (
-                      <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">custom</span>
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-ink-dim">
-                    {formatBytes(entry.sizeBytes)} · {entry.license ?? "?"} · {entry.repo}
-                  </p>
-                  {entry.notes && <p className="mt-1 text-xs text-ink-dim/80">{entry.notes}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                  {busy ? (
-                    <span className="text-xs text-ink-dim">
-                      {Math.round((prog.receivedBytes / (prog.totalBytes ?? entry.sizeBytes ?? 1)) * 100 || 0)}%
-                    </span>
-                  ) : downloaded(entry.id) ? (
-                    <>
-                      {canActivate(entry) && !active && (
-                        <Button
-                          variant="ghost"
-                          onClick={() =>
-                            void window.whisperflow.models
-                              .setActive({ role: entry.role, id: entry.id })
-                              .then(loadConfig)
-                          }
-                        >
-                          Set active
-                        </Button>
-                      )}
-                      <Button
-                        variant="danger"
-                        onClick={() =>
-                          void window.whisperflow.models.delete({ id: entry.id }).then(loadModels).then(loadConfig)
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </>
-                  ) : (
-                    <Button onClick={() => downloadOne(entry.id)}>Download</Button>
-                  )}
-                </div>
-              </div>
-              {busy && (
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
-                  <div
-                    className="h-full rounded-full bg-accent transition-[width]"
-                    style={{
-                      width: `${Math.min(100, (prog.receivedBytes / (prog.totalBytes ?? entry.sizeBytes ?? 1)) * 100)}%`,
-                    }}
-                  />
-                </div>
-              )}
-              {prog?.state === "error" && (
-                <p className="mt-2 text-xs text-red-400">Download failed: {prog.error ?? "unknown error"}</p>
-              )}
-            </Card>
-          );
-        })}
+        {entries.map((entry) => (
+          <ModelCard
+            key={entry.id}
+            entry={entry}
+            recommended={recommendedIds.has(entry.id)}
+            {...{ progress, downloaded, isActive, canActivate, downloadOne, loadModels, loadConfig }}
+          />
+        ))}
       </div>
     </div>
   );

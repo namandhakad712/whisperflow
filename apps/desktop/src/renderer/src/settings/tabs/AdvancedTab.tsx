@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { POLISH_CLOUD_PRESETS, type PolishCloudProviderId, type WhisperFlowConfig } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Button, Card, PageHeader, Row, Select, TextInput, Toggle } from "../../shared/ui";
+import { Button, PageHeader, Row, Select, SettingGroup, TextInput, Toggle } from "../../shared/ui";
 
 /** Style contexts: each context picks the polish tone; custom instructions
  *  override per context. */
@@ -32,23 +32,17 @@ export function AdvancedTab() {
         activeSeg={context}
         onSegChange={(c) => setContext(c as Context)}
         tagline="Make WhisperFlow sound like you."
-        explainer="Pick a writing style per context. Say it once — every dictation follows the tone you chose."
+        explainer="Pick a writing style per context — say it once, and every dictation follows it."
       />
 
-      <Card className="mb-5">
-        <Row
-          label="Auto cleanup"
-          hint="Remove filler words and fix punctuation on every dictation."
-        >
+      <SettingGroup title="Cleanup" hint="How the polish model shapes what you said.">
+        <Row label="Auto cleanup" hint="Remove filler words and fix punctuation on every dictation.">
           <Toggle
             checked={autoCleanup}
             onChange={(v) => void patch({ polish: { provider: v ? "llama-local" : "none" } })}
           />
         </Row>
-        <Row
-          label="Cleanup strength"
-          hint='Five levels: None transcribes exactly what you said; Light cleans up filler words and grammar; Medium edits for clarity and conciseness.'
-        >
+        <Row label="Cleanup strength" hint="Choose a level — the labels say what each one does.">
           <Select
             value={config.polish.cleanup}
             onChange={(v) =>
@@ -63,10 +57,7 @@ export function AdvancedTab() {
             ]}
           />
         </Row>
-        <Row
-          label="Transcription format"
-          hint="How AI shapes the typed text. 'No AI formatting' skips polish entirely; 'Casual messaging' lowercases everything but proper nouns."
-        >
+        <Row label="Transcription format" hint="How the typed text is shaped — 'No AI formatting' skips polish entirely.">
           <Select
             value={config.polish.format}
             onChange={(v) =>
@@ -82,10 +73,7 @@ export function AdvancedTab() {
             ]}
           />
         </Row>
-        <Row
-          label="Email signature"
-          hint="Add a signature when you dictate into an email app — only fires in detected email clients, and never twice."
-        >
+        <Row label="Email signature" hint="Appended once, only when dictating into a detected email client.">
           <Toggle
             checked={config.polish.emailSignature ?? false}
             onChange={(v) => void patch({ polish: { emailSignature: v } })}
@@ -100,10 +88,14 @@ export function AdvancedTab() {
             />
           </Row>
         )}
-        <Row
-          label={`Tone for ${context.toLowerCase()}`}
-          hint={context === "Other" ? "Custom instructions steer the polish model." : undefined}
-        >
+      </SettingGroup>
+
+      <SettingGroup
+        title={`Tone for ${context.toLowerCase()}`}
+        hint="Applies the preset below; the last tone you set is used everywhere until you change it."
+        className="mt-5"
+      >
+        <Row hint={context === "Other" ? "Custom instructions steer the polish model." : undefined} label="Preset">
           <span className="rounded-lg bg-surface-2 px-3 py-1.5 text-[13px] font-medium capitalize">
             {CONTEXT_TONE[context]}
           </span>
@@ -124,10 +116,10 @@ export function AdvancedTab() {
             />
           </div>
         )}
-      </Card>
+      </SettingGroup>
 
-      <Card>
-        <Row label="Polish engine" hint="Local llama.cpp (default) or any OpenAI-compatible endpoint.">
+      <SettingGroup title="Polish engine" className="mt-5">
+        <Row label="Engine" hint="Local llama.cpp (default) or any OpenAI-compatible endpoint.">
           <Select
             value={provider}
             onChange={(v) =>
@@ -154,7 +146,7 @@ export function AdvancedTab() {
           </Row>
         )}
         {provider === "openai-compat" && <CloudPolishCard />}
-      </Card>
+      </SettingGroup>
     </section>
   );
 }
@@ -256,7 +248,7 @@ function CloudPolishCard() {
       </div>
       <Row
         label="Fall back to the local model"
-        hint="If the endpoint fails (quota, network, 5xx), retry on the downloaded GGUF. With it off, a failure drops straight to offline cleanup."
+        hint="Retry on the downloaded GGUF when the endpoint fails; off means failures drop to offline cleanup."
       >
         <Toggle
           checked={config.polish.fallbackToLocal}

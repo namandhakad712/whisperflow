@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TranscriptItem } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Card, PageHeader } from "../../shared/ui";
+import { Card, PageHeader, SettingGroup } from "../../shared/ui";
 
 /** Words-per-day bars from local history — the privacy-safe version of "Insights". */
 export function InsightsTab() {
@@ -63,11 +63,10 @@ export function InsightsTab() {
           </Card>
         ))}
       </div>
-      <Card>
-        <p className="mb-4 text-sm font-semibold">Last 7 days</p>
+      <SettingGroup title="Last 7 days" hint="Words per day, from your local transcripts.">
         <div className="flex h-36 items-end gap-3">
           {stats.days.map((d) => (
-            <div key={d.key} className="flex flex-1 flex-col items-center gap-2">
+            <div key={d.key} className="flex min-w-0 flex-1 flex-col items-center gap-2">
               <div className="flex h-28 w-full items-end">
                 <div
                   className="w-full rounded-t-md bg-accent transition-all"
@@ -79,7 +78,7 @@ export function InsightsTab() {
             </div>
           ))}
         </div>
-      </Card>
+      </SettingGroup>
       <Heatmap items={items} />
       {items.length === 0 && (
         <p className="mt-4 text-xs text-ink-dim">
@@ -123,8 +122,7 @@ function Heatmap({ items }: { items: TranscriptItem[] }) {
     words === 0 ? "bg-surface-2" : words < 20 ? "bg-accent/25" : words < 60 ? "bg-accent/50" : words < 150 ? "bg-accent/75" : "bg-accent";
 
   return (
-    <Card className="mt-5">
-      <p className="mb-4 text-sm font-semibold">Activity — last 12 weeks</p>
+    <SettingGroup title="Activity — last 12 weeks" hint="One cell per day; hover a cell to see its word count." className="mt-5">
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {cols.map((col, ci) => (
           <div key={ci} className="flex flex-col gap-1.5">
@@ -145,6 +143,6 @@ function Heatmap({ items }: { items: TranscriptItem[] }) {
         ))}
         <span>more</span>
       </div>
-    </Card>
+    </SettingGroup>
   );
 }

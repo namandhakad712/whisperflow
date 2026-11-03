@@ -44,6 +44,22 @@ export interface ModelCatalogEntry {
   license?: string;
   /** Short human note shown in the catalog UI. */
   notes?: string;
+  /**
+   * Compact speed label for the Models tab card stat row, e.g. `"Fastest"`.
+   * Omit for entries where speed is not meaningful (sidecar binaries).
+   */
+  speed?: string;
+  /**
+   * Compact quality/accuracy label for the card stat row, e.g.
+   * `"Best accuracy"` or `"English-only"`. Kept separate from `notes`
+   * because notes are full sentences — the card needs one short phrase.
+   */
+  quality?: string;
+  /**
+   * Recommended-for badges shown on the card — the per-language / use-case
+   * tag, e.g. `["Multilingual", "Most accurate"]` or `["English-only"]`.
+   */
+  badges?: readonly string[];
   /** True for user-added entries (from the custom-model form). */
   custom?: boolean;
 }
