@@ -138,11 +138,11 @@ export function ShortcutsTab() {
           "Copy last dictation",
           config.hotkey.shortcuts?.copyLast ?? "Shift+Alt+X",
           "copyLast",
-          "Their copy_last_text — puts the same text on the clipboard without typing.",
+          "Puts the same text on the clipboard without typing.",
         )}
         {bindRow(
           "AI-edit selection (Lens)",
-          config.hotkey.shortcuts?.lens ?? "Ctrl+Super+Alt",
+          config.hotkey.shortcuts?.lens ?? "Ctrl+Super+Alt+L",
           "lens",
           "Highlight any text, press this, and tell the AI what to change — 'make it shorter', 'translate to French', 'fix the tone'. The result replaces your selection.",
         )}

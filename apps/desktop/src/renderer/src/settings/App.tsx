@@ -5,20 +5,20 @@ import {
   Volume2,
   Cpu,
   Book,
-  TextSelect,
-  Sparkles,
+  Command,
+  SlidersHorizontal,
   History,
   Keyboard,
   ShieldCheck,
-  CircleHelp,
+  Info,
   PanelLeftClose,
   PanelLeftOpen,
-  UserRound,
   Palette,
   BarChart3,
   StickyNote,
   AppWindow,
 } from "lucide-react";
+import { useAppVersion } from "../shared/useAppVersion";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
 import { ShortcutsTab } from "./tabs/ShortcutsTab";
@@ -37,18 +37,19 @@ import { Onboarding } from "./Onboarding";
 
 /** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius.
  *  Grouped so the five things everyone touches sit apart from the collections and
- *  the system tools — the flat 13-item list read as one wall of options. */
+ *  the system tools — the flat 13-item list read as one wall of options.
+ *  Labels match each tab's own page title (and the docs) — one word per screen. */
 const ESSENTIALS = [
   { id: "general", label: "Dictation", icon: Mic },
   { id: "audio", label: "Audio", icon: Volume2 },
   { id: "models", label: "Models", icon: Cpu },
   { id: "overlay", label: "Overlay", icon: AppWindow },
-  { id: "advanced", label: "Style", icon: Sparkles },
+  { id: "advanced", label: "Advanced", icon: SlidersHorizontal },
 ] as const;
 
 const COLLECTIONS = [
   { id: "dictionary", label: "Dictionary", icon: Book },
-  { id: "commands", label: "Snippets", icon: TextSelect },
+  { id: "commands", label: "Commands", icon: Command },
   { id: "history", label: "History", icon: History },
   { id: "insights", label: "Insights", icon: BarChart3 },
   { id: "scratchpad", label: "Scratchpad", icon: StickyNote },
@@ -57,7 +58,7 @@ const COLLECTIONS = [
 const SYSTEM = [
   { id: "shortcuts", label: "Shortcuts", icon: Keyboard },
   { id: "privacy", label: "Privacy", icon: ShieldCheck },
-  { id: "about", label: "Help", icon: CircleHelp },
+  { id: "about", label: "About", icon: Info },
 ] as const;
 
 const RAIL_GROUPS = [
@@ -77,6 +78,18 @@ const SECONDARY = [...COLLECTIONS, ...SYSTEM];
 
 function currentRoute(): string {
   return window.location.hash.replace(/^#\/?/, "") || "general";
+}
+
+/** First-run gate. Onboarding's finish/skip writes "wf-onboarded"; nothing
+ *  else ever clears it, so a completed user never sees onboarding again —
+ *  not on relaunch, not by hand-navigating to #/onboarding. */
+function hasOnboarded(): boolean {
+  try {
+    return localStorage.getItem("wf-onboarded") === "1";
+  } catch {
+    // Storage unavailable (private mode) — don't trap the user in onboarding.
+    return true;
+  }
 }
 
 type Skin = "nocturne" | "classic" | "dawn";
@@ -120,9 +133,13 @@ const SKIN_LABEL: Record<Skin, string> = {
 };
 
 export function App() {
-  const [route, setRoute] = useState(currentRoute);
+  // First run starts on onboarding (lazily checked so a completed user is
+  // never re-triggered, whatever the hash says); everyone else resumes on
+  // whatever tab the URL points at.
+  const [route, setRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
   const [collapsed, setCollapsed] = useState(false);
   const [skin, setSkin] = useState<Skin>(() => readSkin());
+  const version = useAppVersion();
   const loadConfig = useSettings((s) => s.loadConfig);
 
   useEffect(() => {
@@ -134,13 +151,14 @@ export function App() {
       window.location.hash = r.startsWith("/") ? r : `/${r}`;
       setRoute(r.replace(/^\//, ""));
     });
+    if (!hasOnboarded()) window.location.hash = "/onboarding";
     return () => {
       window.removeEventListener("hashchange", onHash);
       unsubNavigate();
     };
   }, [loadConfig]);
 
-  if (route === "onboarding") return <Onboarding />;
+  if (route === "onboarding" && !hasOnboarded()) return <Onboarding />;
   const allTabs: Array<{ id: string }> = RAIL_GROUPS.flatMap((g) => [...g.items]);
   const tab = (allTabs.find((t) => t.id === route)?.id ?? "general") as TabId;
 
@@ -152,7 +170,7 @@ export function App() {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* top bar with the reference hub's pill row */}
+      {/* top bar with the pill row */}
       <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
         <div className="flex items-center gap-2">
           <button
@@ -166,14 +184,6 @@ export function App() {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => (window.location.hash = "/about")}
-            className="flex h-8 items-center gap-2 rounded-lg bg-pill px-3 text-[13px] font-medium text-ink transition-opacity hover:opacity-85"
-          >
-            <UserRound size={15} />
-            <span>Account</span>
-          </button>
           <button
             type="button"
             onClick={cycleSkin}
@@ -225,7 +235,7 @@ export function App() {
             </RailItem>
           ))}
           <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-rail-text-dim">
-            {collapsed ? "v0.1" : <>local-first · apache-2.0<br />v0.1.0 · no telemetry</>}
+            {collapsed ? `v${version}` : <>local-first · apache-2.0<br />v{version} · no telemetry</>}
           </div>
         </aside>
 

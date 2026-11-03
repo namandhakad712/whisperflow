@@ -69,6 +69,9 @@ export interface DictationSessionDeps {
    * `stop()` result still carries everything said (for history).
    */
   appendMode?: boolean;
+  /** Fired once when VAD silence has ended the turn (toggle/command modes
+   *  only — hold mode ends on key release). The host should call stop(). */
+  onAutoEnd?: () => void;
   onEvent: (ev: DictationStateEvent) => void;
   logger?: (msg: string) => void;
 }
@@ -89,6 +92,7 @@ export class DictationSession {
     this.vad = new RmsVad({
       sensitivity: deps.config.audio.vad.sensitivity,
       silenceMs: deps.config.audio.vad.silenceMs,
+      autoStopMs: deps.config.audio.vad.autoStopMs ?? 0,
     });
     this.emit("listening");
   }
@@ -99,7 +103,15 @@ export class DictationSession {
     const frame = sampleRate === 16000 ? pcm : resample(pcm, sampleRate, 16000);
 
     const ev = this.vad.feed(frame);
-    if (ev) this.enqueueSegment(ev.pcm);
+    if (!ev) return;
+    if (ev.type === "autoend") {
+      // The user stopped talking long enough that the turn is over. Hold mode
+      // (ptt) ends on key release, not silence — only toggle/command turns
+      // auto-end, so holding while thinking never cuts you off.
+      if (this.deps.triggerSource !== "ptt") this.deps.onAutoEnd?.();
+      return;
+    }
+    this.enqueueSegment(ev.pcm);
   }
 
   /** Finalizes: transcribes the tail, corrects, applies commands, polishes. */
@@ -108,7 +120,8 @@ export class DictationSession {
     this.finished = true;
 
     const tail = this.vad.flush();
-    if (tail) this.enqueueSegment(tail.pcm);
+    // flush() can only return a segment event (autoend never fires after end).
+    if (tail && tail.type === "segment") this.enqueueSegment(tail.pcm);
 
     // Test affordance: WF_STT_MOCK produces the canned text, but headless runs
     // have no microphone — VAD never fires, so there'd be nothing to transcribe.

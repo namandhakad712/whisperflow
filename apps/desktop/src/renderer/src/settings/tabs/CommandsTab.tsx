@@ -10,8 +10,8 @@ const ACTIONS: Array<{ value: VoiceCommand["action"]; label: string }> = [
 ];
 
 const SHOWCASE: Array<[string, string]> = [
-  ["“my email”", "naman@yourdomain.com"],
-  ["“sign off”", "Best,\nNaman"],
+  ["“my email”", "you@example.com"],
+  ["“sign off”", "Best regards"],
   ["“organize this”", "Rewrite these rough notes into clear, polished prose…"],
 ];
 
@@ -45,7 +45,7 @@ export function CommandsTab() {
 
   /**
    * Imports snippets from JSON: `[{"phrase": "sign off", "action": "insert",
-   * "payload": "Best,\nNaman"}, …]`. Malformed entries are skipped, not fatal —
+   * "payload": "Best regards"}, …]`. Malformed entries are skipped, not fatal —
    * a bad file reports how many were imported.
    */
   const importJson = async () => {
@@ -101,7 +101,7 @@ export function CommandsTab() {
         explainer="Save text you type often — an email, intro, or prompt — then say a word to drop it in instantly."
       />
 
-      {/* showcase: phrase → expansion, like the reference board */}
+      {/* showcase: phrase → expansion */}
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         {SHOWCASE.map(([p, v]) => (
           <div key={p} className="rounded-xl border border-dashed border-line bg-surface/60 p-4">

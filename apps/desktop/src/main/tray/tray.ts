@@ -42,7 +42,7 @@ export function createTray(controller: TrayController): Tray {
       ? "WhisperFlow — recording… (press the hotkey or the tray to stop)"
       : active
         ? "WhisperFlow — listening…"
-        : "WhisperFlow — hold nothing back";
+        : "WhisperFlow — press the hotkey to dictate";
 
   const rebuild = () => {
     tray.setToolTip(tooltip());

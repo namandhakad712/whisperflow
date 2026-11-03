@@ -35,6 +35,7 @@ export interface EnginePort {
       skipSignature?: boolean;
       triggerSource?: "ptt" | "popo" | "command" | "lens";
       audioPath?: string;
+      onAutoEnd?: () => void;
     },
   ): Promise<EngineSession>;
   getConfig(): Promise<WhisperFlowConfig>;
@@ -91,6 +92,7 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
         skipSignature: opts?.skipSignature,
         triggerSource: opts?.triggerSource,
         audioPath: opts?.audioPath,
+        onAutoEnd: opts?.onAutoEnd,
       });
       return {
         feed: (pcm) => session.feed(pcm),

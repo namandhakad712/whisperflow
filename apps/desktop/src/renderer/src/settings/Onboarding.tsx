@@ -203,7 +203,7 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
           <button
             key={value}
             type="button"
-            // Their onboarding picks one language explicitly: auto-detect goes
+            // Picking a language here pins it explicitly: auto-detect goes
             // off and the chosen language is the single selected one.
             onClick={() => void patch({ stt: { language: value, languages: [value], autoDetect: false } })}
             className={`rounded-lg border px-3 py-2 text-sm transition-colors ${

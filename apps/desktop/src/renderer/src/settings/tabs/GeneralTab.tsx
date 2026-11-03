@@ -2,23 +2,27 @@ import { useEffect, useState } from "react";
 import type { ModelStatus } from "@whisperflow/shared";
 import { useSettings } from "../store";
 import { Card, PageHeader, Toggle } from "../../shared/ui";
+import { useAppVersion } from "../../shared/useAppVersion";
 
-/** Reference-pattern setup card: progress bar + checklist, wired to REAL app state. */
+/** Setup card: progress bar + checklist, wired to REAL app state. */
 function SetupChecklist() {
   const statuses = useSettings((s) => s.statuses);
   const config = useSettings((s) => s.config);
   const progress = useSettings((s) => s.progress);
+  const history = useSettings((s) => s.history);
   const loadModels = useSettings((s) => s.loadModels);
+  const loadHistory = useSettings((s) => s.loadHistory);
   const bindProgress = useSettings((s) => s.bindProgress);
   const [done, setDone] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     void loadModels();
+    void loadHistory();
     // Live refresh: re-pull statuses on every download event so the checklist
     // ticks the moment a download lands — even while this tab was not mounted
     // when the download started.
     return bindProgress();
-  }, [loadModels, bindProgress]);
+  }, [loadModels, loadHistory, bindProgress]);
 
   useEffect(() => {
     const sttCloud = config?.stt.provider === "cloud";
@@ -27,13 +31,15 @@ function SetupChecklist() {
       sttCloud ||
       statuses.some((s) => s.entryId === config?.stt.modelId && s.state === "downloaded");
     setDone({
-      hotkey: true,
+      // The hotkey is only really "tested" once a dictation exists — history
+      // fills only after real use, so a fresh install shows no false progress.
+      hotkey: history.length > 0,
       engine: sttCloud || engineReady,
       models: sttCloud || modelReady,
       dictionary: (config?.dictionary.length ?? 0) > 0,
       snippet: (config?.commands.length ?? 0) > 0,
     });
-  }, [statuses, config, progress]);
+  }, [statuses, config, progress, history]);
 
   const steps: Array<{ id: string; label: string; hint: string; action: () => void; actionLabel: string }> = [
     { id: "hotkey", label: "Test your hotkey", hint: "Press it anywhere — the overlay appears", action: () => (window.location.hash = "#/shortcuts"), actionLabel: "Open" },
@@ -80,7 +86,7 @@ function SetupChecklist() {
   );
 }
 
-/** Reference-measured settings anatomy: rows of [label + value] with a Change button. */
+/** Settings anatomy: rows of [label + value] with a Change button. */
 function ChangeRow({ label, value, onChange }: { label: string; value: React.ReactNode; onChange: () => void }) {
   return (
     <div className="flex items-center justify-between gap-6 px-5 py-5">
@@ -102,6 +108,7 @@ function ChangeRow({ label, value, onChange }: { label: string; value: React.Rea
 export function GeneralTab() {
   const config = useSettings((s) => s.config);
   const devices = useSettings((s) => s.devices);
+  const version = useAppVersion();
   if (!config) return null;
 
   const go = (route: string) => {
@@ -116,13 +123,23 @@ export function GeneralTab() {
         <ChangeRow
           label="Shortcuts"
           value={
-            <>
-              Hold{" "}
-              <kbd className="rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
-                {config.hotkey.pushToTalk}
-              </kbd>{" "}
-              and speak.
-            </>
+            config.hotkey.mode === "hold" ? (
+              <>
+                Hold{" "}
+                <kbd className="rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
+                  {config.hotkey.pushToTalk}
+                </kbd>{" "}
+                and speak; release to finish.
+              </>
+            ) : (
+              <>
+                Press{" "}
+                <kbd className="rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
+                  {config.hotkey.pushToTalk}
+                </kbd>{" "}
+                to start; press again or fall silent to finish.
+              </>
+            )
           }
           onChange={() => go("shortcuts")}
         />
@@ -195,16 +212,15 @@ export function GeneralTab() {
         </div>
       </Card>
       <p className="mt-5 text-xs leading-5 text-ink-dim">
-        WhisperFlow v0.1.0 · local-first · Apache-2.0 · zero telemetry
+        WhisperFlow v{version} · local-first · Apache-2.0 · zero telemetry
       </p>
     </section>
   );
 }
 
 /**
- * Their widget copy: "Flow will detect your language automatically. Make sure
- * all the languages you speak are selected." Summarises the selected set the
- * same way their header does.
+ * Summarises the selected language set for the Dictation row: "Auto-detect"
+ * unless the user pinned one language with auto-detect off.
  */
 export function languageSummary(stt: {
   language: string;

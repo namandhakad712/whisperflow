@@ -199,6 +199,13 @@ export class DictationController {
           // hotkey.mode is the single source of truth (legacy flags are derived from it).
           ...(fg ? { triggerSource: cfg?.hotkey?.mode === "hold" ? "ptt" : "popo" } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
+          // The session ends itself when the user falls silent (toggle mode) —
+          // the reference behavior, so the pill collapses without a second
+          // press. Hold mode never fires this (release ends the turn).
+          onAutoEnd: () => {
+            log("dictation: silence ended the turn");
+            void this.finish();
+          },
         },
       );
       this.session = session;

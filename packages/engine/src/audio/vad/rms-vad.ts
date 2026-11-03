@@ -16,6 +16,9 @@ export interface RmsVadOptions {
   silenceMs: number;
   /** Minimum speech (ms) before a segment can close. */
   minSpeechMs?: number;
+  /** End-of-turn: after real speech, this much total silence fires `autoend`
+   * (0 disables). One-shot per VAD instance. */
+  autoStopMs?: number;
 }
 
 export interface VadSegmentEvent {
@@ -26,7 +29,13 @@ export interface VadSegmentEvent {
   speechMs: number;
 }
 
-export type VadEvent = VadSegmentEvent;
+export interface VadAutoEndEvent {
+  type: "autoend";
+  /** Total speech (ms) detected before the silences that ended the turn. */
+  speechMs: number;
+}
+
+export type VadEvent = VadSegmentEvent | VadAutoEndEvent;
 
 const PRE_ROLL_MS = 220;
 const FRAME_MS = 64; // nominal frame length for bookkeeping
@@ -34,6 +43,8 @@ const FRAME_MS = 64; // nominal frame length for bookkeeping
 export class RmsVad {
   private readonly silenceMs: number;
   private readonly minSpeechMs: number;
+  /** End-of-turn silence budget (0 = never auto-end). */
+  private readonly autoStopMs: number;
   /** Multiplied by the running noise floor to decide "speech". */
   private readonly speechFactor: number;
 
@@ -41,6 +52,11 @@ export class RmsVad {
   private speechActive = false;
   private silenceMsAccumulated = 0;
   private speechMsAccumulated = 0;
+  /** Silence since the last REAL speech frame — drives autoend. */
+  private silenceSinceSpeech = 0;
+  /** Total real speech across the whole turn (not per segment). */
+  private totalSpeechMs = 0;
+  private autoEnded = false;
   private preRoll: Float32Array[] = [];
   private preRollSamples = 0;
   private segment: Float32Array[] = [];
@@ -50,6 +66,7 @@ export class RmsVad {
   constructor(opts: RmsVadOptions) {
     this.silenceMs = opts.silenceMs;
     this.minSpeechMs = opts.minSpeechMs ?? 240;
+    this.autoStopMs = opts.autoStopMs ?? 0;
     // sensitivity 1.0 → 3× floor, sensitivity 0.0 → 12× floor.
     this.speechFactor = 3 + (1 - clamp01(opts.sensitivity)) * 9;
   }
@@ -59,7 +76,13 @@ export class RmsVad {
     return this.noiseFloor * this.speechFactor;
   }
 
+  /** True once autoend has fired (the turn is over; stop feeding). */
+  get ended(): boolean {
+    return this.autoEnded;
+  }
+
   feed(frame: Float32Array): VadEvent | null {
+    if (this.autoEnded) return null;
     const rms = computeRms(frame);
 
     // Track the quiet-side envelope as the noise floor (fast attack, slow decay).
@@ -82,7 +105,9 @@ export class RmsVad {
         this.segmentSamples = this.preRollSamples;
       }
       this.speechMsAccumulated += frameMs(frame);
+      this.totalSpeechMs += frameMs(frame);
       this.silenceMsAccumulated = 0;
+      this.silenceSinceSpeech = 0;
       this.pushFrame(frame, "segment");
       this.pushFrame(frame, "preRoll");
       return null;
@@ -90,12 +115,35 @@ export class RmsVad {
 
     // Silence path.
     this.pushFrame(frame, "preRoll");
-    if (!this.speechActive) return null;
+    if (!this.speechActive) {
+      // End-of-turn clock: only after the user actually spoke some real words,
+      // so a paused start (thinking before talking) never auto-ends the turn.
+      if (this.autoStopMs > 0 && this.totalSpeechMs >= this.minSpeechMs) {
+        this.silenceSinceSpeech += frameMs(frame);
+        if (this.silenceSinceSpeech >= this.autoStopMs) {
+          this.autoEnded = true;
+          return { type: "autoend", speechMs: this.totalSpeechMs };
+        }
+      }
+      return null;
+    }
 
     this.pushFrame(frame, "segment");
     this.silenceMsAccumulated += frameMs(frame);
     if (this.silenceMsAccumulated >= this.silenceMs && this.speechMsAccumulated >= this.minSpeechMs) {
-      return this.closeSegment();
+      const ev = this.closeSegment();
+      // An open segment just closed on silence — a longer silence after this
+      // still counts toward the end-of-turn budget.
+      this.silenceSinceSpeech += this.silenceMsAccumulated;
+      if (
+        this.autoStopMs > 0 &&
+        this.totalSpeechMs >= this.minSpeechMs &&
+        this.silenceSinceSpeech >= this.autoStopMs
+      ) {
+        this.autoEnded = true;
+        return { type: "autoend", speechMs: this.totalSpeechMs };
+      }
+      return ev;
     }
     if (this.silenceMsAccumulated >= this.silenceMs * 4) {
       // Long silence without enough speech: discard the pending segment.

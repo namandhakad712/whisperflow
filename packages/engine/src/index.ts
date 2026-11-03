@@ -49,6 +49,8 @@ export interface StartDictationOptions {
   triggerSource?: "ptt" | "popo" | "command" | "lens";
   /** Absolute path of the recording file when the host is saving audio. */
   audioPath?: string;
+  /** Fired once when VAD silence ends the turn (toggle/command modes only). */
+  onAutoEnd?: () => void;
 }
 
 export interface WhisperFlowEngine {
@@ -223,6 +225,7 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         triggerSource: sessionOpts.triggerSource,
         audioPath: sessionOpts.audioPath,
         appendMode: cfg.general.meetingMode,
+        onAutoEnd: sessionOpts.onAutoEnd,
         onEvent: sessionOpts.onEvent,
         logger,
       });

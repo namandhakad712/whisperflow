@@ -111,6 +111,11 @@ export const VadConfigSchema = z.object({
   sensitivity: z.number().min(0).max(1).default(0.5),
   /** Trailing silence (ms) that ends a speech segment. */
   silenceMs: z.number().int().min(100).max(5000).default(700),
+  /** End-of-turn: after real speech, this much total silence (ms) ends the
+   *  dictation in toggle mode — the pill collapses without a second press.
+   *  0 disables (only a press/Esc stops the turn). Hold mode always ends on
+   *  key release. */
+  autoStopMs: z.number().int().min(0).max(30000).default(2500),
 });
 export type VadConfig = z.infer<typeof VadConfigSchema>;
 

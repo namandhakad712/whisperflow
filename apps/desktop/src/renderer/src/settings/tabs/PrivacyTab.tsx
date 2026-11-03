@@ -113,9 +113,11 @@ export function PrivacyTab() {
       </div>
 
       <p className="mt-6 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-xs leading-5 text-ink-dim">
-        Audio is always transcribed locally by whisper.cpp. Transcript text only leaves the machine if
-        you disable the lock AND configure a remote polish endpoint. The source code (Apache-2.0) is
-        the proof — audit it, or watch the app work behind a firewall.
+        By default, your audio is transcribed locally by whisper.cpp — nothing is sent anywhere. If you
+        configure a cloud STT provider (Models tab), your audio is sent to that provider under your own
+        API key. Transcript text leaves the machine only for cloud STT or a configured remote polish
+        endpoint. The source code (Apache-2.0) is the proof — audit it, or watch the app work behind a
+        firewall.
       </p>
     </section>
   );

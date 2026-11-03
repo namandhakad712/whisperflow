@@ -44,7 +44,7 @@ export function AboutTab() {
             <dt className="text-ink-dim">Source</dt>
             <dd>
               <a className="text-accent hover:underline" href="https://github.com/namandhakad712/whisperflow">
-                github.com/whisperflow
+                github.com/namandhakad712/whisperflow
               </a>
             </dd>
           </div>
