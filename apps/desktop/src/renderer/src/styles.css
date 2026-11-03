@@ -140,6 +140,13 @@ body.overlay-body {
   color: #fff;
 }
 
+/* One focus ring everywhere: accent halo, never the browser default.
+   Keyboard-visible only, so mouse clicks stay clean. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;

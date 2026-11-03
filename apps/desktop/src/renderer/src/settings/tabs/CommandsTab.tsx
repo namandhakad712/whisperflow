@@ -33,6 +33,13 @@ export function CommandsTab() {
       setTimeout(() => setNotice(null), 4000);
       return;
     }
+    // An insert/replace command with no text would fire and do nothing when
+    // spoken — refuse it up front instead of storing a dead command.
+    if ((action === "insert" || action === "replace") && !payload.trim()) {
+      setNotice(action === "insert" ? "Insert needs the text to insert." : "Replace needs the replacement text.");
+      setTimeout(() => setNotice(null), 4000);
+      return;
+    }
     setPhrase("");
     setPayload("");
     void addCommand(clean, action, payload.trim() || undefined)

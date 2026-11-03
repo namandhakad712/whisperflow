@@ -3,7 +3,11 @@ import { ChevronRight } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-line bg-surface/60 p-5 ${className}`}>{children}</div>
+    <div
+      className={`rounded-2xl border border-line bg-surface/60 p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.35)] ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -104,36 +108,47 @@ export function Row({ label, hint, children }: { label: string; hint?: string; c
   );
 }
 
+/**
+ * The boolean control — an animated toggle switch, the only thing that should
+ * ever appear at the right edge of a Row. Track shrinks the knob when off so
+ * the state reads at a glance, even at a 44px glance.
+ */
 export function Toggle({
   checked,
   onChange,
   disabled,
+  "aria-label": ariaLabel,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  "aria-label"?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors disabled:opacity-40 ${
-        checked ? "bg-accent" : "bg-ink/15"
+      className={`relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-40 ${
+        checked ? "bg-accent" : "bg-ink/15 ring-1 ring-inset ring-white/[0.06]"
       }`}
     >
       {/* knob: explicit left + translate so it can never escape the track; white-on-accent
           stays legible on every theme (blue Nocturne, ink Classic, light Dawn) */}
       <span
-        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow ring-1 ring-black/10 transition-transform ${
-          checked ? "translate-x-[20px]" : "translate-x-0"
+        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow ring-1 ring-black/10 transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+          checked ? "translate-x-[20px] scale-[0.92]" : "translate-x-0 scale-100"
         }`}
       />
     </button>
   );
 }
+
+/** Canonical name for the boolean control — same premium switch. */
+export const Switch = Toggle;
 
 export function Button({
   children,
@@ -150,16 +165,16 @@ export function Button({
 }) {
   const styles =
     variant === "primary"
-      ? "bg-accent text-bg hover:bg-accent-strong"
+      ? "bg-accent text-bg shadow-[0_1px_2px_rgba(0,0,0,0.2)] hover:bg-accent-strong"
       : variant === "danger"
-        ? "border border-red-500/40 text-red-400 hover:bg-red-500/10"
+        ? "border border-red-500/40 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
         : "border border-line bg-surface-2 text-ink hover:border-accent/50";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors disabled:opacity-40 ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-40 ${styles} ${className}`}
     >
       {children}
     </button>
@@ -188,7 +203,7 @@ export function TextInput({
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={onKeyDown}
-      className={`w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none placeholder:text-ink-dim/60 focus:border-accent/60 ${className}`}
+      className={`w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-ink-dim/60 focus:border-accent/60 focus:ring-2 focus:ring-accent/25 ${className}`}
     />
   );
 }
@@ -215,7 +230,7 @@ export function Segmented<T extends string>({
           aria-pressed={o.value === value}
           disabled={o.disabled}
           onClick={() => onChange(o.value)}
-          className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40 ${
             o.value === value ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
           }`}
         >
@@ -239,7 +254,7 @@ export function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent/60"
+      className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

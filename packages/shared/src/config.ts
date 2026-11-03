@@ -316,11 +316,14 @@ export const POLISH_CLOUD_PRESETS = {
     label: "Groq — free tier",
     baseUrl: "https://api.groq.com/openai/v1",
     defaultModel: "openai/gpt-oss-20b",
-    models: ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+    // llama-3.3-70b-versatile / llama-3.1-8b-instant became Enterprise-only
+    // (contact-sales) on Groq's self-serve model list — removed so a free key
+    // never lands on a model it can't call.
+    models: ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "qwen/qwen3.8-27b"],
     docs: "https://console.groq.com/docs/models",
     freeNote:
-      "Free tier for the gpt-oss models (Groq's rate-limits table): 30 RPM, 1,000 requests/day. The two llama-3.x models are still listed as production models but no longer appear in the published free-tier limits table — treat their free limits as unverified.",
-    verified: "2026-10-29",
+      "Free tier for the gpt-oss models (Groq's rate-limits table): 30 RPM, 1,000 requests/day. qwen3.8-27b is a preview model — availability/quota may differ. Fallback for older configs: llama-3.x ids no longer self-serve.",
+    verified: "2026-11-03",
   },
   openrouter: {
     label: "OpenRouter — free endpoints",

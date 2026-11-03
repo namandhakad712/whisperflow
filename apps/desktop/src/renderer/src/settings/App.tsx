@@ -72,10 +72,6 @@ type TabId =
   | (typeof COLLECTIONS)[number]["id"]
   | (typeof SYSTEM)[number]["id"];
 
-/** Rail render groups (Essentials first, then collections + system). */
-const MAIN = ESSENTIALS;
-const SECONDARY = [...COLLECTIONS, ...SYSTEM];
-
 function currentRoute(): string {
   return window.location.hash.replace(/^#\/?/, "") || "general";
 }
@@ -177,7 +173,7 @@ export function App() {
             type="button"
             onClick={() => setCollapsed((c) => !c)}
             aria-label="Toggle sidebar"
-            className="flex h-8 items-center gap-2 rounded-lg bg-pill px-3 text-[13px] font-medium text-ink transition-opacity hover:opacity-85"
+            className="flex h-8 items-center gap-2 rounded-full bg-pill px-3 text-[13px] font-medium text-ink transition-colors duration-150 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
             {!collapsed && <span>Toggle sidebar</span>}
@@ -188,7 +184,7 @@ export function App() {
             type="button"
             onClick={cycleSkin}
             aria-label={`Theme: ${SKIN_LABEL[skin]}. Click to change.`}
-            className="flex h-8 items-center gap-2 rounded-lg bg-pill px-3 text-[13px] font-medium text-ink transition-opacity hover:opacity-85"
+            className="flex h-8 items-center gap-2 rounded-full bg-pill px-3 text-[13px] font-medium text-ink transition-colors duration-150 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <Palette size={15} />
             <span>Theme · {SKIN_LABEL[skin]}</span>
@@ -211,28 +207,26 @@ export function App() {
               WhisperFlow
             </p>
           )}
-          {MAIN.map((item) => (
-            <RailItem
-              key={item.id}
-              active={tab === item.id}
-              collapsed={collapsed}
-              label={item.label}
-              href={`#/${item.id}`}
-            >
-              <item.icon size={17} strokeWidth={1.8} />
-            </RailItem>
-          ))}
-          <div className="my-3 border-t border-white/10" />
-          {SECONDARY.map((item) => (
-            <RailItem
-              key={item.id}
-              active={tab === item.id}
-              collapsed={collapsed}
-              label={item.label}
-              href={`#/${item.id}`}
-            >
-              <item.icon size={17} strokeWidth={1.8} />
-            </RailItem>
+          {RAIL_GROUPS.map((group, gi) => (
+            <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
+              {!collapsed && (
+                <p className="px-3 pb-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-rail-text-dim/70">
+                  {group.label}
+                </p>
+              )}
+              {collapsed && gi > 0 && <div className="mx-3 my-2 border-t border-white/10" />}
+              {group.items.map((item) => (
+                <RailItem
+                  key={item.id}
+                  active={tab === item.id}
+                  collapsed={collapsed}
+                  label={item.label}
+                  href={`#/${item.id}`}
+                >
+                  <item.icon size={17} strokeWidth={1.75} />
+                </RailItem>
+              ))}
+            </div>
           ))}
           <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-rail-text-dim">
             {collapsed ? `v${version}` : <>local-first · apache-2.0<br />v{version} · no telemetry</>}
@@ -327,9 +321,10 @@ function RailItem({  active,
     <a
       href={href}
       title={collapsed ? label : undefined}
-      className={`flex h-9 items-center rounded-md text-[15px] font-[550] transition-colors ${
+      aria-current={active ? "page" : undefined}
+      className={`flex h-9 items-center rounded-md text-[15px] font-[550] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
         collapsed ? "justify-center px-0" : "gap-3 px-3"
-      } ${active ? "bg-rail-active text-rail-text" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
+      } ${active ? "bg-rail-active text-rail-text ring-1 ring-inset ring-white/[0.06]" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
     >
       {children}
       {!collapsed && <span>{label}</span>}
