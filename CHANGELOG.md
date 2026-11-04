@@ -2,6 +2,21 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.20] — 2026-11-04
+
+### Added
+- **Model cards.** The Models tab shows every model as a card with the three things people actually
+  compare — Speed · Size · quality — plus recommendation badges, ACTIVE/on-disk pills, the license,
+  inline download progress, and a one-click primary action. The horizontal scrollbar is gone
+  (rows wrap, nothing overflows the panel), and "Graphics: unknown" renders as "Not available".
+- **Tray model switch:** right-click the tray → Model → any downloaded STT model. The active model
+  is checked; un-downloaded entries are disabled; the list refreshes after every switch.
+
+### Fixed
+- **A lens press with nothing selected now opens the bar** with a "nothing selected — highlight the
+  text to edit, then press the hotkey again" hint instead of silently doing nothing (a shortcut
+  press that does nothing is the worst response).
+
 ## [0.1.19] — 2026-11-03
 
 ### Changed — one position model, the overlay and the rest pill are the same thing

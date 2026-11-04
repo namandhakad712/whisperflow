@@ -49,14 +49,15 @@ export function ScratchpadTab() {
         tagline="Your safe space to dump, draft, and explore."
         explainer="Drop a to-do list, brain-dump an idea, park a thought. Notes never leave this machine."
       />
-      <div className="mb-5 flex gap-2">
+      <div className="mb-5 flex flex-wrap gap-2">
         <TextInput
           value={draft}
           onChange={setDraft}
           placeholder="Start a note…"
           onKeyDown={(e) => e.key === "Enter" && add()}
+          className="min-w-0 flex-1"
         />
-        <Button onClick={add}>New note</Button>
+        <Button onClick={add} className="shrink-0">New note</Button>
       </div>
       {notes.length === 0 ? (
         <EmptyState
