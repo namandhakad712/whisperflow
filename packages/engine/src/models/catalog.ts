@@ -87,6 +87,23 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     badges: ["Multilingual", "Smaller download"],
   },
   {
+    id: "qwen3-8b-q4",
+    role: "polish",
+    name: "Qwen3 8B (Q4_K_M, non-thinking)",
+    repo: "unsloth/Qwen3-8B-GGUF",
+    file: "Qwen3-8B-Q4_K_M.gguf",
+    url: HF("unsloth/Qwen3-8B-GGUF", "Qwen3-8B-Q4_K_M.gguf"),
+    sizeBytes: 4_921_000_000,
+    format: "gguf",
+    tiers: ["high"],
+    license: "Apache-2.0",
+    notes:
+      "The heavier-rewrite tier — real restructuring and tone changes, not just cleanup. Qwen3 runs its fast non-thinking mode (the template sets enable_thinking=false), so a rewrite stays quick. ~4.9 GB download, high-tier hardware only.",
+    speed: "Medium",
+    quality: "Heavy rewrites",
+    badges: ["Heavier rewrites"],
+  },
+  {
     id: "qwen3.5-4b-q4",
     role: "polish",
     name: "Qwen3.5 4B (Q4_K_M)",
@@ -98,7 +115,7 @@ export const CATALOG: readonly ModelCatalogEntry[] = [
     tiers: ["high"],
     license: "Apache-2.0",
     notes:
-      "Larger polish model — only worth the download if you want heavier rewriting than text cleanup; the 2B default handles filler removal, punctuation, and casing fine. Use the text path only (don't load the mmproj vision file). ~2.7 GB.",
+      "Middle polish tier — noticeably stronger rewrites than the 2B default, half the download of the 8B. ~2.7 GB.",
     speed: "Slower",
     quality: "Heavier rewrites",
     badges: ["Max control"],
