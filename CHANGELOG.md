@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.21] — 2026-11-04
+
+### Added — Modes
+- **Per-app formatting profiles.** Add a Mode in Settings → Modes with a match pattern ("slack",
+  "gmail", "code"…) and the overrides you want for that target. The first enabled mode whose
+  pattern matches the app you're dictating into — matched against the app name, the window title,
+  **and the browser URL**, so "gmail" covers both the Gmail app and gmail.com — wins over the
+  global polish settings. Tone, cleanup level, format, email signature, and extra instructions are
+  all overridable; anything left on Auto falls back to global. 8 new engine tests, and the match is
+  logged per dictation so you can see which mode fired.
+
 ## [0.1.20] — 2026-11-04
 
 ### Added

@@ -16,6 +16,7 @@ import type {
 import { join } from "node:path";
 import { ConfigStore } from "./config/ConfigStore.js";
 import { createHistoryStore, type HistoryStore } from "./history/historyStore.js";
+import { applyModeOverrides, resolveMode } from "./modes/resolve.js";
 import { ModelManager } from "./models/manager.js";
 import { CATALOG } from "./models/catalog.js";
 import { WhisperCppProvider } from "./providers/stt/WhisperCppProvider.js";
@@ -39,6 +40,10 @@ export interface StartDictationOptions {
   onEvent: (ev: DictationStateEvent) => void;
   /** Target app name, when the host knows it (used as polish context). */
   app?: string;
+  /** Window title of the target app — mode matching uses it. */
+  appTitle?: string;
+  /** Active browser URL when the target is a browser — mode matching uses it. */
+  appUrl?: string;
   /** Reference AppType of the target app — gates signature/messaging/cleanup rules. */
   appType?: "email" | "ai" | "terminal" | "other";
   /** Target app is a chat/messaging client (trailing-period stripping). */
@@ -213,8 +218,17 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         cfg.stt.fallback === "local" ? local : cfg.stt.fallback === "cloud" ? cloud : null;
       const stt = mock ?? pickStt(primary, backup);
       if (mock) logger("stt: WF_STT_MOCK is set — transcriptions are the canned test text");
+      // Modes: the first enabled profile matching the target app rewrites the
+      // session's polish config (per-app formatting, Hex's stickiest feature).
+      const mode = resolveMode(cfg, {
+        app: sessionOpts.app,
+        title: sessionOpts.appTitle,
+        url: sessionOpts.appUrl,
+      });
+      const effective = mode ? applyModeOverrides(cfg, mode) : cfg;
+      if (mode) logger(`modes: matched "${mode.name}" (match=${mode.match})`);
       return new DictationSession({
-        config: structuredClone(cfg),
+        config: structuredClone(effective),
         stt,
         polish: activePolish(),
         history,

@@ -577,6 +577,38 @@ export const UpdatesConfigSchema = z.object({
 });
 export type UpdatesConfig = z.infer<typeof UpdatesConfigSchema>;
 
+/**
+ * A Mode (their stickiest feature): a named set of polish overrides that
+ * activates when the dictation lands in a matching app. `match` is a
+ * substring against the foreground app's name, window title, or browser URL
+ * (case-insensitive) — e.g. "gmail", "slack", "code". Every override is
+ * optional; unset fields fall back to the global polish settings.
+ */
+export const ModeProfileSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  /** Case-insensitive substring matched against app name / title / URL. */
+  match: z.string().min(1),
+  /** "Auto" keeps the global tone for this mode. */
+  tone: z.enum(["auto", "neutral", "casual", "professional", "custom"]).default("auto"),
+  /** "Auto" keeps the global cleanup level. */
+  cleanup: z.enum(["auto", "none", "light", "medium", "high", "full"]).default("auto"),
+  /** "Auto" keeps the global format. */
+  format: z.enum(["auto", "casual", "formatted", "raw", "lowercase"]).default("auto"),
+  /** Extra instructions appended for this mode, e.g. "always reply in bullets". */
+  customInstructions: z.string().default(""),
+  /** A signature override for email apps; "auto" keeps the global setting. */
+  emailSignature: z.enum(["auto", "on", "off"]).default("auto"),
+  enabled: z.boolean().default(true),
+});
+export type ModeProfile = z.infer<typeof ModeProfileSchema>;
+
+/** Modes section. */
+export const ModesConfigSchema = z.object({
+  profiles: z.array(ModeProfileSchema).default([]),
+});
+export type ModesConfig = z.infer<typeof ModesConfigSchema>;
+
 /** Root config schema — the shape of `config.json`. */
 export const WhisperFlowConfigSchema = z.object({
   hotkey: HotkeyConfigSchema.prefault({}),
@@ -595,6 +627,7 @@ export const WhisperFlowConfigSchema = z.object({
   general: GeneralConfigSchema.prefault({}),
   updates: UpdatesConfigSchema.prefault({}),
   models: ModelsConfigSchema.prefault({}),
+  modes: ModesConfigSchema.prefault({}),
 });
 export type WhisperFlowConfig = z.infer<typeof WhisperFlowConfigSchema>;
 

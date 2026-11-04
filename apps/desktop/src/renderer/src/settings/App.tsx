@@ -17,6 +17,7 @@ import {
   BarChart3,
   StickyNote,
   AppWindow,
+  Layers,
 } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { useSettings } from "./store";
@@ -32,6 +33,7 @@ import { AdvancedTab } from "./tabs/AdvancedTab";
 import { AboutTab } from "./tabs/AboutTab";
 import { InsightsTab } from "./tabs/InsightsTab";
 import { ScratchpadTab } from "./tabs/ScratchpadTab";
+import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { Onboarding } from "./Onboarding";
 
@@ -48,6 +50,7 @@ const ESSENTIALS = [
 ] as const;
 
 const COLLECTIONS = [
+  { id: "modes", label: "Modes", icon: Layers },
   { id: "dictionary", label: "Dictionary", icon: Book },
   { id: "commands", label: "Commands", icon: Command },
   { id: "history", label: "History", icon: History },
@@ -241,6 +244,7 @@ export function App() {
             {tab === "models" && <ModelsTab />}
             {tab === "overlay" && <OverlayTab />}
             {tab === "dictionary" && <DictionaryTab />}
+            {tab === "modes" && <ModesTab />}
             {tab === "commands" && <CommandsTab />}
             {tab === "history" && <HistoryTab />}
             {tab === "privacy" && <PrivacyTab />}

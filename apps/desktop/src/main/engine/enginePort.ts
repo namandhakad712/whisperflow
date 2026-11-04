@@ -30,6 +30,10 @@ export interface EnginePort {
     onEvent: (ev: DictationStateEvent) => void,
     opts?: {
       app?: string;
+      /** Target window title — used for Modes matching. */
+      appTitle?: string;
+      /** Active browser URL — used for Modes matching. */
+      appUrl?: string;
       appType?: "email" | "ai" | "terminal" | "other";
       isMessaging?: boolean;
       skipSignature?: boolean;
@@ -87,6 +91,8 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
       const session = await engine.startDictation({
         onEvent,
         app: opts?.app,
+        appTitle: opts?.appTitle,
+        appUrl: opts?.appUrl,
         appType: opts?.appType,
         isMessaging: opts?.isMessaging,
         skipSignature: opts?.skipSignature,

@@ -192,6 +192,9 @@ export class DictationController {
         (ev) => this.broadcast(ev),
         {
           ...(fg ? { app: fg.app } : {}),
+          // Modes match on title/URL too (e.g. "gmail" covers gmail-in-a-browser).
+          ...(fg ? { appTitle: fg.title } : {}),
+          ...(url ? { appUrl: url } : {}),
           ...(appType ? { appType } : {}),
           ...(fg && appType ? { isMessaging: isMessagingApp(fg.app, url) } : {}),
           ...(appType === "email" ? { skipSignature: this.skipSignature } : {}),
