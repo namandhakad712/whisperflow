@@ -422,5 +422,7 @@ export interface WhisperflowApi {
   capture: {
     /** Sends one 16 kHz mono PCM chunk (renderer → main, transferable). */
     sendPcm(chunk: Float32Array): void;
+    /** One PCM chunk from the system-audio loopback (meeting mode). */
+    sendSystemPcm(chunk: Float32Array): void;
   };
 }

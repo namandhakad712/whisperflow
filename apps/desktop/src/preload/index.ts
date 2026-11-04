@@ -80,10 +80,22 @@ const api: WhisperflowApi = {
   capture: {
     /** 16 kHz mono Float32 PCM chunk from the overlay's AudioWorklet. */
     sendPcm: (chunk) => ipcRenderer.send(IPC.CapturePcm, chunk),
+    /** 16 kHz mono Float32 PCM chunk from the system-audio loopback window. */
+    sendSystemPcm: (chunk) => ipcRenderer.send("capture/systemPcm", chunk),
   },
 };
 
 contextBridge.exposeInMainWorld("whisperflow", api);
+
+// The capture page needs desktopCapturer to grab the Windows audio loopback;
+// it exists only where Electron exposes it. Sandboxed/isolated renderers
+// elsewhere never call it.
+try {
+  const dc = (require("electron") as { desktopCapturer?: unknown }).desktopCapturer;
+  if (dc) contextBridge.exposeInMainWorld("desktopCapturer", dc);
+} catch {
+  /* not available in this context — fine, only the capture page uses it */
+}
 
 // Non-contract extras (cancel button on the overlay, tray-driven actions).
 const extras = {

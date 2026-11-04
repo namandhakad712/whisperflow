@@ -57,6 +57,11 @@ export function registerIpc(deps: {
     if (event.sender !== windows.overlayWeb() || !(chunk instanceof Float32Array)) return;
     controller.feed(chunk);
   });
+  // System-audio loopback (meeting mode) — same feeding path, different window.
+  ipcMain.on("capture/systemPcm", (event, chunk: Float32Array) => {
+    if (event.sender !== windows.systemAudioWeb() || !(chunk instanceof Float32Array)) return;
+    controller.feed(chunk);
+  });
 
   // ---- settings --------------------------------------------------------------
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());

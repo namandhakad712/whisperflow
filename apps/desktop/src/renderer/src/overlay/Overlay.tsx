@@ -384,10 +384,14 @@ export function Overlay() {
         overlayBackdrop?: string;
         overlayTint?: string;
         overlayFollowSystemTheme?: boolean;
+        meetingMode?: boolean;
       };
       hotkey?: { pushToTalk?: string };
       audio?: { deviceId?: string };
     };
+    // Meeting mode: the session captures SYSTEM audio (a hidden window), so
+    // this renderer's mic capture must stay off — never both at once.
+    setMeetingMode(Boolean(c.general?.meetingMode));
     // The mic the user picked in Audio settings (ref so capture reads the
     // freshest value without re-running this effect).
     micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
@@ -453,10 +457,13 @@ export function Overlay() {
     };
   }, [readConfig]);
 
-  // Start/stop the mic with the state stream.
+  // Start/stop the mic with the state stream. In meeting mode the SYSTEM audio
+  // is captured instead (a hidden window feeds the session directly) — running
+  // the mic too would interleave two sources into one audio stream.
+  const [meetingMode, setMeetingMode] = useState(false);
   useEffect(() => {
     const listening = event.state === "listening";
-    if (listening && !captureRef.current && !startingRef.current) {
+    if (listening && !meetingMode && !captureRef.current && !startingRef.current) {
       startingRef.current = true;
       startCapture({
         deviceId: micIdRef.current,

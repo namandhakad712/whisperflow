@@ -20,6 +20,7 @@ export default defineConfig({
           overlay: resolve(__dirname, "src/renderer/overlay.html"),
           status: resolve(__dirname, "src/renderer/status.html"),
           lens: resolve(__dirname, "src/renderer/lens.html"),
+          systemAudio: resolve(__dirname, "src/renderer/system-audio.html"),
         },
       },
     },

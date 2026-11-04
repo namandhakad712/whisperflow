@@ -201,7 +201,7 @@ export function OverlayTab() {
       <Card className="mb-5">
         <Row
           label="Meeting mode"
-          hint="Keep the session open across pauses. Each finished utterance is pasted the moment it's transcribed — meetings, lectures, interviews. Press the hotkey again to finish."
+          hint="Capture the call's SYSTEM audio (everyone talking, not just you) and keep the session open across pauses — each utterance is pasted the moment it's transcribed. Press the hotkey again to finish. Nothing is sent anywhere: transcription runs locally like every other dictation."
         >
           <Toggle
             checked={g.meetingMode}

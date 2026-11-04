@@ -2,6 +2,16 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.22] — 2026-11-04
+
+### Added — meeting capture
+- **Meeting mode now records the call, not just you.** Turning it on captures the Windows system
+  audio loopback (everyone on the call) via Electron's desktop capturer — no WASAPI sidecar, no
+  native build — through a hidden capture page whose PCM feeds the session exactly like mic chunks.
+  Transcription still runs locally. The capture window is torn down with the session so a live
+  desktop capture never outlives it, and the mic capture stays off in meeting mode so the two
+  sources never interleave in one stream. The Overlay tab's hint now says what meeting mode does.
+
 ## [0.1.21] — 2026-11-04
 
 ### Added — Modes

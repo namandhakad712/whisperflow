@@ -45,7 +45,7 @@ export class WindowManager {
   constructor(
     private readonly opts: {
       preloadPath: string;
-      resolveRenderer: (page: "settings" | "overlay" | "status" | "lens") => string | null; // dev URL or null → file
+      resolveRenderer: (page: "settings" | "overlay" | "status" | "lens" | "systemAudio") => string | null; // dev URL or nullull → file
       /** True while a dictation is mid-flight — recovery must defer then. */
       isDictationBusy?: () => boolean;
       /** Last free-float pill position (from config) for the "free" anchor. */
@@ -428,6 +428,47 @@ export class WindowManager {
     else void win.loadFile(join(__dirname, "../renderer/lens.html"));
     this.lensWindow = win;
     return win;
+  }
+
+  /**
+   * The system-audio capture window (meeting mode). Hidden 1×1: it only runs
+   * the Windows audio loopback via the desktop capturer and ships PCM chunks
+   * back over "capture/systemPcm". Never shown, never in the taskbar.
+   */
+  private systemAudioWindow: BrowserWindow | null = null;
+  startSystemAudio(): void {
+    if (this.systemAudioWindow?.isDestroyed() === false) return; // already capturing
+    const win = new BrowserWindow({
+      width: 1,
+      height: 1,
+      show: false,
+      frame: false,
+      fullscreenable: false,
+      maximizable: false,
+      minimizable: false,
+      closable: false,
+      resizable: false,
+      movable: false,
+      skipTaskbar: true,
+      focusable: false,
+      webPreferences: {
+        preload: this.opts.preloadPath,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+    const target = this.opts.resolveRenderer("systemAudio");
+    if (target) void win.loadURL(target);
+    else void win.loadFile(join(__dirname, "../renderer/system-audio.html"));
+    this.systemAudioWindow = win;
+  }
+  stopSystemAudio(): void {
+    if (this.systemAudioWindow?.isDestroyed() === false) this.systemAudioWindow.destroy();
+    this.systemAudioWindow = null;
+  }
+  systemAudioWeb(): WebContents | null {
+    return this.systemAudioWindow?.isDestroyed() === false ? this.systemAudioWindow.webContents : null;
   }
 
   /** Shows the lens near the given point (or the cursor) and focuses it. */

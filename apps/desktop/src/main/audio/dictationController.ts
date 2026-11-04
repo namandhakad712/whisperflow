@@ -173,6 +173,18 @@ export class DictationController {
       this.chunks = [];
       this.audioPath = this.recording ? this.recordingsTarget(cfg?.general?.recordingsDir) : null;
 
+      // Meeting mode: capture the SYSTEM audio loopback (everyone on the call),
+      // not just the mic. The hidden capture window runs the desktop capturer
+      // and ships PCM over "capture/systemPcm", fed to the session like mic
+      // chunks. Stopped in finish() so the window never leaks a live capture.
+      if (meeting) {
+        try {
+          this.deps.windows.startSystemAudio();
+        } catch (err) {
+          log("dictation: system-audio capture unavailable:", String(err).slice(0, 120));
+        }
+      }
+
       // Attribute the dictation to the app that will receive it (per-app stats,
       // history filters) — the reference app stores this too. The type drives
       // per-app formatting: signature in email apps, no trailing period in
@@ -301,6 +313,9 @@ export class DictationController {
       }
       if (this.recording) this.flushRecording();
       this.recording = false;
+      // Release the system-audio loopback window — a live desktop capture must
+      // never outlive the session that started it.
+      this.deps.windows.stopSystemAudio();
       this.deps.hotkeys.unbindEscape();
       this.finishing = false;
       if (this.recordingCap) {

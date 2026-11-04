@@ -38,9 +38,14 @@ function resolvePreloadPath(): string {
   return join(dir, "index.mjs");
 }
 
-function resolveRenderer(page: "settings" | "overlay" | "status" | "lens"): string | null {
+function resolveRenderer(
+  page: "settings" | "overlay" | "status" | "lens" | "systemAudio",
+): string | null {
   const devUrl = process.env["ELECTRON_RENDERER_URL"];
-  return devUrl ? `${devUrl}/${page}.html` : null;
+  // The vite entry for the system-audio page is "systemAudio" (camelCase);
+  // every other page's URL matches its id verbatim.
+  const urlPage = page === "systemAudio" ? "system-audio" : page;
+  return devUrl ? `${devUrl}/${urlPage}.html` : null;
 }
 
 async function bootstrap(): Promise<void> {
