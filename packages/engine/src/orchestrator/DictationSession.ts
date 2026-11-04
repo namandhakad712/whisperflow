@@ -87,14 +87,64 @@ export class DictationSession {
   private sttQueue: Promise<void> = Promise.resolve();
   /** Meeting mode: everything already emitted for live insertion. */
   private appendedText = "";
+  /** Interim transcription: "text while you talk". A segment opens → we
+   *  transcribe the accumulated audio every ~1.2 s and broadcast it as the
+   *  live partial, so a long utterance isn't a wall of silence on the pill. */
+  private interimTimer: ReturnType<typeof setInterval> | null = null;
+  private interimInFlight = false;
 
   constructor(private readonly deps: DictationSessionDeps) {
     this.vad = new RmsVad({
       sensitivity: deps.config.audio.vad.sensitivity,
       silenceMs: deps.config.audio.vad.silenceMs,
       autoStopMs: deps.config.audio.vad.autoStopMs ?? 0,
+      onSpeechStart: () => this.startInterim(),
     });
     this.emit("listening");
+  }
+
+  /** Starts the interim-transcription cadence while the user is talking. */
+  private startInterim(): void {
+    if (this.interimTimer) return;
+    // Cloud STT: repeated uploads of partial audio would cost money and add
+    // latency — interim partials are a LOCAL-path affordance only.
+    const enabled =
+      (this.deps.config.stt.provider ?? "local") !== "cloud" &&
+      this.deps.config.audio.vad.livePartial !== false;
+    if (!enabled) return;
+    this.interimTimer = setInterval(() => void this.runInterim(), 1200);
+  }
+
+  private stopInterim(): void {
+    if (this.interimTimer) {
+      clearInterval(this.interimTimer);
+      this.interimTimer = null;
+    }
+    this.interimInFlight = false;
+  }
+
+  private async runInterim(): Promise<void> {
+    if (this.interimInFlight || this.finished || this.cancelled) return;
+    const stt = this.deps.stt;
+    const pcm = this.vad.peekSegment();
+    // Only once there's at least a second of speech to show for it.
+    if (!stt || !pcm || pcm.length < 16000) return;
+    const modelPath = stt.modelPathFor(this.deps.config.stt.modelId);
+    const ready = stt.ready ? stt.ready(this.deps.config.stt.modelId) : modelPath !== null;
+    if (!ready) return;
+    this.interimInFlight = true;
+    try {
+      const text = await stt.transcribe(pcm, {
+        ...(modelPath ? { modelPath } : {}),
+        language: resolveSttLanguage(this.deps.config.stt),
+      });
+      const clean = stripWhisperTokens(String(text)).trim();
+      if (clean && !this.finished) this.emit("listening", clean);
+    } catch {
+      /* interim partials are best-effort; the final transcribe still runs */
+    } finally {
+      this.interimInFlight = false;
+    }
   }
 
   /** Feed PCM at any rate; it is resampled to 16 kHz mono here. */
@@ -104,6 +154,7 @@ export class DictationSession {
 
     const ev = this.vad.feed(frame);
     if (!ev) return;
+    this.stopInterim(); // any VAD outcome ends the interim cadence
     if (ev.type === "autoend") {
       // The user stopped talking long enough that the turn is over. Hold mode
       // (ptt) ends on key release, not silence — only toggle/command turns
@@ -118,6 +169,7 @@ export class DictationSession {
   async stop(): Promise<DictationResult> {
     if (this.finished) throw new Error("session already stopped");
     this.finished = true;
+    this.stopInterim();
 
     const tail = this.vad.flush();
     // flush() can only return a segment event (autoend never fires after end).
@@ -232,6 +284,7 @@ export class DictationSession {
   cancel(): void {
     this.cancelled = true;
     this.finished = true;
+    this.stopInterim();
     this.vad.reset();
   }
 

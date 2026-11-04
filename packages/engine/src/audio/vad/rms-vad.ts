@@ -19,6 +19,10 @@ export interface RmsVadOptions {
   /** End-of-turn: after real speech, this much total silence fires `autoend`
    * (0 disables). One-shot per VAD instance. */
   autoStopMs?: number;
+  /** Fired once each time a speech segment OPENS (silence → speech). Lets the
+   *  host start interim transcription so words can appear while the user is
+   *  still talking, not only after the segment closes on silence. */
+  onSpeechStart?: () => void;
 }
 
 export interface VadSegmentEvent {
@@ -47,6 +51,8 @@ export class RmsVad {
   private readonly autoStopMs: number;
   /** Multiplied by the running noise floor to decide "speech". */
   private readonly speechFactor: number;
+  /** Host hook: a speech segment just opened. */
+  private readonly onSpeechStart?: () => void;
 
   private noiseFloor = 0.005;
   private speechActive = false;
@@ -69,6 +75,7 @@ export class RmsVad {
     this.autoStopMs = opts.autoStopMs ?? 0;
     // sensitivity 1.0 → 3× floor, sensitivity 0.0 → 12× floor.
     this.speechFactor = 3 + (1 - clamp01(opts.sensitivity)) * 9;
+    this.onSpeechStart = opts.onSpeechStart;
   }
 
   /** Current adaptive threshold (exposed for diagnostics/tests). */
@@ -79,6 +86,19 @@ export class RmsVad {
   /** True once autoend has fired (the turn is over; stop feeding). */
   get ended(): boolean {
     return this.autoEnded;
+  }
+
+  /** True while a speech segment is open (the user is talking). */
+  get speaking(): boolean {
+    return this.speechActive;
+  }
+
+  /** A copy of the segment accumulated SO FAR (pre-roll + speech), so a host
+   *  can run an interim transcription while the user is still talking. Null
+   *  when no segment is open. */
+  peekSegment(): Float32Array | null {
+    if (!this.speechActive || this.segmentSamples === 0) return null;
+    return concatFrames(this.segment, this.segmentSamples);
   }
 
   feed(frame: Float32Array): VadEvent | null {
@@ -103,6 +123,8 @@ export class RmsVad {
         this.speechMsAccumulated = 0;
         this.segment = [...this.preRoll];
         this.segmentSamples = this.preRollSamples;
+        // The host can start interim transcription now — words while talking.
+        this.onSpeechStart?.();
       }
       this.speechMsAccumulated += frameMs(frame);
       this.totalSpeechMs += frameMs(frame);

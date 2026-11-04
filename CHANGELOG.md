@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.24] — 2026-11-04
+
+### Added — live partial transcript
+- **Words now appear on the pill WHILE you talk.** A long utterance used to be a wall of silence
+  until the 700 ms silence closed the segment. Now, the moment speech opens a segment, the
+  accumulated audio is transcribed every ~1.2 s and broadcast as the live partial — the pill fills
+  with text as you speak. LOCAL STT only (partial audio is never uploaded to a cloud provider, so
+  a BYOK key is never billed for interims), at least a second of speech before the first interim,
+  interims serialize through the same whisper queue as the final transcribe, and the tokens are
+  stripped by the same `[BLANK_AUDIO]` filter. Toggle: `audio.vad.livePartial` (default on).
+
 ## [0.1.23] — 2026-11-04
 
 ### Added

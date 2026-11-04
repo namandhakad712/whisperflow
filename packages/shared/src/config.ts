@@ -116,6 +116,10 @@ export const VadConfigSchema = z.object({
    *  0 disables (only a press/Esc stops the turn). Hold mode always ends on
    *  key release. */
   autoStopMs: z.number().int().min(0).max(30000).default(2500),
+  /** Show words on the pill WHILE you talk: the open segment is transcribed
+   *  every ~1.2 s (local STT only — partial audio never goes to a cloud
+   *  provider). */
+  livePartial: z.boolean().default(true),
 });
 export type VadConfig = z.infer<typeof VadConfigSchema>;
 

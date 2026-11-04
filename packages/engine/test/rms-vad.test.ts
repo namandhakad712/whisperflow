@@ -110,4 +110,22 @@ describe("RmsVad", () => {
     for (let i = 0; i < 40; i++) expect(vad.feed(silenceFrame())?.type !== "autoend").toBe(true);
     expect(vad.ended).toBe(false);
   });
+
+  it("fires onSpeechStart when a segment opens and exposes the live audio", () => {
+    let opens = 0;
+    const vad = new RmsVad({ sensitivity: 0.5, silenceMs: 300, onSpeechStart: () => opens++ });
+    feedSilence(vad, 12);
+    expect(vad.speaking).toBe(false);
+    expect(vad.peekSegment()).toBeNull();
+    for (let i = 0; i < 6; i++) vad.feed(speechFrame());
+    expect(opens).toBe(1);
+    expect(vad.speaking).toBe(true);
+    // The visible-so-far audio includes the pre-roll + the speech frames.
+    const live = vad.peekSegment();
+    expect(live).not.toBeNull();
+    expect(live!.length).toBeGreaterThan(FRAME);
+    // More speech keeps the same segment open (no second open event).
+    for (let i = 0; i < 4; i++) vad.feed(speechFrame());
+    expect(opens).toBe(1);
+  });
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DictationSession, type DictationSessionDeps } from "../src/orchestrator/DictationSession.js";
 import { createHistoryStore } from "../src/history/historyStore.js";
 import { WhisperFlowConfigSchema, type DictationStateEvent } from "@whisperflow/shared";
@@ -192,5 +192,63 @@ describe("DictationSession", () => {
     expect(toggle.autoEnded).toBe(1); // exactly once; stop() still ends the turn
     const hold = run("ptt");
     expect(hold.autoEnded).toBe(0); // hold ends on key release, not silence
+  });
+
+  it("broadcasts interim partials while the user is still talking", async () => {
+    vi.useFakeTimers();
+    try {
+      const events: DictationStateEvent[] = [];
+      let calls = 0;
+      const deps = makeDeps({
+        onEvent: (ev) => events.push(ev),
+        stt: {
+          async transcribe() {
+            calls++;
+            return "hello wishperflow";
+          },
+          modelPathFor: () => "/models/fake.bin",
+        },
+      });
+      const session = new DictationSession(deps);
+      // Calibrate, then talk continuously (no silence long enough to close).
+      for (let i = 0; i < 12; i++) session.feed(silenceFrame());
+      for (let i = 0; i < 40; i++) session.feed(speechFrame());
+      // Advance past two interim cadence ticks (1.2 s each).
+      await vi.advanceTimersByTimeAsync(1300);
+      await vi.advanceTimersByTimeAsync(1300);
+      const partials = events.filter((e) => e.state === "listening" && e.partial);
+      expect(partials.length).toBeGreaterThanOrEqual(2);
+      expect(partials[partials.length - 1]!.partial).toBe("hello wishperflow");
+      expect(calls).toBeGreaterThanOrEqual(2);
+      // The final transcription still runs on stop.
+      const result = await session.stop();
+      expect(result.raw).toBe("hello wishperflow");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("cloud STT runs no interim partials (partial audio is never billed)", async () => {
+    vi.useFakeTimers();
+    try {
+      let calls = 0;
+      const deps = makeDeps({
+        config: WhisperFlowConfigSchema.parse({ stt: { provider: "cloud" } }),
+        stt: {
+          async transcribe() {
+            calls++;
+            return "hello wishperflow";
+          },
+          modelPathFor: () => null,
+        },
+      });
+      const session = new DictationSession(deps);
+      for (let i = 0; i < 12; i++) session.feed(silenceFrame());
+      for (let i = 0; i < 40; i++) session.feed(speechFrame());
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(calls).toBe(0); // the interim cadence never started
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
