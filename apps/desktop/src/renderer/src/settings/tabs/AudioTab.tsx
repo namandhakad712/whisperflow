@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSettings } from "../store";
-import { Card, Row, PageHeader, Select } from "../../shared/ui";
+import { Card, Row, PageHeader, Select, Toggle } from "../../shared/ui";
 
 /**
  * The codes whisper.cpp accepts natively. Opens with the common ones and
@@ -113,6 +113,15 @@ export function AudioTab() {
               { value: "on", label: "On — detect while I speak" },
               { value: "off", label: "Off — use my languages" },
             ]}
+          />
+        </Row>
+        <Row
+          label="Dictation chimes"
+          hint="A soft chime when a dictation starts and a falling one when you cancel — generated locally, no assets, no network."
+        >
+          <Toggle
+            checked={config.general?.sounds ?? true}
+            onChange={(v) => void patch({ general: { sounds: v } })}
           />
         </Row>
         <Row

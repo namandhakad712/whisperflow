@@ -378,6 +378,23 @@ export function Overlay() {
     return unsub;
   }, []);
 
+  // Feedback chimes: main sends a data URL, we just play it. Skipped silently
+  // when the Audio API is unavailable — never breaks a dictation.
+  useEffect(() => {
+    const unsub = window.whisperflowExtras.overlay.onSound((ev) => {
+      try {
+        const audio = new Audio(ev.dataUrl);
+        audio.volume = 0.5;
+        void audio.play().catch(() => {
+          /* autoplay policy or teardown racing — the chime is optional */
+        });
+      } catch {
+        /* no Audio API — optional feedback, never fatal */
+      }
+    });
+    return unsub;
+  }, []);
+
   const readConfig = useCallback(async () => {
     const c = (await window.whisperflow.settings.get()) as {
       general?: {

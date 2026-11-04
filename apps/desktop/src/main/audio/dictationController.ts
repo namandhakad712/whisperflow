@@ -8,6 +8,7 @@ import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
+import { playSound } from "../lib/sound";
 import { getForegroundApp } from "../system/foreground";
 import { getAppType, isMessagingApp } from "../system/appType";
 import { getFocusedElementInfo } from "../system/uia";
@@ -73,6 +74,8 @@ export class DictationController {
   private recordingCapWarn: NodeJS.Timeout | null = null;
   /** True while start() resolves config/UIA/engine — gates re-entrancy. */
   private starting = false;
+  /** Chimes on (config general.sounds, read at start). */
+  private sounds = true;
   /** A finish() that arrived during `starting` — honored the moment the
    *  session exists (hold-mode release during the cold-start window). */
   private finishRequested = false;
@@ -168,6 +171,10 @@ export class DictationController {
     this.deps.windows.showOverlay(undefined, "cursor");
     try {
       const cfg = await this.deps.engine.getConfig().catch(() => null);
+      // Feedback chime (instant — getConfig is in-memory, so this still fires
+      // before the slow UIA classification probe).
+      this.sounds = cfg?.general?.sounds ?? true;
+      if (this.sounds) playSound(this.deps.windows, "start");
       const meeting = Boolean(cfg?.general?.meetingMode) || opts.recorder;
       this.recording = opts.recorder || (cfg?.general?.saveAudio ?? false);
       this.chunks = [];
@@ -366,6 +373,7 @@ export class DictationController {
   cancel(): void {
     const session = this.session;
     this.session = null;
+    if (this.sounds) playSound(this.deps.windows, "cancel");
     try {
       session?.cancel();
     } catch (err) {

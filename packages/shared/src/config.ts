@@ -521,6 +521,8 @@ const GeneralFieldsSchema = z.object({
     meetingMode: z.boolean().default(false),
     /** Save every dictation's audio (WAV) next to its transcript. */
     saveAudio: z.boolean().default(false),
+    /** Play the start/cancel chimes (generated WAVs, no network). */
+    sounds: z.boolean().default(true),
     /** Recordings folder. Empty = `<userData>/recordings`. */
     recordingsDir: z.string().default(""),
     /**

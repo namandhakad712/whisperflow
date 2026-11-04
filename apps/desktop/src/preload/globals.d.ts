@@ -39,6 +39,7 @@ declare global {
         setInteractive(interactive: boolean): void;
         onAlign(cb: (ev: { edge: "top" | "bottom" }) => void): () => void;
         onRest(cb: (ev: { resting: boolean }) => void): () => void;
+        onSound(cb: (ev: { name: string; dataUrl: string }) => void): () => void;
       };
     };
   }

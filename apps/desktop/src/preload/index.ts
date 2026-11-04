@@ -140,6 +140,8 @@ const extras = {
     onAlign: (cb: (ev: { edge: "top" | "bottom" }) => void) => subscribe("overlay/align", cb),
     /** Resting mode: main morphs the window to the small dash between turns. */
     onRest: (cb: (ev: { resting: boolean }) => void) => subscribe("overlay/rest", cb),
+    /** Feedback chimes (dictation start / cancel) — generated WAVs, no network. */
+    onSound: (cb: (ev: { name: string; dataUrl: string }) => void) => subscribe("sound/play", cb),
   },
 };
 contextBridge.exposeInMainWorld("whisperflowExtras", extras);
