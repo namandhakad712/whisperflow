@@ -2,6 +2,14 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.27] — 2026-11-05
+
+### Added — per-app corrections
+- **Modes now carry their own dictionary.** A mode can spell terms one way for one app and another
+  way elsewhere — add the term under "Corrections for this app" in the mode editor (one per line) and
+  the fuzzy matcher applies it only while dictating into that app, matched ahead of the global
+  dictionary. The mode card shows the count as a badge.
+
 ## [0.1.26] — 2026-11-05
 
 ### Fixed

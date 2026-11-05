@@ -78,4 +78,19 @@ describe("mode resolution", () => {
     applyModeOverrides(base, profile({ tone: "professional" }));
     expect(base.polish.tone).not.toBe("professional");
   });
+
+  it("prepends the mode's corrections ahead of the global dictionary", () => {
+    const base = WhisperFlowConfigSchema.parse({
+      dictionary: [{ id: "g1", term: "WhisperFlow" }],
+    });
+    const cfg = applyModeOverrides(
+      base,
+      profile({ id: "m-code", dictionary: [{ id: "c1", term: "WhisperFlow" }] }),
+    );
+    expect(cfg.dictionary[0]!.id).toBe("c1");
+    expect(cfg.dictionary[1]!.id).toBe("g1");
+    expect(cfg.dictionary.length).toBe(2);
+    // The mode's source config is untouched (structuredClone).
+    expect(base.dictionary.length).toBe(1);
+  });
 });

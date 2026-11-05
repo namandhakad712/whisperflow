@@ -50,16 +50,36 @@ function blank(): ModeProfile {
     cleanup: "auto",
     format: "auto",
     customInstructions: "",
+    dictionary: [],
     emailSignature: "auto",
     enabled: true,
   };
+}
+
+/** Corrections are edited as one term per line; each becomes a dictionary
+ *  entry matched (fuzzily) only when this mode is active. */
+function correctionsText(p: ModeProfile): string {
+  return p.dictionary.map((e) => e.term).join("\n");
+}
+
+function parseCorrections(text: string, modeId: string) {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((term, i) => ({ id: `${modeId}-c${i}`, term }));
 }
 
 export function ModesTab() {
   const config = useSettings((s) => s.config);
   const patchConfig = useSettings((s) => s.patchConfig);
   const [draft, setDraft] = useState<ModeProfile | null>(null);
+  const [corrections, setCorrections] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const newMode = () => {
+    setDraft(blank());
+    setCorrections("");
+  };
   if (!config) return null;
 
   const profiles = config.modes?.profiles ?? [];
@@ -73,7 +93,13 @@ export function ModesTab() {
       return;
     }
     const others = profiles.filter((p) => p.id !== m.id);
-    void patchConfig({ modes: { profiles: [...others, m] } }).then(() => setDraft(null));
+    const withCorrections = { ...m, dictionary: parseCorrections(corrections, m.id) };
+    void patchConfig({ modes: { profiles: [...others, withCorrections] } }).then(() => setDraft(null));
+  };
+
+  const edit = (p: ModeProfile) => {
+    setDraft({ ...p });
+    setCorrections(correctionsText(p));
   };
 
   const remove = (id: string) => {
@@ -93,6 +119,7 @@ export function ModesTab() {
     if (p.format !== "auto") out.push(`format: ${p.format}`);
     if (p.emailSignature !== "auto") out.push(`signature: ${p.emailSignature}`);
     if (p.customInstructions.trim()) out.push("extra instructions");
+    if (p.dictionary.length > 0) out.push(`${p.dictionary.length} correction${p.dictionary.length === 1 ? "" : "s"}`);
     return out;
   };
 
@@ -111,7 +138,7 @@ export function ModesTab() {
               body="Add one — e.g. match “slack” for casual chat formatting, or “gmail” for a different tone in email."
             />
             <div className="flex justify-center py-3">
-              <Button onClick={() => setDraft(blank())}>Add a mode</Button>
+              <Button onClick={newMode}>Add a mode</Button>
             </div>
           </>
         )}
@@ -146,7 +173,7 @@ export function ModesTab() {
               )}
             </div>
             <Switch checked={p.enabled} onChange={(v) => toggle(p, v)} aria-label={`Enable ${p.name}`} />
-            <Button variant="ghost" onClick={() => setDraft({ ...p })}>
+            <Button variant="ghost" onClick={() => edit(p)}>
               Edit
             </Button>
             <Button variant="ghost" onClick={() => remove(p.id)}>
@@ -196,6 +223,20 @@ export function ModesTab() {
                 className="w-full"
               />
             </div>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs text-ink-dim sm:col-span-2">
+              Corrections for this app — one per line
+              <textarea
+                value={corrections}
+                onChange={(e) => setCorrections(e.target.value)}
+                rows={3}
+                spellCheck={false}
+                placeholder={"WhisperFlow\nkubernetes"}
+                className="w-full resize-y rounded-lg border border-line bg-surface-2 px-3 py-2 font-mono text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
+              />
+              <span className="text-[11px] text-ink-dim/70">
+                Matched fuzzily, only while dictating into this app — so “kube” can be one thing in Slack and another in your IDE.
+              </span>
+            </label>
           </div>
           <div className="flex items-center justify-end gap-2 px-4 py-3">
             <Button variant="ghost" onClick={() => setDraft(null)}>
@@ -209,7 +250,7 @@ export function ModesTab() {
       {!editing && profiles.length > 0 && (
         <div className="mt-4 flex items-center justify-between">
           <p className="text-xs text-ink-dim">{notice}</p>
-          <Button onClick={() => setDraft(blank())}>Add a mode</Button>
+          <Button onClick={newMode}>Add a mode</Button>
         </div>
       )}
     </section>

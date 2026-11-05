@@ -61,5 +61,10 @@ export function applyModeOverrides(
   if (mode.emailSignature !== "auto") {
     out.polish = { ...out.polish, emailSignature: mode.emailSignature === "on" };
   }
+  if (mode.dictionary.length > 0) {
+    // Mode corrections run FIRST — the corrector claims spans in entry order,
+    // so app-specific spellings win over the global dictionary.
+    out.dictionary = [...mode.dictionary, ...out.dictionary];
+  }
   return out;
 }

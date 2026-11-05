@@ -614,6 +614,9 @@ export const ModeProfileSchema = z.object({
   format: z.enum(["auto", "casual", "formatted", "raw", "lowercase"]).default("auto"),
   /** Extra instructions appended for this mode, e.g. "always reply in bullets". */
   customInstructions: z.string().default(""),
+  /** Corrections that apply ONLY in this app — matched ahead of the global
+   *  dictionary, so a term can be spelled one way for a specific tool. */
+  dictionary: z.array(DictionaryEntrySchema).default([]),
   /** A signature override for email apps; "auto" keeps the global setting. */
   emailSignature: z.enum(["auto", "on", "off"]).default("auto"),
   enabled: z.boolean().default(true),
