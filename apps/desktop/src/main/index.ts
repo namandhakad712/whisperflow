@@ -295,8 +295,15 @@ async function bootstrap(): Promise<void> {
     send: (status) => windows.sendToSettings("update/status", status),
   });
 
-  if (!process.argv.includes("--hidden")) {
+  // The settings window opens at boot ONLY for a first-run user (onboarding);
+  // after that the app boots tray-only — a whole React renderer kept alive
+  // all day cost real idle CPU/RAM (measured: ~276 MB / ~2% of a core).
+  // Tray click, the tray menu, and a second launch all surface the window.
+  const onboardingDone = existsSync(join(app.getPath("userData"), "onboarding-done"));
+  if (!process.argv.includes("--hidden") && !onboardingDone) {
     windows.createSettingsWindow();
+  } else if (onboardingDone) {
+    log("boot: tray-only (onboarding complete)");
   }
 }
 

@@ -28,6 +28,7 @@ declare global {
         onNavigate(cb: (route: string) => void): () => void;
         keyboardHookStatus(): Promise<{ available: boolean; reason?: string }>;
         testCloudPolish(): Promise<{ ok: boolean; message: string }>;
+        onboardingComplete(): Promise<void>;
         pickFile(request?: {
           title?: string;
           filters?: Array<{ name: string; extensions: string[] }>;

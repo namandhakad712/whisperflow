@@ -64,6 +64,17 @@ export function registerIpc(deps: {
   });
 
   // ---- settings --------------------------------------------------------------
+  // First-run gate: the settings window is only created at boot when the user
+  // hasn't finished onboarding (see index.ts) — this writes the marker so
+  // every later boot is tray-only and skips a whole renderer process.
+  ipcMain.handle("app/onboardingComplete", () => {
+    try {
+      writeFileSync(join(app.getPath("userData"), "onboarding-done"), "1");
+      log("onboarding: complete — the app boots tray-only from now on");
+    } catch (err) {
+      log("onboarding: could not write the marker —", String(err).slice(0, 100));
+    }
+  });
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
   ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
     const next = await engine.setConfig(patch ?? {});

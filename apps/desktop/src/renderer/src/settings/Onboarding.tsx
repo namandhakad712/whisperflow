@@ -58,6 +58,7 @@ export function Onboarding() {
               variant="ghost"
               onClick={() => {
                 localStorage.setItem("wf-onboarded", "1");
+                void window.whisperflowExtras.app.onboardingComplete();
                 window.location.hash = "/general";
               }}
             >
@@ -398,6 +399,7 @@ function FinishStep() {
         <Button
           onClick={() => {
             localStorage.setItem("wf-onboarded", "1");
+            void window.whisperflowExtras.app.onboardingComplete();
             window.location.hash = "/general";
           }}
         >
