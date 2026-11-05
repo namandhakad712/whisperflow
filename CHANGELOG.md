@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.25] — 2026-11-05
+
+### Added
+- **Deepgram Nova-3 as a cloud STT provider** (Settings → Models). Deepgram is not
+  OpenAI-compatible, so it gets its own request path: the model rides in the query string
+  (`/v1/listen?model=nova-3&smart_format=true`), the audio is the raw WAV body, and the transcript
+  comes back out of `results.channels[0].alternatives[0]`. $200 free credit with no card; Smart
+  Formatting (dates, numbers, punctuation) is included with the model. The key check uses
+  `GET /v1/projects` (Deepgram has no `/models`) so verifying a key never spends transcription
+  credit. 2 new request-shape tests.
+
 ## [0.1.24] — 2026-11-04
 
 ### Added — live partial transcript

@@ -89,6 +89,50 @@ describe("CloudSttProvider", () => {
     expect((calls[0]!.init.headers as Record<string, string>).authorization).toBe("Bearer k1");
   });
 
+  it("Deepgram: model in the query string, raw WAV body, channel-shaped reply", async () => {
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    globalThis.fetch = (async (url: URL | string, init?: RequestInit) => {
+      calls.push({ url: String(url), init: init ?? {} });
+      return new Response(
+        JSON.stringify({
+          results: { channels: [{ alternatives: [{ transcript: "hello deepgram" }] }] },
+        }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+
+    const provider = new CloudSttProvider(
+      configWith({ stt: { cloud: { provider: "deepgram", apiKey: "dg-key" } } }),
+    );
+    const text = await provider.transcribe(new Float32Array(1600), { language: "en" });
+
+    expect(text).toBe("hello deepgram");
+    const { url, init } = calls[0]!;
+    expect(url.startsWith(`${CLOUD_STT_PRESETS.deepgram.baseUrl}/listen?`)).toBe(true);
+    expect(url).toContain("model=nova-3");
+    expect(url).toContain("smart_format=true");
+    expect(url).toContain("language=en");
+    // Raw audio body (not multipart), announced as WAV.
+    expect(init.body).toBeInstanceOf(Uint8Array);
+    expect((init.headers as Record<string, string>)["content-type"]).toBe("audio/wav");
+    expect((init.headers as Record<string, string>).authorization).toBe("Bearer dg-key");
+  });
+
+  it("Deepgram: testConnection verifies the key via /v1/projects, not /models", async () => {
+    const seen: string[] = [];
+    globalThis.fetch = (async (url: URL | string) => {
+      seen.push(String(url));
+      return new Response(JSON.stringify({ projects: [] }), { status: 200 });
+    }) as typeof fetch;
+
+    const provider = new CloudSttProvider(
+      configWith({ stt: { cloud: { provider: "deepgram", apiKey: "dg-key" } } }),
+    );
+    const result = await provider.testConnection();
+    expect(result.ok).toBe(true);
+    expect(seen[0]).toBe(`${CLOUD_STT_PRESETS.deepgram.baseUrl}/projects`);
+  });
+
   it("honors a user base URL and model override", async () => {
     const seen: string[] = [];
     globalThis.fetch = (async (url: URL | string) => {

@@ -175,6 +175,17 @@ export const CLOUD_STT_PRESETS = {
       "No free tier — pay per minute. `gpt-transcribe` is $0.0045/min. `whisper-1` is deprecated (announced 2026-08-26) with a shutdown date of 2027-02-26; `gpt-transcribe` is the current model.",
     verified: "2026-10-29",
   },
+  deepgram: {
+    label: "Deepgram — Nova-3",
+    // NOT OpenAI-compatible: POST /v1/listen?model=nova-3 with a raw audio body.
+    baseUrl: "https://api.deepgram.com/v1",
+    defaultModel: "nova-3",
+    models: ["nova-3", "nova-3-general", "nova-3-medical", "nova-3-pharma"],
+    docs: "https://developers.deepgram.com/docs/model",
+    freeNote:
+      "$200 free credit, no card needed. Nova-3 pre-recorded ≈ $0.0043/min ($0.26/hour); Smart Formatting comes free with the model. Pay-per-minute beyond the credit.",
+    verified: "2026-11-03",
+  },
   custom: {
     label: "Custom — OpenAI-compatible endpoint",
     baseUrl: "",
@@ -191,7 +202,7 @@ export type CloudSttProviderId = keyof typeof CLOUD_STT_PRESETS;
 /** BYO cloud STT endpoint (OpenAI /audio/transcriptions format). Blocked when `privacy.localOnly`. */
 export const CloudSttConfigSchema = z.object({
   /** Preset decides the default base URL + model list. */
-  provider: z.enum(["groq", "mistral", "openai", "custom"]).default("groq"),
+  provider: z.enum(["groq", "mistral", "openai", "deepgram", "custom"]).default("groq"),
   /** Base URL. Empty = the preset's default. */
   baseUrl: z.string().default(""),
   /** API key. Stored locally in config.json only — never sent anywhere but the endpoint. */

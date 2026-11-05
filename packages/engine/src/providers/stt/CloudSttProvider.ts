@@ -36,6 +36,8 @@ export class CloudSttProvider {
     if (!model) throw new Error("Cloud STT is not configured (model missing).");
 
     const wav = pcmToWav(pcm, 16000);
+    if (cfg.stt.cloud.provider === "deepgram") return this.transcribeDeepgram(baseUrl, apiKey, model, wav, opts);
+
     const form = new FormData();
     form.append("file", new Blob([wav], { type: "audio/wav" }), "chunk.wav");
     form.append("model", model);
@@ -55,6 +57,35 @@ export class CloudSttProvider {
     return (json.text ?? "").replace(/\s+/g, " ").trim();
   }
 
+  /**
+   * Deepgram is not OpenAI-compatible: the model goes in the query string, the
+   * audio is the raw body, and the transcript lives in
+   * results.channels[0].alternatives[0].transcript.
+   */
+  private async transcribeDeepgram(
+    baseUrl: string,
+    apiKey: string,
+    model: string,
+    wav: Uint8Array,
+    opts: CloudSttOpts,
+  ): Promise<string> {
+    const params = new URLSearchParams({ model, smart_format: "true" });
+    if (opts.language && opts.language !== "auto") params.set("language", opts.language);
+    const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/listen?${params.toString()}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "audio/wav" },
+      body: wav,
+    });
+    if (!res.ok) {
+      throw new Error(`Deepgram HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    }
+    const json = (await res.json()) as {
+      results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> };
+    };
+    const text = json.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "";
+    return text.replace(/\s+/g, " ").trim();
+  }
+
   /** Ping the endpoint with the key — verifies auth without sending audio. */
   async testConnection(): Promise<{ ok: boolean; message: string }> {
     const cfg = this.config();
@@ -64,6 +95,18 @@ export class CloudSttProvider {
     const { baseUrl, apiKey, model } = this.resolved();
     if (!apiKey) return { ok: false, message: "Add an API key first." };
     const base = baseUrl.replace(/\/+$/, "");
+    // Deepgram has no /models endpoint: GET /v1/projects verifies the key (401
+    // on a bad key) without spending any transcription credit.
+    if (cfg.stt.cloud.provider === "deepgram") {
+      try {
+        const res = await fetch(`${base}/projects`, { headers: { authorization: `Bearer ${apiKey}` } });
+        if (res.status === 401 || res.status === 403) return { ok: false, message: "Key rejected (401/403)." };
+        if (!res.ok) return { ok: true, message: `Endpoint answered ${res.status} — key looks usable.` };
+        return { ok: true, message: `Key works — ready to use ${model}.` };
+      } catch (err) {
+        return { ok: false, message: `Could not reach ${baseUrl}: ${String(err).slice(0, 80)}` };
+      }
+    }
     try {
       const res = await fetch(`${base}/models`, { headers: { authorization: `Bearer ${apiKey}` } });
       if (res.status === 401 || res.status === 403) return { ok: false, message: "Key rejected (401/403)." };
