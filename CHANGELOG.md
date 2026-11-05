@@ -2,6 +2,26 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.28] — 2026-11-05
+
+### Changed — the sub-100 MB push
+- **Local polish's CUDA backend no longer ships (−174 MB unpacked).** `ggml-cuda.dll` only loads on
+  machines with the full CUDA *toolkit* runtime (cudart + cuBLAS system DLLs) — an NVIDIA driver
+  alone is not enough, so outside ML workstations it never loaded. node-llama-cpp resolves backends
+  in priority order and falls back to **Vulkan** through the driver's own `vulkan-1.dll`: NVIDIA
+  users keep GPU-accelerated local polish, everyone else was never on CUDA. Power users can
+  `npm i @node-llama-cpp/win-x64-cuda` into the app folder to restore the path.
+- **Two never-imported font packages dropped** (`@fontsource-variable/figtree`,
+  `@fontsource/eb-garamond`): no CSS ever imported either; the "Figtree" names in font-family chains
+  were already falling through, so nothing changes visually.
+
+### Fixed
+- **Escape in meeting mode leaked the system-audio capture** — `cancel()` never released the hidden
+  loopback window, leaving a live desktop-audio capture running after its turn (leak + privacy bug).
+- **The app boots tray-only** once onboarding is complete: the full Settings React window used to be
+  created at every boot and live all day (~100–175 MB of idle footprint). First-run users still get
+  onboarding; tray click / menu / re-launch surface the window any time.
+
 ## [0.1.27] — 2026-11-05
 
 ### Added — per-app corrections

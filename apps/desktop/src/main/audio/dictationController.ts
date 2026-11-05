@@ -381,6 +381,10 @@ export class DictationController {
     }
     this.chunks = [];
     this.recording = false;
+    // Release the system-audio loopback too — cancel() is the Escape path and
+    // used to leave the hidden capture window running (a live desktop-audio
+    // capture outliving its turn is a leak AND a privacy bug).
+    this.deps.windows.stopSystemAudio();
     this.deps.windows.dismissOverlay();
     this.deps.hotkeys.unbindEscape();
     if (this.recordingCap) {

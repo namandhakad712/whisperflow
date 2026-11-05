@@ -6,7 +6,7 @@ directories:
   output: release
   buildResources: resources
 
-# Workspace deps + native modules (better-sqlite3) are resolved from node_modules
+# Workspace deps + native modules (uiohook-napi) are resolved from node_modules
 # automatically; electron-builder rebuilds natives for Electron's ABI.
 
 compression: maximum
@@ -34,6 +34,21 @@ files:
   #     only when process.arch === "arm64").
   - "!node_modules/@node-llama-cpp/win-x64-cuda-ext/**"
   - "!node_modules/@node-llama-cpp/win-arm64/**"
+  # The CUDA *primary* binary too (170 MB unpacked). ggml-cuda.dll only loads
+  # on machines that have the full CUDA *toolkit* runtime installed
+  # (cudart64_*.dll + cuBLAS system DLLs — an NVIDIA driver alone is not
+  # enough), which outside ML workstations is vanishingly rare.
+  # node-llama-cpp resolves backends in priority order [cuda, vulkan, cpu]:
+  # when this package is absent, getLlama() logs "A prebuilt binary was not
+  # found, falling back to using Vulkan" and loads the Vulkan backend through
+  # the NVIDIA driver's vulkan-1.dll instead (fallback loop verified
+  # end-to-end; see getLlamaForOptions in node-llama-cpp). NVIDIA users keep
+  # GPU-accelerated local polish, just via Vulkan; everyone else was never on
+  # CUDA to begin with. Vulkan (70 MB) + CPU (31 MB, the last-resort backend)
+  # still ship. Power users who want the CUDA path back can npm i
+  # @node-llama-cpp/win-x64-cuda into the app folder — the same
+  # optional-runtime pattern as onnxruntime-node above.
+  - "!node_modules/@node-llama-cpp/win-x64-cuda/**"
   # Import-library / export-table leftovers from the addon build — link-time
   # artifacts, never dlopen'ed at runtime.
   - "!node_modules/@node-llama-cpp/**/*.lib"
