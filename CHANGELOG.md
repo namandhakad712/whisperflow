@@ -2,6 +2,16 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.26] — 2026-11-05
+
+### Fixed
+- **Backups now include Scratchpad notes.** The notes live in the settings app's localStorage, so
+  "Export backup" (config + history) silently dropped every note, and restoring from a backup lost
+  them all. The export reads `wf-scratchpad-notes` out of the settings window's storage and packs it
+  into the backup file; the import writes it back. When the settings window hasn't been opened in the
+  session the notes can't be read — the export says so in the log instead of pretending it saved
+  them.
+
 ## [0.1.25] — 2026-11-05
 
 ### Added

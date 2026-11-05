@@ -181,21 +181,53 @@ export function registerIpc(deps: {
     deps.tray.refresh?.(enabled);
   });
   ipcMain.handle("app/checkForUpdates", async () => ({ message: await checkForUpdatesNow() }));
+  /** Reads the Scratchpad notes out of the app's localStorage. The notes live
+   *  in the settings window's origin storage; without this, "Export backup"
+   *  silently dropped every note on restore (reviewer finding). Null when the
+   *  store is unreachable (settings window not yet opened this session). */
+  const readScratchpad = async (): Promise<string | null> => {
+    const web = windows.settingsWeb();
+    if (!web || web.isDestroyed()) return null;
+    try {
+      return (await web.executeJavaScript(`localStorage.getItem('wf-scratchpad-notes')`)) as string | null;
+    } catch (err) {
+      log("backup: scratchpad unreadable —", String(err).slice(0, 100));
+      return null;
+    }
+  };
+
   ipcMain.handle("app/exportBackup", async () => {
     const stamp = new Date().toISOString().slice(0, 10);
     const result = await dialog.showSaveDialog({
       title: "Export WhisperFlow backup",
       defaultPath: `whisperflow-backup-${stamp}.json`,
-      filters: [{ name: "WhisperFlow backup", extensions: ["json"] }],
+      filters: [{ name: "Whisperflow backup", extensions: ["json"] }],
     });
     if (result.canceled || !result.filePath) return { exported: false };
-    const [config, history] = await Promise.all([engine.getConfig(), engine.listHistory({ limit: 500 })]);
+    const [config, history, scratchpad] = await Promise.all([
+      engine.getConfig(),
+      engine.listHistory({ limit: 500 }),
+      readScratchpad(),
+    ]);
     writeFileSync(
       result.filePath,
-      JSON.stringify({ app: "WhisperFlow", version: app.getVersion(), exportedAt: Date.now(), config, history }, null, 2),
+      JSON.stringify(
+        {
+          app: "WhisperFlow",
+          version: app.getVersion(),
+          exportedAt: Date.now(),
+          config,
+          history,
+          // Never undefined: a missing field restores to nothing, an explicit
+          // null means "no notes were stored".
+          ...(scratchpad !== null ? { scratchpad } : {}),
+        },
+        null,
+        2,
+      ),
       "utf-8",
     );
-    log("backup exported to", result.filePath);
+    log(`backup exported to ${result.filePath}${scratchpad === null ? " (scratchpad notes not readable — open Settings once and retry)" : " (scratchpad notes included)"}`);
     return { exported: true, path: result.filePath };
   });
   ipcMain.handle("app/rebindHotkey", (_e, accelerator: string) => {
@@ -334,6 +366,7 @@ export function registerIpc(deps: {
         app?: string;
         config?: unknown;
         history?: unknown;
+        scratchpad?: string;
       };
       if (raw.app !== "WhisperFlow" || !Array.isArray(raw.history)) {
         return { ok: false, message: "Not a WhisperFlow backup file." };
@@ -344,6 +377,19 @@ export function registerIpc(deps: {
       const { added } = await engine.importHistory(items);
       if (raw.config && typeof raw.config === "object") {
         await engine.setConfig(raw.config as Record<string, unknown>);
+      }
+      // Restore the Scratchpad notes into the app's localStorage (the settings
+      // window must be loaded for the write to land). Nothing else stored them.
+      if (typeof raw.scratchpad === "string") {
+        const web = windows.settingsWeb();
+        if (web && !web.isDestroyed()) {
+          try {
+            await web.executeJavaScript(`localStorage.setItem('wf-scratchpad-notes', ${JSON.stringify(raw.scratchpad)})`);
+            log("backup imported: scratchpad notes restored");
+          } catch (err) {
+            log("backup imported: scratchpad restore failed —", String(err).slice(0, 100));
+          }
+        }
       }
       log(`backup imported: ${added} history entries from ${req.path}`);
       return { ok: true, addedHistory: added };
