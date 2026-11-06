@@ -46,6 +46,12 @@ matcher fixes what the STT *said* — `WhisperFlow` fixes `wishper flow`, `Kuber
 `kubernetties`. One edit per word, no training. `dictionaryAutoLearn` (default on) watches you
 re-type a word after dictation and turns the correction into an entry automatically.
 
+**Vocabulary packs (Settings → Dictionary → Export/Import):** your whole dictionary as one JSON
+file — pronunciation and hints included — so a team, a clinic, or a study group can share one
+vocabulary. Import merges instead of duplicating: existing terms (case-insensitive) get enriched
+with the pack's metadata, never overwritten; plain `.txt`/`.csv` word lists (one term per line)
+still import as before.
+
 **Voice commands** (`commands` array): phrases spoken during dictation that act instead of being
 typed.
 
@@ -211,20 +217,18 @@ Ranked by how often it's asked for, with where it would live:
 1. **Per-language / per-mode STT models.** Modes override polish only; a Mode that also picks the
    model (a big model for English, a small fast one for chat) needs `ModeProfile.stt` —
    `packages/shared/src/config.ts` + `packages/engine/src/modes/resolve.ts`.
-2. **Dictionary import/export.** Entries are editable one-by-one; a CSV/JSON share for vocabulary
-   packs (medical, legal, a team's jargon) is a few hours on the Dictionary tab. This is the
-   single biggest team-level ask.
-3. **Post-dictation hooks.** No "after each dictation, run X on the text" (pipe to a script,
+2. **Post-dictation hooks.** No "after each dictation, run X on the text" (pipe to a script,
    append to a scratchpad, send an HTTP webhook). An optional `hooks` section + a main-process
-   runner would make WhisperFlow a pipeline tool, not just an input method.
-4. **Sound customization.** The start/cancel chimes are generated WAVs (`apps/desktop/resources/sounds`);
+   runner would make WhisperFlow a pipeline tool, not just an input method. ← *the biggest
+   remaining team-level ask, now that vocabulary packs ship.*
+3. **Sound customization.** The start/cancel chimes are generated WAVs (`apps/desktop/resources/sounds`);
    an import-your-own path is one IPC handler away.
-5. **Multiple profiles (work / home).** One config per user; a profile switcher is a config-layer
+4. **Multiple profiles (work / home).** One config per user; a profile switcher is a config-layer
    feature, not a schema one (`profiles: { [name]: WhisperFlowConfig }` + an active pointer).
-6. **Advanced whisper flags.** No beam size / temperature / `--no-speech-threshold` exposure —
+5. **Advanced whisper flags.** No beam size / temperature / `--no-speech-threshold` exposure —
    `packages/engine/src/providers/stt/WhisperCppProvider.ts` takes options from config only.
-7. **Keyboard navigation in Settings.** Tabs are reachable, but the overlay and lens are pointer-first.
-8. **Plugin/theming share.** Themes are per-field (tint, backdrop); there's no theme
+6. **Keyboard navigation in Settings.** Tabs are reachable, but the overlay and lens are pointer-first.
+7. **Plugin/theming share.** Themes are per-field (tint, backdrop); there's no theme
    export/import bundle.
 
 If the thing you want is here, open a feature request with your *outcome* (not just the

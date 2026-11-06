@@ -76,6 +76,45 @@ export function registerIpc(deps: {
     }
   });
   ipcMain.handle(IPC.SettingsGet, () => engine.getConfig());
+
+  // Vocabulary packs: the dictionary, written out as a shareable JSON file
+  // (the import side lives in the Dictionary tab and accepts both packs and
+  // plain word lists). A pack is a verbatim entry copy so pronunciation and
+  // hints survive the round trip.
+  ipcMain.handle("app/exportDictionary", async () => {
+    const cfg = await engine.getConfig();
+    if (cfg.dictionary.length === 0) {
+      return { exported: false, message: "Your dictionary is empty — add terms first." };
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    const result = await dialog.showSaveDialog({
+      title: "Export vocabulary pack",
+      defaultPath: `whisperflow-vocabulary-${stamp}.json`,
+      filters: [{ name: "WhisperFlow vocabulary pack", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return { exported: false };
+    try {
+      writeFileSync(
+        result.filePath,
+        JSON.stringify(
+          {
+            app: "WhisperFlow",
+            kind: "vocabulary-pack",
+            exportedAt: Date.now(),
+            count: cfg.dictionary.length,
+            dictionary: cfg.dictionary,
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      );
+      log(`vocabulary pack exported: ${cfg.dictionary.length} terms → ${result.filePath}`);
+      return { exported: true, path: result.filePath, count: cfg.dictionary.length };
+    } catch (err) {
+      return { exported: false, message: String(err).slice(0, 120) };
+    }
+  });
   ipcMain.handle(IPC.SettingsSet, async (_e, patch) => {
     const next = await engine.setConfig(patch ?? {});
     // Live windows re-read config so shape/position/backdrop/theme changes

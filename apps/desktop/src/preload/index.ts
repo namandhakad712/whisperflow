@@ -130,6 +130,14 @@ const extras = {
       ipcRenderer.invoke("app/testCloudPolish") as Promise<{ ok: boolean; message: string }>,
     /** First-run gate closed onboarding — the app boots tray-only afterwards. */
     onboardingComplete: () => ipcRenderer.invoke("app/onboardingComplete"),
+    /** Writes the dictionary as a shareable vocabulary pack (JSON). */
+    exportDictionary: () =>
+      ipcRenderer.invoke("app/exportDictionary") as Promise<{
+        exported: boolean;
+        path?: string;
+        count?: number;
+        message?: string;
+      }>,
   },
   settings: {
     /** Fired after every settings/set — lets live windows re-read config. */

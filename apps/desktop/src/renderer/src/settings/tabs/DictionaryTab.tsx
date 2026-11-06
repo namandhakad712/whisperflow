@@ -5,6 +5,7 @@ import { Button, Card, EmptyState, PageHeader, TextInput } from "../../shared/ui
 export function DictionaryTab() {
   const config = useSettings((s) => s.config);
   const loadConfig = useSettings((s) => s.loadConfig);
+  const patchConfig = useSettings((s) => s.patchConfig);
   const [term, setTerm] = useState("");
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -36,14 +37,24 @@ export function DictionaryTab() {
       });
   };
 
-  /** Imports a word list: one term per line, optional "word → replacement". */
+  /** Imports a word list or a vocabulary PACK (JSON): one term per line for
+   *  .txt/.csv/.md, or a pack file `{ app, dictionary: [...] }` / bare array
+   *  for .json — the shareable form that Export writes. */
   const importList = async () => {
     const picked = await window.whisperflowExtras.app.pickFile({
-      title: "Import a dictionary word list",
-      filters: [{ name: "Text", extensions: ["txt", "csv", "md"] }],
+      title: "Import a dictionary word list or vocabulary pack",
+      filters: [
+        { name: "Vocabulary pack (JSON)", extensions: ["json"] },
+        { name: "Text word list", extensions: ["txt", "csv", "md"] },
+      ],
       readText: true,
     });
     if (picked.canceled || !picked.content) return;
+    const trimmed = picked.content.trim();
+    if (picked.path?.toLowerCase().endsWith(".json") || trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      await importPack(trimmed, picked.path);
+      return;
+    }
     const lines = picked.content
       .split(/\r?\n/)
       .map((l) => l.trim())
@@ -62,6 +73,75 @@ export function DictionaryTab() {
     setTimeout(() => setNotice(null), 5000);
   };
 
+  /** Merges a pack into the dictionary. Existing terms (case-insensitive) are
+   *  never duplicated — the pack's metadata enriches them, new ones appended. */
+  const importPack = async (raw: string, path?: string) => {
+    let incoming: Array<{ id?: string; term?: string; pronunciation?: string; hint?: string; observedSource?: string }> = [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      const maybe = Array.isArray(parsed)
+        ? parsed
+        : (parsed && typeof parsed === "object" && Array.isArray((parsed as { dictionary?: unknown }).dictionary)
+            ? (parsed as { dictionary: typeof incoming }).dictionary
+            : null);
+      if (!maybe) throw new Error("not a pack");
+      incoming = maybe.filter((e) => e && typeof e.term === "string" && e.term.trim());
+    } catch {
+      setNotice("That file isn’t a vocabulary pack (expected a JSON array or `{\"dictionary\": [...]}`).");
+      setTimeout(() => setNotice(null), 6000);
+      return;
+    }
+    const existing = new Map(config.dictionary.map((e) => [e.term.toLowerCase(), e]));
+    let merged = 0;
+    let added = 0;
+    for (const e of incoming) {
+      const term = (e.term as string).trim();
+      const prior = existing.get(term.toLowerCase());
+      if (prior) {
+        // Enrich, but never overwrite something the user set by hand.
+        existing.set(term.toLowerCase(), {
+          ...prior,
+          pronunciation: prior.pronunciation ?? e.pronunciation,
+          hint: prior.hint ?? e.hint,
+          observedSource: prior.observedSource ?? e.observedSource,
+        });
+        merged++;
+      } else {
+        existing.set(term.toLowerCase(), {
+          id: `pack-${Date.now().toString(36)}-${added}`,
+          term,
+          ...(e.pronunciation ? { pronunciation: e.pronunciation } : {}),
+          ...(e.hint ? { hint: e.hint } : {}),
+          ...(e.observedSource ? { observedSource: e.observedSource } : {}),
+        });
+        added++;
+      }
+    }
+    if (added + merged === 0) {
+      setNotice("That pack had no terms.");
+      setTimeout(() => setNotice(null), 5000);
+      return;
+    }
+    await patchConfig({ dictionary: [...existing.values()] });
+    await loadConfig();
+    setNotice(
+      `Pack imported: +${added} new${merged > 0 ? `, ${merged} enriched` : ""}${path ? ` from ${path.split(/[\\/]/).pop()}` : ""}.`,
+    );
+    setTimeout(() => setNotice(null), 6000);
+  };
+
+  /** Writes the dictionary as a shareable vocabulary pack (JSON). */
+  const exportPack = async () => {
+    const result = await window.whisperflowExtras.app.exportDictionary();
+    if (result.exported) {
+      setNotice(`Pack exported — ${result.count} terms → ${result.path?.split(/[\\/]/).pop() ?? "file"}.`);
+      setTimeout(() => setNotice(null), 6000);
+    } else if (result.message) {
+      setNotice(result.message);
+      setTimeout(() => setNotice(null), 5000);
+    }
+  };
+
   const entries = config.dictionary.filter(
     (e) => !search || e.term.toLowerCase().includes(search.toLowerCase()),
   );
@@ -70,7 +150,7 @@ export function DictionaryTab() {
     <section>
       <PageHeader
         title="Dictionary"
-        actions={<><Button variant="ghost" onClick={() => void importList()}>Import</Button><Button onClick={add}>Add new</Button></>}
+        actions={<><Button variant="ghost" onClick={() => void exportPack()}>Export pack</Button><Button variant="ghost" onClick={() => void importList()}>Import</Button><Button onClick={add}>Add new</Button></>}
         tagline="WhisperFlow spells the way you do."
         explainer="Correct a spelling once or add it here — personal terms, jargon, and names come out right every time."
       />

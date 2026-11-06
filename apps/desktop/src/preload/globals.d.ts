@@ -29,6 +29,12 @@ declare global {
         keyboardHookStatus(): Promise<{ available: boolean; reason?: string }>;
         testCloudPolish(): Promise<{ ok: boolean; message: string }>;
         onboardingComplete(): Promise<void>;
+        exportDictionary(): Promise<{
+          exported: boolean;
+          path?: string;
+          count?: number;
+          message?: string;
+        }>;
         pickFile(request?: {
           title?: string;
           filters?: Array<{ name: string; extensions: string[] }>;

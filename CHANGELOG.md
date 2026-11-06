@@ -2,6 +2,16 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.30] — 2026-11-06
+
+### Added — vocabulary packs (shareable dictionaries)
+- **Settings → Dictionary → Export pack** writes your whole dictionary as one JSON file —
+  pronunciation and hints included — and **Import** accepts both packs and the plain word lists it
+  always did. A pack merge never duplicates: existing terms (case-insensitive) are *enriched* with
+  the pack's metadata, never overwritten; new ones are appended with generated ids. This is the P0
+  team feature from the personas study: a clinic, a team, or a study group can share one vocabulary
+  as a file — no server, no account, nothing to sync. docs/EXTENDING.md updated.
+
 ## [0.1.29] — 2026-11-06
 
 ### Added — community + docs day
