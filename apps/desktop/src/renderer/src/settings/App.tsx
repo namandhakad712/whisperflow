@@ -280,18 +280,22 @@ function UpdateBanner() {
   if (!status || status.state === "not-available" || status.state === "checking") return null;
 
   if (status.state === "downloaded") {
+    const notes = status.releaseNotes ? summarizeReleaseNotes(status.releaseNotes) : null;
     return (
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-4 py-2.5">
-        <p className="text-[13px] font-medium">
-          WhisperFlow v{status.version} is ready — restart to finish installing.
-        </p>
-        <button
-          type="button"
-          onClick={() => void window.whisperflow.app.quitAndInstall()}
-          className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink transition-opacity hover:opacity-90"
-        >
-          Restart now
-        </button>
+      <div className="flex shrink-0 flex-col gap-1 border-b border-accent/30 bg-accent/10 px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[13px] font-medium">
+            WhisperFlow v{status.version} is ready — restart to finish installing.
+          </p>
+          <button
+            type="button"
+            onClick={() => void window.whisperflow.app.quitAndInstall()}
+            className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink transition-opacity hover:opacity-90"
+          >
+            Restart now
+          </button>
+        </div>
+        {notes ? <p className="text-[12px] text-ink-dim">What’s new: {notes}</p> : null}
       </div>
     );
   }
@@ -303,10 +307,26 @@ function UpdateBanner() {
       <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-accent" />
       <p className="text-[13px] text-ink-dim">
         WhisperFlow v{status.version} is downloading… it installs when you quit.
-        {status.releaseNotes ? ` ${status.releaseNotes}` : ""}
+        {status.releaseNotes ? ` ${summarizeReleaseNotes(status.releaseNotes)}` : ""}
       </p>
     </div>
   );
+}
+
+/** GitHub release notes arrive as HTML or long markdown; the banner needs the
+ *  first line of substance, not the whole changelog. */
+function summarizeReleaseNotes(raw: string): string {
+  const text = raw
+    .replace(/<\/(p|div|li|h\d)>/gi, "\n") // block ends → newlines
+    .replace(/<[^>]+>/g, "") // any remaining tags
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  // First sentence-ish chunk up to ~180 chars, at a line boundary if possible.
+  const firstLine = text.split(/(?<=[.!?])\s/)[0] ?? text;
+  return firstLine.length > 180 ? `${text.slice(0, 177)}…` : firstLine;
 }
 
 function RailItem({  active,

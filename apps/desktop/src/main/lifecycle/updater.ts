@@ -19,7 +19,7 @@ export type UpdateStatus =
   | { state: "checking" }
   | { state: "available"; version: string; releaseNotes?: string }
   | { state: "not-available"; version: string }
-  | { state: "downloaded"; version: string }
+  | { state: "downloaded"; version: string; releaseNotes?: string }
   | { state: "error"; message: string };
 
 interface UpdaterDeps {
@@ -98,7 +98,14 @@ export function initUpdater(log: (...args: unknown[]) => void, deps?: UpdaterDep
       let downloaded: string | null = null;
 
       autoUpdater.on("update-available", (info) => {
-        deps?.send({ state: "available", version: info.version ?? "?" });
+        deps?.send({
+          state: "available",
+          version: info.version ?? "?",
+          // Show what's coming before it installs — the release notes are the
+          // user's only signal that the background download is worth their
+          // trust. Keep markdown as-is; the banner renders it as plain text.
+          ...(info.releaseNotes ? { releaseNotes: String(info.releaseNotes) } : {}),
+        });
         log(`updater: v${info.version} available — downloading in the background`);
       });
       autoUpdater.on("update-not-available", (info) => {
@@ -125,7 +132,11 @@ export function initUpdater(log: (...args: unknown[]) => void, deps?: UpdaterDep
           return;
         }
         downloaded = version;
-        deps?.send({ state: "downloaded", version });
+        deps?.send({
+          state: "downloaded",
+          version,
+          ...(info?.releaseNotes ? { releaseNotes: String(info.releaseNotes) } : {}),
+        });
         log("updater: update downloaded, installs on quit");
       });
 

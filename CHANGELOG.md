@@ -2,6 +2,27 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.29] — 2026-11-06
+
+### Added — community + docs day
+- **`docs/EXTENDING.md`** — the complete customization reference: every knob (UI tab *and* config
+  key) with defaults, 7 copy-paste config.json recipes (meeting notes, developer, non-native
+  speaker, accessibility, privacy-paranoid, cheapest-cloud, email), and an honest ranked gap list
+  of what you *can't* configure yet.
+- **`docs/research/personas-and-positioning.md`** — the personal→corporate ladder: 5 personas with
+  their real pains, the psychology of adoption/retention for voice products, where local-first
+  structurally wins/loses, and a P0/P1/P2 12-month ladder with tier mapping.
+- **Issue templates** (bug / feature / config question), a **PR template** with the verification
+  checklist + size justification, and **dependabot** (grouped minor/patch, Electron its own group,
+  native-module majors held for human review).
+- **CONTRIBUTING rewritten** — the workspace golden rule (rebuild `packages/shared` first), the full
+  verification loop, config-schema migration policy, and the release flow.
+
+### Changed — the updater tells you what's coming
+- The update banner now shows **what's new**: release notes ride along on both "downloading…" and
+  "ready to restart", HTML-stripped and clipped to the first sentence. No more installing a
+  background download blind.
+
 ## [0.1.28] — 2026-11-05
 
 ### Changed — the sub-100 MB push

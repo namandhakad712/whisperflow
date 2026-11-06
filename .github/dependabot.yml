@@ -1,0 +1,34 @@
+# Dependabot keeps our own wheels turning — every bump is a *candidate*, not an order.
+# Review the release notes before merging: native modules (node-llama-cpp, better-sqlite3,
+# uiohook-napi) and Electron majors frequently break the build in ways tests can't see.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 4
+    groups:
+      # Tiny things that rarely break: roll them together.
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+      # A new Electron is its own event — it needs a real smoke boot.
+      electron:
+        patterns: ["electron", "electron-builder", "electron-vite", "electron-updater"]
+    ignore:
+      # Major bumps of anything native go through human review, not automation.
+      - dependency-name: "node-llama-cpp"
+        update-types: ["major"]
+      - dependency-name: "@node-llama-cpp/*"
+        update-types: ["major"]
+      - dependency-name: "better-sqlite3"
+        update-types: ["major"]
+      - dependency-name: "uiohook-napi"
+        update-types: ["major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -1,0 +1,64 @@
+name: 🐛 Bug report
+description: Something is broken or behaves incorrectly
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to write this up. A good bug report is reproducible — the more
+        you include up front, the faster we can fix it.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: And what did you expect to happen instead?
+      placeholder: "I pressed the hotkey, spoke, and …"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, starting from the app running.
+      placeholder: "1. …\n2. …"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: WhisperFlow version
+      description: Settings → About (or the tray tooltip). Include Windows version if relevant.
+      placeholder: "0.1.28 on Windows 11 23H2"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Dictation mode
+      options:
+        - Press to toggle
+        - Hold to talk
+        - Not sure
+  - type: textarea
+    id: provider
+    attributes:
+      label: STT / polish setup
+      description: Which providers are configured (local whisper, Groq, Deepgram, local llama, …)? Include the model ids if you set them manually.
+      placeholder: "Local whisper (whisper-small), polish: Groq gpt-oss-20b"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log excerpt
+      description: |
+        From %APPDATA%\WhisperFlow\logs\YYYY-MM-DD.log. Paste the lines around the failure —
+        timestamps help. **Do not paste API keys** (keys live in config.json, not the log).
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for a duplicate
+          required: true
+        - label: This is a bug, not a feature request (use the other template for those)
+          required: true

@@ -252,7 +252,7 @@ export type AppUpdateStatus =
   | { state: "checking" }
   | { state: "available"; version: string; releaseNotes?: string }
   | { state: "not-available"; version: string }
-  | { state: "downloaded"; version: string }
+  | { state: "downloaded"; version: string; releaseNotes?: string }
   | { state: "error"; message: string };
 export type UpdateStatusEmit = AppUpdateStatus;
 

@@ -218,13 +218,25 @@ verified feature scoreboard.
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [ADRs](docs/adr/)
+- [**Extending WhisperFlow**](docs/EXTENDING.md) — every knob, defaults, and copy-paste recipes
+- [Personas & positioning](docs/research/personas-and-positioning.md) — who we build for, and why
 - [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md) ([web view](https://namandhakad712.github.io/whisperflow/changelog/)) · [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Live docs on the site](https://namandhakad712.github.io/whisperflow/docs/)
 
+## Community
+
+- **Bugs** → [open an issue](../../issues/new/choose) (the template walks you through it)
+- **"How do I make it …?"** → [docs/EXTENDING.md](docs/EXTENDING.md) first, then a
+  [Discussion](../../discussions) — the fastest answer often lives in a recipe
+- **Feature ideas** → the feature-request template; tell us the *outcome* you want
+- **Security** → [SECURITY.md](SECURITY.md), never a public issue
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Clean-room policy: never submit code, assets, or copy
-derived from proprietary products.
+See [CONTRIBUTING.md](CONTRIBUTING.md) — setup, the verification loop, the workspace golden rule,
+and the clean-room policy (never submit code, assets, or copy derived from proprietary products).
+Good first steps: `good-first-issue`, macOS/Linux packaging, translations, or curating a measured
+model entry for the catalog.
 
 ## Support the project
 

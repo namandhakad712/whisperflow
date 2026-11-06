@@ -1,0 +1,39 @@
+name: ⚙️ Setup / configuration question
+description: Help configuring the app (models, providers, Modes, shortcuts)
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Questions are welcome — the fastest answer often lives in **docs/EXTENDING.md**
+        (every knob + copy-paste recipes). If that doesn't cover it, tell us your goal.
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to achieve?
+      placeholder: "I want dictation to … in this app"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - Models / providers (local whisper, Groq, Deepgram, local LLM)
+        - Modes / per-app behavior
+        - Hotkeys / dictation modes
+        - Audio / VAD / silence settings
+        - Themes / overlay placement
+        - Backup / restore / history
+        - Something else
+  - type: input
+    id: version
+    attributes:
+      label: WhisperFlow version
+      placeholder: "0.1.28"
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        🛑 Never paste API keys. Keys stay in your local config.json; nobody here needs to see them
+        to help you configure an endpoint.

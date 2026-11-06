@@ -1,0 +1,51 @@
+name: ✨ Feature request
+description: Something the app should do that it doesn't
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us the outcome you want, not just the implementation you imagine — the team often finds
+        a better path when the underlying need is clear.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      placeholder: "When I dictate into X, I keep having to …"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would the ideal behavior look like?
+      placeholder: "I should be able to …"
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is this for?
+      options:
+        - Everyone (fundamental improvement)
+        - Power users (customization / automation)
+        - Specific workflows (languages, accessibility, meetings, coding)
+        - Teams / corporate use
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried instead?
+      placeholder: "Modes, a Mode dictionary, voice commands, config.json …"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and docs/EXTENDING.md for a way to do this today
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        💡 Things that are often already possible: per-app behavior (Settings → Modes), custom
+        shortcuts, personal dictionary, voice commands ("insert …"), BYOK cloud STT/polish,
+        and config.json overrides (see docs/EXTENDING.md).
