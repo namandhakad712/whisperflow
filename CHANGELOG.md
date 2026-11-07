@@ -2,6 +2,19 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.31] — 2026-11-07
+
+### Added — post-dictation hooks
+- **Settings → Hooks**: fire-and-forget automation on every completed dictation. Two kinds:
+  - **Command** — an executable + args, spawned WITHOUT a shell; the transcript arrives on
+    STDIN, never interpolated into the command line, so a transcript can never become an
+    injection. Example: append every dictation to a notes file or pipe it into a script.
+  - **Webhook** — POSTs `{ app, event, text, timestamp }` JSON to any URL.
+- Hooks are non-blocking by contract: they never slow a dictation, never see a cancelled turn,
+  and a 10-second watchdog kills a stuck command. Failures land in the log only — a broken
+  webhook can never break your typing. This is the biggest remaining team ask from the personas
+  study (a pipeline hook turns WhisperFlow from an input method into a tool). 4 runner tests.
+
 ## [0.1.30] — 2026-11-06
 
 ### Added — vocabulary packs (shareable dictionaries)

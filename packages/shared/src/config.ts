@@ -630,6 +630,33 @@ export const ModesConfigSchema = z.object({
 export type ModesConfig = z.infer<typeof ModesConfigSchema>;
 
 /** Root config schema — the shape of `config.json`. */
+export type HookEvent = "dictation";
+
+export const HookItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  /** Which event fires it. `dictation` = a completed, non-cancelled turn. */
+  event: z.enum(["dictation"]).default("dictation"),
+  kind: z.enum(["command", "webhook"]),
+  /**
+   * `command`: an executable + args (spawned, NOT through a shell — the
+   * transcript arrives on STDIN, never interpolated into the command line, so
+   * a hook can never become an injection).
+   * `webhook`: a URL POSTed `{text, timestamp}` JSON.
+   */
+  target: z.string().min(1),
+  /** Master per-item switch. */
+  enabled: z.boolean().default(true),
+});
+
+/** Fire-and-forget automation. Hooks NEVER block a dictation, and failures
+ *  only land in the log — a broken webhook cannot break your typing. */
+export const HooksConfigSchema = z.object({
+  items: z.array(HookItemSchema).default([]),
+});
+export type HooksConfig = z.infer<typeof HooksConfigSchema>;
+export type HookItem = z.infer<typeof HookItemSchema>;
+
 export const WhisperFlowConfigSchema = z.object({
   hotkey: HotkeyConfigSchema.prefault({}),
   audio: AudioConfigSchema.prefault({}),
@@ -643,6 +670,7 @@ export const WhisperFlowConfigSchema = z.object({
    */
   dictionaryAutoLearn: z.boolean().default(true),
   commands: z.array(VoiceCommandSchema).default([]),
+  hooks: HooksConfigSchema.prefault({}),
   privacy: PrivacyConfigSchema.prefault({}),
   general: GeneralConfigSchema.prefault({}),
   updates: UpdatesConfigSchema.prefault({}),

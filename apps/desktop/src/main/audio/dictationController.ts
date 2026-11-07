@@ -13,6 +13,7 @@ import { getForegroundApp } from "../system/foreground";
 import { getAppType, isMessagingApp } from "../system/appType";
 import { getFocusedElementInfo } from "../system/uia";
 import { applyLearnedWords, observeEdits } from "../learning/editObserver";
+import { runHooks } from "@whisperflow/engine";
 
 /**
  * Owns one dictation at a time: hotkey → overlay + mic → engine session →
@@ -285,6 +286,18 @@ export class DictationController {
     let capturedError: unknown = null;
     try {
       const result = await session.stop();
+      if (result && result.final) {
+        // Post-dictation hooks: fire-and-forget automation on a completed
+        // turn. Never blocks, never throws into the dictation path — the
+        // runner logs failures and moves on.
+        try {
+          const cfg = await this.deps.engine.getConfig().catch(() => null);
+          const hooks = cfg?.hooks?.items ?? [];
+          await runHooks(hooks, result, { logger: log });
+        } catch (hookErr) {
+          log("hooks: runner failed:", String(hookErr).slice(0, 120));
+        }
+      }
       if (result && result.final && result.action !== "undo") {
         this.broadcast({ state: "injecting" });
         const ok = await injectText(result.final);

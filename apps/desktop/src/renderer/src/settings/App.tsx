@@ -3,6 +3,7 @@ import type { AppUpdateStatus } from "@whisperflow/shared";
 import {
   Mic,
   Volume2,
+  Webhook,
   Cpu,
   Book,
   Command,
@@ -27,6 +28,7 @@ import { AudioTab } from "./tabs/AudioTab";
 import { ModelsTab } from "./tabs/ModelsTab";
 import { DictionaryTab } from "./tabs/DictionaryTab";
 import { CommandsTab } from "./tabs/CommandsTab";
+import { HooksTab } from "./tabs/HooksTab";
 import { HistoryTab } from "./tabs/HistoryTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
 import { AdvancedTab } from "./tabs/AdvancedTab";
@@ -53,6 +55,7 @@ const COLLECTIONS = [
   { id: "modes", label: "Modes", icon: Layers },
   { id: "dictionary", label: "Dictionary", icon: Book },
   { id: "commands", label: "Commands", icon: Command },
+  { id: "hooks", label: "Hooks", icon: Webhook },
   { id: "history", label: "History", icon: History },
   { id: "insights", label: "Insights", icon: BarChart3 },
   { id: "scratchpad", label: "Scratchpad", icon: StickyNote },
@@ -246,6 +249,7 @@ export function App() {
             {tab === "dictionary" && <DictionaryTab />}
             {tab === "modes" && <ModesTab />}
             {tab === "commands" && <CommandsTab />}
+            {tab === "hooks" && <HooksTab />}
             {tab === "history" && <HistoryTab />}
             {tab === "privacy" && <PrivacyTab />}
             {tab === "advanced" && <AdvancedTab />}
