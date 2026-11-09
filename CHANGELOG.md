@@ -2,6 +2,16 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.33] — 2026-11-09
+
+### Added — per-mode STT model + language (P1 from IMPROVEMENT-PLAN)
+- A Mode can now override **which speech-to-text model and which language** its app uses. The
+  editor gained "STT model" and "Language" selects; an empty value keeps the global settings.
+  `ModeProfile.stt` applies through `applyModeOverrides` exactly like the polish overrides — so a
+  developer can have a fast small model for Slack and a big accurate one for Gmail, and a
+  bilingual user can force `en` in the IDE and `de` in email. The mode card badges the overrides.
+  Resolver test added (model + language merge; empty strings keep the global).
+
 ## [0.1.31] — 2026-11-07
 
 ### Added — post-dictation hooks

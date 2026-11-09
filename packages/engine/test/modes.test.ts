@@ -93,4 +93,21 @@ describe("mode resolution", () => {
     // The mode's source config is untouched (structuredClone).
     expect(base.dictionary.length).toBe(1);
   });
+
+  it("mode STT block overrides model + language; empty strings keep the global", () => {
+    const base = WhisperFlowConfigSchema.parse({
+      stt: { modelId: "whisper-small", language: "en" },
+    });
+    const cfg = applyModeOverrides(
+      base,
+      profile({ id: "m-code", stt: { modelId: "whisper-large-v3-turbo" } }),
+    );
+    expect(cfg.stt.modelId).toBe("whisper-large-v3-turbo");
+    expect(cfg.stt.language).toBe("en"); // unset → global kept
+    // Empty string leaves the global alone; base config untouched (clone).
+    const cfg2 = applyModeOverrides(base, profile({ id: "m-x", stt: { language: "fr" } }));
+    expect(cfg2.stt.language).toBe("fr");
+    expect(cfg2.stt.modelId).toBe("whisper-small");
+    expect(base.stt.modelId).toBe("whisper-small");
+  });
 });

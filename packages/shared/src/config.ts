@@ -619,6 +619,16 @@ export const ModeProfileSchema = z.object({
   dictionary: z.array(DictionaryEntrySchema).default([]),
   /** A signature override for email apps; "auto" keeps the global setting. */
   emailSignature: z.enum(["auto", "on", "off"]).default("auto"),
+  /** Per-mode STT: a different model/language for this app. Empty strings
+   *  keep the global STT settings (a Mode can pick only one of them). */
+  stt: z
+    .object({
+      /** Catalog id of the STT model, e.g. "whisper-large-v3-turbo". */
+      modelId: z.string().default(""),
+      /** BCP-47-ish tag or "auto" — the language for this app. */
+      language: z.string().default(""),
+    })
+    .optional(),
   enabled: z.boolean().default(true),
 });
 export type ModeProfile = z.infer<typeof ModeProfileSchema>;

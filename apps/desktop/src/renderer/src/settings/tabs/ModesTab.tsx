@@ -76,6 +76,13 @@ export function ModesTab() {
   const [draft, setDraft] = useState<ModeProfile | null>(null);
   const [corrections, setCorrections] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const catalog = useSettings((s) => s.catalog);
+  // STT models from the catalog (role "stt"), excluding cloud-adapter ids.
+  const sttModels = catalog
+    .filter((e) => e.role === "stt")
+    .map((e) => e.id)
+    .sort();
+  const LANGUAGES = ["auto", "en", "es", "fr", "de", "it", "pt", "nl", "ja", "ko", "zh", "hi", "ru", "ar"];
   const newMode = () => {
     setDraft(blank());
     setCorrections("");
@@ -93,7 +100,9 @@ export function ModesTab() {
       return;
     }
     const others = profiles.filter((p) => p.id !== m.id);
-    const withCorrections = { ...m, dictionary: parseCorrections(corrections, m.id) };
+    // Normalize the stt block: empty model + empty language = absent.
+    const stt = m.stt && (m.stt.modelId || m.stt.language) ? m.stt : undefined;
+    const withCorrections = { ...m, stt, dictionary: parseCorrections(corrections, m.id) };
     void patchConfig({ modes: { profiles: [...others, withCorrections] } }).then(() => setDraft(null));
   };
 
@@ -120,6 +129,8 @@ export function ModesTab() {
     if (p.emailSignature !== "auto") out.push(`signature: ${p.emailSignature}`);
     if (p.customInstructions.trim()) out.push("extra instructions");
     if (p.dictionary.length > 0) out.push(`${p.dictionary.length} correction${p.dictionary.length === 1 ? "" : "s"}`);
+    if (p.stt?.modelId) out.push(`STT: ${p.stt.modelId}`);
+    if (p.stt?.language) out.push(`lang: ${p.stt.language}`);
     return out;
   };
 
@@ -223,6 +234,43 @@ export function ModesTab() {
                 className="w-full"
               />
             </div>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs text-ink-dim">
+              STT model (empty = global)
+              <select
+                value={draft!.stt?.modelId ?? ""}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft!,
+                    stt: { modelId: e.target.value, language: draft!.stt?.language ?? "" },
+                  })
+                }
+                className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
+              >
+                <option value="">Use my global model</option>
+                {sttModels.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs text-ink-dim">
+              Language (empty = global)
+              <select
+                value={draft!.stt?.language ?? ""}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft!,
+                    stt: { language: e.target.value, modelId: draft!.stt?.modelId ?? "" },
+                  })
+                }
+                className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
+              >
+                <option value="">Use my global language</option>
+                <option value="auto">Auto-detect</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </label>
             <label className="flex min-w-0 flex-col gap-1.5 text-xs text-ink-dim sm:col-span-2">
               Corrections for this app — one per line
               <textarea
