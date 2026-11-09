@@ -8,6 +8,7 @@ import type { WindowManager } from "../windows/WindowManager";
 import type { HotkeyManager } from "../hotkeys/hotkeys";
 import { injectText } from "../injection/windowsInjector";
 import { log } from "../lib/log";
+import { audit } from "../lib/audit";
 import { playSound } from "../lib/sound";
 import { getForegroundApp } from "../system/foreground";
 import { getAppType, isMessagingApp } from "../system/appType";
@@ -36,6 +37,8 @@ export class DictationController {
   /** PCM chunks accumulated while saving audio (engine session is 16 kHz mono). */
   private chunks: Float32Array[] = [];
   private audioPath: string | null = null;
+  /** The foreground app of the current (or last) dictation — for audit lines. */
+  private activeApp: string | undefined = undefined;
 
   constructor(
     private readonly deps: {
@@ -203,6 +206,7 @@ export class DictationController {
         log("dictation: foreground app unavailable:", String(e).slice(0, 120));
         return null;
       });
+      this.activeApp = fg?.app;
       // UIA gives us the real browser URL (their GetActiveAppInfo url field) —
       // a much stronger classification signal than the window title.
       const uia = await getFocusedElementInfo().catch(() => null);
@@ -304,6 +308,7 @@ export class DictationController {
       if (result && result.final && result.action !== "undo") {
         this.broadcast({ state: "injecting" });
         const ok = await injectText(result.final);
+        audit({ kind: "pasted", textLen: result.final.length, app: this.activeApp });
         if (!ok) log("dictation: injection returned false");
         else this.observeEdits(result.final);
       }

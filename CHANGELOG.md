@@ -2,6 +2,15 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.34] — 2026-11-09
+
+### Added — audit log (the enterprise checkbox)
+- **`logs/audit-YYYY-MM-DD.log`**: append-only, one-line-JSON-per-event. Records what was
+  **pasted** (text length + target app) and **cancelled**, local-only, rotated daily with the app
+  log. It never contains audio, transcripts, or keys — the honest answer to "what leaves this
+  machine": nothing does by default (`privacy.localOnly` hard-blocks every network provider), and
+  the paste trail is right there for a security team to parse.
+
 ## [0.1.33] — 2026-11-09
 
 ### Added — per-mode STT model + language (P1 from IMPROVEMENT-PLAN)

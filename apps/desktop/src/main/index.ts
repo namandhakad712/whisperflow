@@ -15,6 +15,7 @@ import { applyLaunchAtLogin } from "./lifecycle/autostart";
 import { initUpdater } from "./lifecycle/updater";
 import { runDailyBackup } from "./lifecycle/backup";
 import { initLogging, log } from "./lib/log";
+import { initAudit } from "./lib/audit";
 
 // Must precede anything that touches userData — this pins %APPDATA%/WhisperFlow.
 app.setName("WhisperFlow");
@@ -50,6 +51,7 @@ function resolveRenderer(
 
 async function bootstrap(): Promise<void> {
   initLogging(join(app.getPath("userData"), "logs"));
+  initAudit(join(app.getPath("userData"), "logs"));
   log(`WhisperFlow ${app.getVersion()} starting (packaged: ${app.isPackaged})`);
 
   // Mic permission for our own pages only.
