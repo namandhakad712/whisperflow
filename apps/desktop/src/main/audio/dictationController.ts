@@ -243,7 +243,10 @@ export class DictationController {
         return;
       }
       this.deps.hotkeys.bindEscape();
-      this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor");
+      // The reposition onto the configured anchor GLIDES from wherever the
+      // instant cursor-show left the pill — no more teleport ~1s into the
+      // dictation (the launch glitch, P0).
+      this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor", true);
       this.armRecordingCap(cfg?.audio?.maxRecordingLengthMs ?? 0);
       // Their email-signature eligibility: never add a signature when one is
       // already in the box we're about to type into.

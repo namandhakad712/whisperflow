@@ -150,6 +150,7 @@ export class WindowManager {
 
   /** Shows the frameless overlay pill (anchor modes in overlayAnchor.ts). */
   private overlayAnchor: OverlayAnchor = "cursor";
+  private animateTimer: ReturnType<typeof setInterval> | null = null;
 
   /**
    * Places the overlay. Anchor semantics replicated from the reference app:
@@ -157,7 +158,7 @@ export class WindowManager {
    * hides under the taskbar), the target display is the one nearest the anchor
    * point, and corner anchors are re-applied when monitors are added/removed.
    */
-  showOverlay(near?: { x: number; y: number }, position: OverlayAnchor = "cursor"): void {
+  showOverlay(near?: { x: number; y: number }, position: OverlayAnchor = "cursor", animate = false): void {
     const win = this.ensureOverlay();
     // Always restore the full dictation geometry — the window may be shrinking
     // from the rest dash or a notification card, and the pill sits at the
@@ -179,7 +180,11 @@ export class WindowManager {
       cursor,
       freePos ?? undefined,
     );
-    win.setBounds(bounds, false);
+    // Instant by default (the FIRST show must be immediate). When the caller
+    // says animate (the reposition onto the configured anchor after the
+    // instant cursor-show), glide to the target instead of teleporting.
+    if (animate) this.animateTo(bounds);
+    else win.setBounds(bounds, false);
     log(
       `overlay: anchor=${position} size=${size.width}x${size.height} → bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`,
     );
@@ -194,6 +199,48 @@ export class WindowManager {
     // even if the state event that usually does it is still in flight.
     win.webContents.send?.("overlay/rest", { resting: false });
     win.showInactive();
+  }
+
+  /** Eases the overlay window toward a target bounds (~180 ms, 60 fps).
+   *  The pill's geometry changes are the ONE place a jump reads as a bug, so
+   *  every reposition onto a configured anchor glides. Cancels any in-flight
+   *  glide so a new one starts from the CURRENT bounds. */
+  private animateTo(target: Electron.Rectangle): void {
+    const win = this.overlayWindow;
+    if (!win || win.isDestroyed()) return;
+    if (this.animateTimer) {
+      clearInterval(this.animateTimer);
+      this.animateTimer = null;
+    }
+    const start = win.getBounds();
+    const dx = target.x - start.x;
+    const dy = target.y - start.y;
+    const dw = target.width - start.width;
+    const dh = target.height - start.height;
+    if (Math.abs(dx) + Math.abs(dy) + Math.abs(dw) + Math.abs(dh) < 2) return;
+    const DURATION = 180;
+    const START = Date.now();
+    this.animateTimer = setInterval(() => {
+      if (win.isDestroyed()) {
+        this.animateTimer = null;
+        return;
+      }
+      const t = Math.min(1, (Date.now() - START) / DURATION);
+      const ease = 1 - (1 - t) * (1 - t) * (1 - t); // cubic ease-out
+      win.setBounds(
+        {
+          x: Math.round(start.x + dx * ease),
+          y: Math.round(start.y + dy * ease),
+          width: Math.max(1, Math.round(start.width + dw * ease)),
+          height: Math.max(1, Math.round(start.height + dh * ease)),
+        },
+        false,
+      );
+      if (t >= 1 && this.animateTimer) {
+        clearInterval(this.animateTimer);
+        this.animateTimer = null;
+      }
+    }, 16);
   }
 
   /** Pure anchor → bounds math (see overlayAnchor.ts; unit-tested). */
