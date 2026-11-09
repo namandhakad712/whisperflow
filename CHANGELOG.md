@@ -2,6 +2,19 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.36] — 2026-11-09
+
+### Added — hooks JSON format + repo hardening
+- **Hooks can now send JSON**: the Hooks editor gained a "Transcript format" selector. `text`
+  (default) keeps the raw transcript on STDIN / as the body; `json` sends
+  `{"text": "…", "timestamp": …}` on STDIN for commands (webhooks keep the documented
+  `{app, event, text, timestamp}` contract). The argv safety contract never changes — the
+  transcript is never interpolated into the command line, in either format.
+- **Repo hardening (not a release feature):** `main` now requires a PR review + passing CI, blocks
+  force-push and deletions, and enforces admins. The installer build documents the optional
+  signing secrets (`WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD`) — unsigned builds stay the default,
+  but a signing key can be dropped in without code changes.
+
 ## [0.1.35] — 2026-11-09
 
 ### Added — sync through YOUR cloud (P2 from IMPROVEMENT-PLAN)

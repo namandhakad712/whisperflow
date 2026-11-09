@@ -118,7 +118,10 @@ function runCommand(hook: HookItem, result: DictationResult, deps: RunHooksDeps)
   });
   child.on("close", () => clearTimeout(watchdog));
   try {
-    child.stdin.write(result.final);
+    const payload = hook.format === "json"
+      ? JSON.stringify({ text: result.final, timestamp: Date.now() })
+      : result.final;
+    child.stdin.write(payload);
     child.stdin.end();
   } catch {
     // stdin closed before we could write — the hook still ran; ignore.

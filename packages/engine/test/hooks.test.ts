@@ -10,6 +10,7 @@ function item(partial: Partial<HookItem>): HookItem {
     event: "dictation",
     kind: "command",
     target: "cat",
+    format: "text",
     enabled: true,
     ...partial,
   };
@@ -72,5 +73,29 @@ describe("runHooks", () => {
       runHooks([item({ kind: "webhook" })], result, { fetch: fetch as never, logger }),
     ).resolves.toBeUndefined();
     expect(logger).toHaveBeenCalled();
+  });
+
+  it("json-format commands get { text, timestamp } on STDIN", async () => {
+    let written = "";
+    const child = {
+      stdin: {
+        write(chunk: string) {
+          written += chunk;
+          return true;
+        },
+        end() {},
+      },
+      on(event: string, handler: () => void) {
+        if (event === "close") handler();
+        return child;
+      },
+    };
+    const spawnFn = vi.fn(() => child);
+    await runHooks([item({ kind: "command", format: "json" })], result, {
+      spawnFn: spawnFn as never,
+    });
+    const parsed = JSON.parse(written) as { text: string; timestamp: number };
+    expect(parsed.text).toBe("hello world");
+    expect(typeof parsed.timestamp).toBe("number");
   });
 });

@@ -73,6 +73,11 @@ win:
     - target: nsis
       arch:
         - x64
+  # Optional code signing: set the WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD repo
+  # secrets and electron-builder signs automatically; without them the build
+  # is unsigned (Windows SmartScreen warns on first run — a known trade for a
+  # hobby-signature-free project).
+  sign: null
 
 nsis:
   oneClick: true

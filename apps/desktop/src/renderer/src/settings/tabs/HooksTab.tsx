@@ -43,6 +43,7 @@ export function HooksTab() {
     event: "dictation",
     kind: "command",
     target: "",
+    format: "text",
     enabled: true,
   });
 
@@ -85,6 +86,17 @@ export function HooksTab() {
                   : "Webhook URL — POSTed `{ app, event, text, timestamp }`"
               }
             />
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs text-ink-dim">
+              Transcript format
+              <select
+                value={draft.format ?? "text"}
+                onChange={(e) => setDraft({ ...draft, format: e.target.value as "text" | "json" })}
+                className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
+              >
+                <option value="text">Plain text (raw transcript)</option>
+                <option value="json">JSON ({`{"text": "…", "timestamp": …}`})</option>
+              </select>
+            </label>
             <div className="flex items-center justify-end gap-2">
               <Button variant="ghost" onClick={() => setDraft(null)}>Cancel</Button>
               <Button onClick={save}>Save hook</Button>

@@ -657,6 +657,10 @@ export const HookItemSchema = z.object({
    * `webhook`: a URL POSTed `{text, timestamp}` JSON.
    */
   target: z.string().min(1),
+  /** Transcript format: `"text"` = raw text on STDIN / plain body;
+   *  `"json"` = `{"text": "…", "timestamp": …}` on STDIN / as the JSON body.
+   *  Never interpolated into argv either way. */
+  format: z.enum(["text", "json"]).default("text"),
   /** Master per-item switch. */
   enabled: z.boolean().default(true),
 });
