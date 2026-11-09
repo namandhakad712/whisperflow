@@ -540,6 +540,8 @@ const GeneralFieldsSchema = z.object({
     sounds: z.boolean().default(true),
     /** Recordings folder. Empty = `<userData>/recordings`. */
     recordingsDir: z.string().default(""),
+    /** Multi-device sync folder (OneDrive/Dropbox/etc). Empty = disabled. */
+    syncFolder: z.string().default(""),
     /**
      * Legacy resting-"flow-bar" dock. Superseded by `overlayRestBar` +
      * `overlayPosition`; kept so pre-merge configs migrate transparently (the

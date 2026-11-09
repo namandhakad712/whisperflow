@@ -14,6 +14,7 @@ import { HoldToTalkWatcher, hookAvailable, parseAccelerator, type KeyboardHookEv
 import { applyLaunchAtLogin } from "./lifecycle/autostart";
 import { initUpdater } from "./lifecycle/updater";
 import { runDailyBackup } from "./lifecycle/backup";
+import { SyncManager } from "./lifecycle/sync";
 import { initLogging, log } from "./lib/log";
 import { initAudit } from "./lib/audit";
 
@@ -154,6 +155,29 @@ async function bootstrap(): Promise<void> {
   const config = await engine.getConfig();
   applyLaunchAtLogin(config.general?.launchAtLogin === true);
 
+  // Multi-device sync through the user's own cloud (OneDrive/Dropbox folder).
+  // Reads config + scratchpad on push, applies remote top-level keys on pull.
+  const sync = new SyncManager({
+    readConfig: () => {
+      const cfg = liveConfig ?? config;
+      return cfg as unknown as Record<string, unknown>;
+    },
+    readScratchpad: async () => {
+      const web = windows.settingsWeb();
+      if (!web || web.isDestroyed()) return null;
+      try {
+        return (await web.executeJavaScript(`localStorage.getItem('wf-scratchpad-notes')`)) as string | null;
+      } catch {
+        return null;
+      }
+    },
+    applyRemote: async (patch) => {
+      await engine.setConfig(patch as Parameters<typeof engine.setConfig>[0]);
+    },
+    log,
+  });
+  if (config.general?.syncFolder) sync.setFolder(config.general.syncFolder);
+
   // Hold-to-talk: a global keyboard hook sees key-up, which globalShortcut
   // cannot. When armed it owns the main hotkey; otherwise the normal toggle
   // registration is used. `hotkey.mode` is the single source of truth — the
@@ -288,6 +312,12 @@ async function bootstrap(): Promise<void> {
         // The resting dash follows the overlay position / enabled state, so
         // a settings change re-parks (or removes) it without a relaunch.
         windows.applyRest(cfg.general?.overlayRestBar === true, resolveRestAnchor(cfg.general ?? {}));
+        // A settings change pushes the new config into the sync folder (and
+        // re-points the folder if the user moved it).
+        if (cfg.general?.syncFolder) {
+          if (sync.activeFolder !== cfg.general.syncFolder) sync.setFolder(cfg.general.syncFolder);
+          sync.schedulePush();
+        }
       });
     },
   });

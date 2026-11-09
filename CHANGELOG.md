@@ -2,6 +2,16 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.35] — 2026-11-09
+
+### Added — sync through YOUR cloud (P2 from IMPROVEMENT-PLAN)
+- **Settings → General → "Sync between machines"**: pick a OneDrive/Dropbox folder and
+  WhisperFlow writes `whisperflow-sync.json` there on every config change — config + dictionary +
+  scratchpad, **never audio or history**. The file is watched for remote updates (3 s poll, since
+  OneDrive/Dropbox don't send FS events reliably), and the conflict policy is last-writer-wins
+  per top-level key: two machines editing different settings never clobber each other. There is
+  NO server of ours — the folder is the user's, so the privacy story holds.
+
 ## [0.1.34] — 2026-11-09
 
 ### Added — audit log (the enterprise checkbox)

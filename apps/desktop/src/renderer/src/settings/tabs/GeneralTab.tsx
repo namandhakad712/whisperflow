@@ -210,6 +210,44 @@ export function GeneralTab() {
             onChange={(v) => void useSettings.getState().patchConfig({ general: { historyEnabled: v } })}
           />
         </div>
+        <div className="flex items-center justify-between gap-6 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Sync between machines</p>
+            <p className="mt-0.5 text-xs leading-5 text-ink-dim">
+              {config.general.syncFolder
+                ? "Config + dictionary sync to your own cloud folder. Never audio or history."
+                : "Pick a OneDrive/Dropbox folder to sync config + dictionary between machines."}
+            </p>
+            {config.general.syncFolder ? (
+              <p className="mt-1 truncate font-mono text-[11px] text-ink-dim/70">{config.general.syncFolder}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {config.general.syncFolder ? (
+              <button
+                type="button"
+                onClick={() => void useSettings.getState().patchConfig({ general: { syncFolder: "" } })}
+                className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm font-medium transition-colors hover:border-danger/50"
+              >
+                Turn off
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={async () => {
+                const picked = await window.whisperflow.app.pickFolder({
+                  title: "Choose the sync folder (OneDrive/Dropbox…)",
+                });
+                if (!picked.canceled && picked.path) {
+                  void useSettings.getState().patchConfig({ general: { syncFolder: picked.path } });
+                }
+              }}
+              className="shrink-0 rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent/50"
+            >
+              {config.general.syncFolder ? "Change…" : "Choose…"}
+            </button>
+          </div>
+        </div>
       </Card>
       <p className="mt-5 text-xs leading-5 text-ink-dim">
         WhisperFlow v{version} · local-first · Apache-2.0 · zero telemetry
