@@ -49,12 +49,23 @@ two selects (model from the catalog, language from the same list as Settings →
 ## P1 — the sub-100 MB installer
 
 At 134.5 MB we're ~35 MB over Hex. The remaining weight is the two llama backends (Vulkan 71 MB
-+ CPU 31 MB) that ship for local polish. **Make local polish a post-install download**: the
-release keeps the *whisper* binaries (the actual dictation path), and the llama runtime +
-GGUF downloads on first use of local polish (the model catalog already downloads models — add the
-runtime binary as a catalog-style download with a progress event on the Models tab). Nobody who
-uses cloud polish pays for the runtime; local-polish users get a one-time ~100 MB download with a
-clear progress UI. The installer goes under ~90 MB.
++ CPU 31 MB) that ship for local polish.
+
+**Analyzed 2026-11-09 — deliberate no-go.** `node-llama-cpp`'s `getLlama()` on Electron defaults
+to `build: "never"`, so it *only* loads binaries present in the app's node_modules. Excluding the
+Vulkan/CPU packages and fetching them at runtime (a post-install download) would make local polish
+fail with "no binary found" on every machine that isn't running the CUDA-toolkit fallback — a
+silent feature regression for the default polish pathvb. The model GGUF files (Qwen3.5-2B Q4 ≈
+1.5 GB) already download at runtime via the catalog; the shipped ~100 MB is the *working runtime*
+for local polish. We hold 134.5 MB until local polish becomes an install-time *option* (a
+"runtime pack" download the first time local polish is used, with the exact same progress UI as
+model downloads — then the installer drops to ~45 MB).
+
+The path is understood when we take it: ship `!node_modules/@node-llama-cpp/**`, add a
+`RUNTIME_PACKS` catalog entry that downloads the right `@node-llama-cpp/win-x64-{vulkan,cpu}`
+into `<userData>/runtimes`, and point `getLlama()` at that folder via
+`existingPrebuiltBinary`-style resolution or a `NODE_LLAMA_CPP_*` env the package honors. It's a
+P2, not a P1, because it changes the first-run contract for local-polish users.
 
 - Files: `packages/engine/src/models/catalog.ts` (+ runtime entry), a new runtime-download IPC +
   Models-tab progress, `electron-builder.yml` (exclude `@node-llama-cpp/*` from `files`).
