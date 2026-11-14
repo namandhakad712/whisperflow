@@ -4,6 +4,7 @@ import {
   Mic,
   Volume2,
   Webhook,
+  UserRound,
   Cpu,
   Book,
   Command,
@@ -29,6 +30,7 @@ import { ModelsTab } from "./tabs/ModelsTab";
 import { DictionaryTab } from "./tabs/DictionaryTab";
 import { CommandsTab } from "./tabs/CommandsTab";
 import { HooksTab } from "./tabs/HooksTab";
+import { ProfilesTab } from "./tabs/ProfilesTab";
 import { HistoryTab } from "./tabs/HistoryTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
 import { AdvancedTab } from "./tabs/AdvancedTab";
@@ -53,6 +55,7 @@ const ESSENTIALS = [
 
 const COLLECTIONS = [
   { id: "modes", label: "Modes", icon: Layers },
+  { id: "profiles", label: "Profiles", icon: UserRound },
   { id: "dictionary", label: "Dictionary", icon: Book },
   { id: "commands", label: "Commands", icon: Command },
   { id: "hooks", label: "Hooks", icon: Webhook },
@@ -250,6 +253,7 @@ export function App() {
             {tab === "modes" && <ModesTab />}
             {tab === "commands" && <CommandsTab />}
             {tab === "hooks" && <HooksTab />}
+            {tab === "profiles" && <ProfilesTab />}
             {tab === "history" && <HistoryTab />}
             {tab === "privacy" && <PrivacyTab />}
             {tab === "advanced" && <AdvancedTab />}

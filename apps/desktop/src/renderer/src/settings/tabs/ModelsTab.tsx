@@ -464,6 +464,33 @@ function CloudSttCard() {
           <span className="text-xs text-red-400">Local-only lock is on — cloud STT is blocked.</span>
         )}
       </div>
+      {/* Free-tier generosity, as chips — the number people actually weigh when
+          deciding between local and BYOK. Only shown when the preset has one. */}
+      {"freeLimits" in preset && preset.freeLimits ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-ink-dim/70">Free tier</span>
+          {preset.freeLimits.audioSecPerDay ? (
+            <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+              {Math.round(preset.freeLimits.audioSecPerDay / 3600)} h dictation / day
+            </span>
+          ) : null}
+          {preset.freeLimits.audioSecPerHour ? (
+            <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">
+              {Math.round(preset.freeLimits.audioSecPerHour / 3600)} h / hour
+            </span>
+          ) : null}
+          {preset.freeLimits.requestsPerDay ? (
+            <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] text-ink-dim">
+              {preset.freeLimits.requestsPerDay.toLocaleString()} requests / day
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {!cloud.apiKey && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-200/90">
+          No key yet — dictation will fail until you paste one above. Nothing else in the app needs it.
+        </p>
+      )}
       <p className="rounded-lg border border-line bg-surface-2/50 px-3 py-2.5 text-xs leading-5 text-ink-dim">
         <span className="font-semibold text-ink">{preset.label}.</span> {preset.freeNote}
         {preset.docs && (

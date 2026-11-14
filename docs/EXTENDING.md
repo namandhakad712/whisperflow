@@ -109,6 +109,20 @@ upgrade treadmill of whatever we ship.
 `stt.fallback` (`"none"|"local"|"cloud"`) decides what happens when the primary fails — the
 default `"none"` means a failed local run *never silently uploads your audio anywhere*.
 
+**Cloud-only is a first-class setup** — you do not need a single local model. Set
+`stt.provider: "cloud"` with a key and every utterance goes straight to that endpoint; the
+whisper.cpp sidecar and GGUF downloads are simply never used. This is the right choice on a
+low-RAM machine, a Chromebook-class laptop, or when you want the lowest possible latency and
+don't mind the audio leaving the box. Groq's free tier alone yields **8 hours of dictation per
+day** (28,800 audio-seconds; 2,000 requests), which is more than a normal workday of talking —
+and if you'd rather keep polish local too, point `polish.provider` back at `"llama-local"` so
+only the audio round-trips. The reverse split (cloud polish, local STT) works the same way:
+the two stages are independent by design.
+
+When either stage is misconfigured — cloud selected with no key, or a local model that isn't
+downloaded — WhisperFlow now says so **on the pill** ("Cloud transcription isn't set up — add an
+API key in Settings → Models") instead of swallowing the audio and appearing broken.
+
 **Polish (the rewrite pass):** `polish.provider` —
 - `"llama-local"` (default): a local GGUF via node-llama-cpp. The CUDA backend ships as an
   optional extra; most machines use the Vulkan or CPU backend.
@@ -214,22 +228,19 @@ accent — whisper stops second-guessing.
 
 Ranked by how often it's asked for, with where it would live:
 
-1. **Per-language / per-mode STT models.** Modes override polish only; a Mode that also picks the
-   model (a big model for English, a small fast one for chat) needs `ModeProfile.stt` —
-   `packages/shared/src/config.ts` + `packages/engine/src/modes/resolve.ts`.
-2. **Post-dictation hooks.** No "after each dictation, run X on the text" (pipe to a script,
-   append to a scratchpad, send an HTTP webhook). An optional `hooks` section + a main-process
-   runner would make WhisperFlow a pipeline tool, not just an input method. ← *the biggest
-   remaining team-level ask, now that vocabulary packs ship.*
-3. **Sound customization.** The start/cancel chimes are generated WAVs (`apps/desktop/resources/sounds`);
+1. **Sound customization.** The start/cancel chimes are generated WAVs (`apps/desktop/resources/sounds`);
    an import-your-own path is one IPC handler away.
-4. **Multiple profiles (work / home).** One config per user; a profile switcher is a config-layer
-   feature, not a schema one (`profiles: { [name]: WhisperFlowConfig }` + an active pointer).
-5. **Advanced whisper flags.** No beam size / temperature / `--no-speech-threshold` exposure —
+2. **Advanced whisper flags.** No beam size / temperature / `--no-speech-threshold` exposure —
    `packages/engine/src/providers/stt/WhisperCppProvider.ts` takes options from config only.
-6. **Keyboard navigation in Settings.** Tabs are reachable, but the overlay and lens are pointer-first.
-7. **Plugin/theming share.** Themes are per-field (tint, backdrop); there's no theme
+3. **Keyboard navigation in Settings.** Tabs are reachable, but the overlay and lens are pointer-first.
+4. **Plugin/theming share.** Themes are per-field (tint, backdrop); there's no theme
    export/import bundle.
+
+Shipped since this list was first written — no longer gaps: per-mode STT model + language
+(`ModeProfile.stt`), post-dictation hooks (`hooks`, with a `text`/`json` transcript format),
+multiple profiles (`profiles.layers` + `profiles.active`, a top-level-key layer over the base
+config), and syncing config/dictionary/scratchpad through your own OneDrive/Dropbox folder
+(`general.syncFolder`).
 
 If the thing you want is here, open a feature request with your *outcome* (not just the
 implementation) — the team often finds a better path when the need is written down.

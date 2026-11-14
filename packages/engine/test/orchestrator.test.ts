@@ -251,4 +251,47 @@ describe("DictationSession", () => {
       vi.useRealTimers();
     }
   });
+
+  it("surfaces a missing cloud key as an error instead of silently dropping audio", async () => {
+    const events: DictationStateEvent[] = [];
+    const deps = makeDeps({
+      config: WhisperFlowConfigSchema.parse({ stt: { provider: "cloud" } }),
+      // A cloud adapter that is NOT ready — exactly the BYOK-with-no-key case.
+      stt: {
+        async transcribe() {
+          throw new Error("should never be called");
+        },
+        modelPathFor: () => null,
+        ready: () => false,
+      },
+      onEvent: (ev) => events.push(ev),
+    });
+    const session = new DictationSession(deps);
+    speakAndPause(session);
+    await session.stop();
+
+    const error = events.find((e) => e.state === "error");
+    expect(error?.error).toContain("API key");
+    // Reported once per turn, not per segment.
+    expect(events.filter((e) => e.state === "error")).toHaveLength(1);
+  });
+
+  it("names the missing local model when that is why nothing was transcribed", async () => {
+    const events: DictationStateEvent[] = [];
+    const deps = makeDeps({
+      stt: {
+        async transcribe() {
+          throw new Error("should never be called");
+        },
+        modelPathFor: () => null,
+      },
+      onEvent: (ev) => events.push(ev),
+    });
+    const session = new DictationSession(deps);
+    speakAndPause(session);
+    await session.stop();
+
+    const error = events.find((e) => e.state === "error");
+    expect(error?.error).toContain("isn't downloaded");
+  });
 });

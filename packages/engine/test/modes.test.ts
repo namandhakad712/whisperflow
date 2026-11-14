@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyModeOverrides,
+  applyProfile,
   modeMatches,
   resolveMode,
   type ModeTarget,
@@ -109,5 +110,30 @@ describe("mode resolution", () => {
     expect(cfg2.stt.language).toBe("fr");
     expect(cfg2.stt.modelId).toBe("whisper-small");
     expect(base.stt.modelId).toBe("whisper-small");
+  });
+
+  it("applies the active profile layer", () => {
+    const base = WhisperFlowConfigSchema.parse({
+      polish: { tone: "neutral" },
+      profiles: {
+        active: "work",
+        layers: {
+          work: { polish: { tone: "professional" } },
+        },
+      },
+    });
+    const cfg = applyProfile(base);
+    expect(cfg.polish.tone).toBe("professional");
+  });
+
+  it("leaves base config untouched", () => {
+    const base = WhisperFlowConfigSchema.parse({
+      profiles: {
+        active: "work",
+        layers: { work: { polish: { tone: "professional" } } },
+      },
+    });
+    applyProfile(base);
+    expect(base.polish.tone).not.toBe("professional");
   });
 });

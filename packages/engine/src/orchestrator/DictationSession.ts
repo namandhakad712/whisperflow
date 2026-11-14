@@ -92,6 +92,9 @@ export class DictationSession {
    *  live partial, so a long utterance isn't a wall of silence on the pill. */
   private interimTimer: ReturnType<typeof setInterval> | null = null;
   private interimInFlight = false;
+  /** A setup problem (no engine / no key / model missing) is reported once per
+   *  turn — repeating it on every silence-separated segment would spam the pill. */
+  private engineErrorShown = false;
 
   constructor(private readonly deps: DictationSessionDeps) {
     this.vad = new RmsVad({
@@ -290,13 +293,26 @@ export class DictationSession {
 
   private enqueueSegment(pcm: Float32Array): void {
     const stt = this.deps.stt;
-    if (!stt) return;
+    if (!stt) {
+      // No engine at all: the host should have refused to start, but if a
+      // segment arrives anyway, say so instead of swallowing it.
+      this.emitUnusableEngine("no transcription engine is configured");
+      return;
+    }
     const config = this.deps.config;
     const modelPath = stt.modelPathFor(config.stt.modelId);
     // Cloud adapters have no local weights: they declare readiness themselves.
     const ready = stt.ready ? stt.ready(config.stt.modelId) : modelPath !== null;
     if (!ready) {
-      this.deps.logger?.(`stt model ${config.stt.modelId} not on disk — segment skipped`);
+      // The exact case a BYOK user hits: cloud selected, key missing. Dropping
+      // the segment silently meant "I spoke and nothing happened" with no
+      // explanation anywhere. Show it on the pill once per turn.
+      this.deps.logger?.(`stt engine not ready (${config.stt.modelId}) — segment skipped`);
+      this.emitUnusableEngine(
+        config.stt.provider === "cloud"
+          ? "Cloud transcription isn't set up — add an API key in Settings → Models"
+          : `The transcription model (${config.stt.modelId}) isn't downloaded — get it in Settings → Models`,
+      );
       return;
     }
     const prompt = this.raw.slice(-220);
@@ -340,5 +356,14 @@ export class DictationSession {
   private emit(state: DictationState, partial?: string, appendText?: string): void {
     this.state = state;
     this.deps.onEvent({ state, partial, ...(appendText ? { appendText } : {}) });
+  }
+
+  /** Surfaces a setup problem ONCE per turn: the user hears "nothing happened"
+   *  otherwise, which reads as a broken app rather than a missing key/model. */
+  private emitUnusableEngine(message: string): void {
+    if (this.engineErrorShown) return;
+    this.engineErrorShown = true;
+    this.deps.logger?.(`dictation: ${message}`);
+    this.deps.onEvent({ state: "error", error: message });
   }
 }

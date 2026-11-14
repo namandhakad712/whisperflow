@@ -2,6 +2,31 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.37] — 2026-11-14
+
+### Added — profiles, spring physics, and cloud-first transcription
+- **Config profiles (work/home)**: `Settings → Profiles` keeps named layers over your base config.
+  Switch a profile and dictation behaves differently (tone, models, dictionary) without touching
+  your global settings — the layer is merged on top at the start of each dictation, so the base
+  config is never mutated. Stored as `profiles.layers` + `profiles.active`.
+- **Spring-physics pill**: the overlay's state morphs now run on a real spring (`stiffness 320`,
+  `damping 26`) instead of a CSS bezier, and window repositioning no longer fights the animation —
+  a same-position resize is applied instantly so the renderer owns the motion. This is the
+  "snappy" feel: the pill overshoots a hair and settles, rather than easing linearly.
+- **Cloud-only dictation is first-class**: you can run WhisperFlow with **no local model at all**.
+  Groq's free tier alone is 28,800 audio-seconds/day — **8 hours of talking, free, no card** — and
+  the Models tab now renders each provider's limits as chips so the trade-off is visible before
+  you commit. STT and polish are independent: local STT + cloud polish, cloud STT + local polish,
+  or all-cloud all work.
+- **Clear failure when the engine isn't usable**: selecting cloud without a key (or a local model
+  that isn't downloaded) used to drop the audio silently — "I spoke and nothing happened". The pill
+  now says exactly what's wrong, once per turn: "Cloud transcription isn't set up — add an API key
+  in Settings → Models".
+- **MSI installer**: Windows releases now ship both NSIS (`.exe`, per-user, auto-updating) and MSI
+  (per-machine, silent, for Group Policy / SCCM deployment).
+- Model cards for cloud STT re-verified against provider docs on 2026-11-14 (Groq's whisper models
+  are 20 RPM / 2,000 requests/day / 7,200 audio-sec/hour / 28,800 audio-sec/day each).
+
 ## [0.1.36] — 2026-11-09
 
 ### Added — hooks JSON format + repo hardening
@@ -14,6 +39,9 @@ All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachan
   force-push and deletions, and enforces admins. The installer build documents the optional
   signing secrets (`WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD`) — unsigned builds stay the default,
   but a signing key can be dropped in without code changes.
+- **MSI Support for Enterprise Deployment**: Windows builds now include an MSI installer target
+  alongside the default NSIS installer, facilitating silent deployments via Group Policy or SCCM
+  in managed environments.
 
 ## [0.1.35] — 2026-11-09
 

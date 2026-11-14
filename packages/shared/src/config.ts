@@ -151,9 +151,13 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "whisper-large-v3-turbo",
     models: ["whisper-large-v3-turbo", "whisper-large-v3"],
     docs: "https://console.groq.com/docs/speech-to-text",
+    /** The limits a user actually cares about, machine-shaped so the UI can
+     *  render them as chips instead of a paragraph. Verified 2026-11-14
+     *  against Groq's rate-limits table (both whisper models are identical). */
+    freeLimits: { requestsPerDay: 2000, audioSecPerHour: 7200, audioSecPerDay: 28800 },
     freeNote:
-      "Free tier (Groq's rate-limits table): 20 RPM, 2,000 requests/day, 7,200 audio-sec/hour (ASH), 28,800 audio-sec/day (ASD). Groq's data page says inputs are not retained by default (abuse logs ≤30 days; zero-data-retention available).",
-    verified: "2026-10-29",
+      "Free tier (Groq's rate-limits table, re-verified 2026-11-14): 20 RPM, 2,000 requests/day, 7,200 audio-sec/hour, 28,800 audio-sec/day — that is 8 hours of dictation per day, free, no card. Groq's data page says inputs are not retained by default (abuse logs ≤30 days; zero-data-retention available).",
+    verified: "2026-11-14",
   },
   mistral: {
     label: "Mistral — Voxtral 3",
@@ -161,9 +165,10 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "voxtral-mini-transcribe-3-0",
     models: ["voxtral-mini-transcribe-3-0", "voxtral-small-transcribe-3-0"],
     docs: "https://docs.mistral.ai/studio/audio/overview",
+    freeLimits: null,
     freeNote:
-      "No free Voxtral quota as of 2026-10-29: Mistral prices Voxtral 3 purely per minute ($0.0035/min Mini Transcribe, $0.0040/min Small Transcribe — about $0.21/hour for Mini) and nothing in their docs, pricing, or Voxtral announcement lists any free audio quota. Treat older '~$10/month free' reports as outdated — this is a pay-per-minute endpoint.",
-    verified: "2026-10-29",
+      "No free Voxtral quota as of 2026-11-14: Mistral prices Voxtral 3 purely per minute ($0.0035/min Mini Transcribe, $0.0040/min Small Transcribe — about $0.21/hour for Mini) and nothing in their docs, pricing, or Voxtral announcement lists any free audio quota. Treat older '~$10/month free' reports as outdated — this is a pay-per-minute endpoint.",
+    verified: "2026-11-14",
   },
   openai: {
     label: "OpenAI",
@@ -171,6 +176,7 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "gpt-transcribe",
     models: ["gpt-transcribe", "whisper-1"],
     docs: "https://platform.openai.com/docs/api-reference/audio",
+    freeLimits: null,
     freeNote:
       "No free tier — pay per minute. `gpt-transcribe` is $0.0045/min. `whisper-1` is deprecated (announced 2026-08-26) with a shutdown date of 2027-02-26; `gpt-transcribe` is the current model.",
     verified: "2026-10-29",
@@ -182,9 +188,10 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "nova-3",
     models: ["nova-3", "nova-3-general", "nova-3-medical", "nova-3-pharma"],
     docs: "https://developers.deepgram.com/docs/model",
+    freeLimits: null,
     freeNote:
-      "$200 free credit, no card needed. Nova-3 pre-recorded ≈ $0.0043/min ($0.26/hour); Smart Formatting comes free with the model. Pay-per-minute beyond the credit.",
-    verified: "2026-11-03",
+      "$200 free credit, no card needed (≈770 hours of dictation at $0.26/hour). Nova-3 pre-recorded ≈ $0.0043/min; Smart Formatting comes free with the model.",
+    verified: "2026-11-14",
   },
   custom: {
     label: "Custom — OpenAI-compatible endpoint",
@@ -192,7 +199,8 @@ export const CLOUD_STT_PRESETS = {
     defaultModel: "",
     models: [],
     docs: "",
-    freeNote: "Anything that speaks POST /audio/transcriptions and returns JSON { text }.",
+    freeLimits: null,
+    freeNote: "Anything that speaks POST /audio/transcriptions and returns JSON { text }. A self-hosted whisper server works here too.",
     verified: "2026-10-29",
   },
 } as const;
@@ -692,6 +700,16 @@ export const WhisperFlowConfigSchema = z.object({
   updates: UpdatesConfigSchema.prefault({}),
   models: ModelsConfigSchema.prefault({}),
   modes: ModesConfigSchema.prefault({}),
+  /** Named config layers (work/home). A profile's keys OVERRIDE the base
+   *  config when `profiles.active` matches; switching applies the layer live.
+   *  The active profile is just a name — the base config never changes. */
+  profiles: z
+    .object({
+      active: z.string().default(""),
+      /** Profile name → a top-level-keys patch (same shape as Settings patches). */
+      layers: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
+    })
+    .default({ active: "", layers: {} }),
 });
 export type WhisperFlowConfig = z.infer<typeof WhisperFlowConfigSchema>;
 

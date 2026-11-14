@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import type { DictationStateEvent } from "@whisperflow/shared";
 import { startCapture, type Capture } from "./capture";
 
@@ -330,6 +331,18 @@ const STATE_LABEL: Record<DictationStateEvent["state"], string> = {
   cancelled: "Cancelled",
 };
 
+// Motion variants for the pill's state morphs. The spring transition is
+// declared inline on the motion element so it is inferred as a Transition
+// (a bare literal widens `type` to string, which framer-motion rejects).
+const pillVariants = {
+  rest: { width: 30, height: 6, borderRadius: 6 },
+  mini: { width: 416, height: 48, borderRadius: 16 },
+  card: { width: 416, height: 80, borderRadius: 16 },
+  l4: { width: 416, height: 322, borderRadius: 16 },
+} as const;
+
+const PILL_SPRING = { type: "spring", stiffness: 320, damping: 26 } satisfies Record<string, unknown>;
+
 /**
  * The floating dictation pill. Listens for engine state; captures the mic
  * while `listening` and streams 16 kHz PCM to the main process.
@@ -580,8 +593,11 @@ export function Overlay() {
       <style>{PILL_CSS}</style>
       <div className="pill-zone">
         {!clipboardFallback && (
-        <div
+        <motion.div
           className="pill-card"
+          variants={pillVariants}
+          animate={pillState}
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
           data-state={pillState}
           data-interactive="true"
           onMouseEnter={() => resting && setHovered(true)}
@@ -644,7 +660,7 @@ export function Overlay() {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
         )}
       </div>
       {clipboardFallback && (

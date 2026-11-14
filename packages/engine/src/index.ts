@@ -16,7 +16,7 @@ import type {
 import { join } from "node:path";
 import { ConfigStore } from "./config/ConfigStore.js";
 import { createHistoryStore, type HistoryStore } from "./history/historyStore.js";
-import { applyModeOverrides, resolveMode } from "./modes/resolve.js";
+import { applyModeOverrides, applyProfile, resolveMode } from "./modes/resolve.js";
 import { ModelManager } from "./models/manager.js";
 import { CATALOG } from "./models/catalog.js";
 import { WhisperCppProvider } from "./providers/stt/WhisperCppProvider.js";
@@ -221,14 +221,14 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
         cfg.stt.fallback === "local" ? local : cfg.stt.fallback === "cloud" ? cloud : null;
       const stt = mock ?? pickStt(primary, backup);
       if (mock) logger("stt: WF_STT_MOCK is set — transcriptions are the canned test text");
-      // Modes: the first enabled profile matching the target app rewrites the
-      // session's polish config (per-app formatting, Hex's stickiest feature).
-      const mode = resolveMode(cfg, {
+      // Profile layer first (work/home overrides the base), THEN modes.
+      const profiled = applyProfile(cfg);
+      const mode = resolveMode(profiled, {
         app: sessionOpts.app,
         title: sessionOpts.appTitle,
         url: sessionOpts.appUrl,
       });
-      const effective = mode ? applyModeOverrides(cfg, mode) : cfg;
+      const effective = mode ? applyModeOverrides(profiled, mode) : profiled;
       if (mode) logger(`modes: matched "${mode.name}" (match=${mode.match})`);
       return new DictationSession({
         config: structuredClone(effective),

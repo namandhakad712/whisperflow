@@ -180,10 +180,17 @@ export class WindowManager {
       cursor,
       freePos ?? undefined,
     );
-    // Instant by default (the FIRST show must be immediate). When the caller
-    // says animate (the reposition onto the configured anchor after the
-    // instant cursor-show), glide to the target instead of teleporting.
-    if (animate) this.animateTo(bounds);
+    // If we have an in-flight glide, kill it instantly — the pill's new
+    // target is the only thing that matters.
+    if (this.animateTimer) {
+      clearInterval(this.animateTimer);
+      this.animateTimer = null;
+    }
+    // Fast track: a same-position resize is not a user-perceived teleport —
+    // apply it instantly so the renderer's spring morph owns the motion.
+    const current = win.getBounds();
+    const samePosition = current.x === bounds.x && current.y === bounds.y;
+    if (animate && !samePosition) this.animateTo(bounds);
     else win.setBounds(bounds, false);
     log(
       `overlay: anchor=${position} size=${size.width}x${size.height} → bounds=${bounds.x},${bounds.y} ${bounds.width}x${bounds.height}`,

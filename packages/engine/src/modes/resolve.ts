@@ -26,6 +26,26 @@ export function modeMatches(profile: ModeProfile, target: ModeTarget): boolean {
   return haystacks.some((h) => h.toLowerCase().includes(needle));
 }
 
+/**
+ * Applies the ACTIVE config-profile layer over the base config (a shallow
+ * top-level-key merge). Profiles are work/home layers — the base config never
+ * changes; switching a profile just picks a different layer. No profile
+ * selected → the base config comes back as-is.
+ */
+export function applyProfile(config: WhisperFlowConfig): WhisperFlowConfig {
+  const active = config.profiles?.active;
+  const layer = active ? config.profiles?.layers?.[active] : undefined;
+  if (!layer) return config;
+  const out: WhisperFlowConfig = structuredClone(config);
+  for (const [key, value] of Object.entries(layer)) {
+    if (key === "profiles") continue; // never layer the profile machinery itself
+    if (value !== undefined && value !== null) {
+      (out as unknown as Record<string, unknown>)[key] = value;
+    }
+  }
+  return out;
+}
+
 /** First enabled profile that matches, or null. Order is the user's list order. */
 export function resolveMode(
   config: Pick<WhisperFlowConfig, "modes">,
