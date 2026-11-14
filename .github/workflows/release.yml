@@ -54,6 +54,17 @@ jobs:
         working-directory: apps/desktop
         run: npx electron-builder --win nsis --prepackaged release/win-unpacked --publish never
 
+      # Enterprise path: a per-machine MSI for Group Policy / SCCM deploys. It is
+      # packed from the SAME prepackaged tree as the NSIS installer, so the two
+      # installers are identical in content — only the packaging differs.
+      # Deliberately soft-failing: this target downloads the WiX toolset at build
+      # time, and an optional enterprise artifact must never block the main
+      # installer. If it fails, the release still ships without an MSI.
+      - name: Pack MSI (enterprise)
+        working-directory: apps/desktop
+        continue-on-error: true
+        run: npx electron-builder --win msi --prepackaged release/win-unpacked --publish never
+
       # The release: installer + latest.yml + blockmap. latest.yml + blockmap are
       # the auto-update feed — blockmap is what makes electron-updater download
       # only the changed blocks between versions.
@@ -69,5 +80,14 @@ jobs:
             apps/desktop/release/WhisperFlow-Setup-*.exe
             apps/desktop/release/latest.yml
             apps/desktop/release/*.blockmap
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Uploaded separately (and only when it exists) so a missing MSI can never
+      # trip fail_on_unmatched_files on the required assets above.
+      - name: Upload MSI (enterprise, optional)
+        if: hashFiles('apps/desktop/release/*.msi') != ''
+        shell: pwsh
+        run: gh release upload "${{ github.ref_name }}" apps/desktop/release/*.msi --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
