@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   CLOUD_STT_PRESETS,
-  POLISH_CLOUD_PRESETS,
   type CustomModelEntry,
   type ModelCatalogEntry,
   type ModelRole,
@@ -230,8 +229,15 @@ export function ModelsTab() {
             {...{ progress, downloaded, isActive, canActivate, downloadOne, loadModels, loadConfig }}
           />
 
-          <CloudPolishCard />
-
+          {/* Cloud polish lives on the Writing style screen — one home for it,
+              so the same endpoint is never configured from two places. */}
+          <a
+            href="#/models/advanced"
+            className="mb-8 flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-[13px] text-ink-dim transition-colors hover:bg-surface-2"
+          >
+            <span>Using a cloud model for polish? Configure it under Writing style.</span>
+            <span className="font-medium text-accent">Writing style →</span>
+          </a>
           <div className="mb-8 flex items-center justify-between">
             <button
               type="button"
@@ -508,124 +514,6 @@ function CloudSttCard() {
       <p className="text-xs leading-5 text-ink-dim">
         Your key is written to your local config only and is sent to nothing but the endpoint above.
         A transcription request posts a short WAV per utterance — no accounts, no identifiers.
-      </p>
-    </div>
-  );
-}
-
-/**
- * Cloud polish — the same picker as cloud STT (asked for explicitly: polish
- * models should be available via cloud APIs too). Picking a provider flips
- * the polish engine to the remote endpoint; the local GGUF remains the
- * fallback when "Fall back to the local model" is on (Advanced tab).
- */
-function CloudPolishCard() {
-  const config = useSettings((s) => s.config)!;
-  const patch = useSettings((s) => s.patchConfig);
-  const cloud = config.polish.remote;
-  const providerId = (cloud.provider ?? "custom") as keyof typeof POLISH_CLOUD_PRESETS;
-  const preset = POLISH_CLOUD_PRESETS[providerId];
-  const models = providerId === "custom" ? [] : preset.models;
-  const activeModel = cloud.model || preset.defaultModel;
-  const [testing, setTesting] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-
-  const onProvider = (p: keyof typeof POLISH_CLOUD_PRESETS) => {
-    const next: Record<string, unknown> = { provider: p };
-    if (p !== "custom") {
-      next.baseUrl = preset2(p).baseUrl;
-      next.model = preset2(p).defaultModel;
-    }
-    // Choosing a cloud provider activates the remote polish engine; choosing
-    // "custom" leaves the engine alone so nothing flips unexpectedly.
-    void patch({ polish: { remote: next, ...(p !== "custom" ? { provider: "openai-compat" } : {}) } });
-  };
-  const preset2 = (p: keyof typeof POLISH_CLOUD_PRESETS) => POLISH_CLOUD_PRESETS[p];
-
-  const test = async () => {
-    setTesting(true);
-    setResult(null);
-    try {
-      const r = await window.whisperflowExtras.app.testCloudPolish();
-      setResult(`${r.ok ? "✓" : "✗"} ${r.message}`);
-    } catch (err) {
-      setResult(`✗ ${String(err).slice(0, 80)}`);
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 space-y-3 border-t border-line/60 pt-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-wider text-ink-dim">…or a cloud polish model</p>
-        {config.polish.provider === "openai-compat" ? (
-          <span className="text-xs text-accent">In use — remote endpoint active</span>
-        ) : (
-          <span className="text-xs text-ink-dim">Picking a provider activates it</span>
-        )}
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <p className="mb-1 text-[11px] uppercase tracking-wider text-ink-dim">Provider</p>
-          <Select
-            value={providerId}
-            onChange={(v) => onProvider(v as keyof typeof POLISH_CLOUD_PRESETS)}
-            options={(Object.keys(POLISH_CLOUD_PRESETS) as Array<keyof typeof POLISH_CLOUD_PRESETS>).map((p) => ({
-              value: p,
-              label: POLISH_CLOUD_PRESETS[p].label,
-            }))}
-          />
-        </div>
-        <div>
-          <p className="mb-1 text-[11px] uppercase tracking-wider text-ink-dim">Model</p>
-          {models.length > 0 ? (
-            <Select
-              value={activeModel}
-              onChange={(v) => void patch({ polish: { remote: { model: v } } })}
-              options={models.map((m) => ({ value: m, label: m }))}
-            />
-          ) : (
-            <TextInput
-              value={cloud.model}
-              onChange={(v) => void patch({ polish: { remote: { model: v } } })}
-              placeholder="model id, e.g. gpt-6-luna"
-            />
-          )}
-        </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <p className="mb-1 text-[11px] uppercase tracking-wider text-ink-dim">
-            Base URL {providerId !== "custom" && "(blank = default)"}
-          </p>
-          <TextInput
-            value={cloud.baseUrl}
-            onChange={(v) => void patch({ polish: { remote: { baseUrl: v } } })}
-            placeholder={preset.baseUrl || "https://your-endpoint/v1"}
-          />
-        </div>
-        <div>
-          <p className="mb-1 text-[11px] uppercase tracking-wider text-ink-dim">API key</p>
-          <TextInput
-            type="password"
-            value={cloud.apiKey}
-            onChange={(v) => void patch({ polish: { remote: { apiKey: v } } })}
-            placeholder="stored locally only"
-          />
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" disabled={testing} onClick={() => void test()}>
-          {testing ? "Testing…" : "Test connection"}
-        </Button>
-        {result && <span className="text-xs text-ink-dim">{result}</span>}
-        {config.privacy.localOnly && (
-          <span className="text-xs text-red-400">Local-only lock is on — cloud polish is blocked.</span>
-        )}
-      </div>
-      <p className="rounded-lg border border-line bg-surface-2/50 px-3 py-2.5 text-xs leading-5 text-ink-dim">
-        <span className="font-semibold text-ink">{preset.label}.</span> {preset.freeNote}
       </p>
     </div>
   );

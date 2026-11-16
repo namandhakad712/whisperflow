@@ -73,6 +73,7 @@ export const IPC = {
   AppPickFile: "app/pickFile",
   AppPickFolder: "app/pickFolder",
   AppImportBackup: "app/importBackup",
+  AppDiagnose: "app/diagnose",
 
   /** emit (renderer → main, transferable Float32Array chunks) */
   CapturePcm: "capture/pcm",
@@ -284,6 +285,33 @@ export interface AppImportBackupResponse {
   message?: string;
 }
 
+/** Setup diagnostics — "why is nothing happening when I speak?". */
+export interface AppDiagnoseRequest {
+  /**
+   * Whether the renderer could enumerate an audio input. Only the renderer
+   * has `navigator.mediaDevices`, so it reports this rather than the main
+   * process guessing.
+   */
+  micAvailable?: boolean;
+  /** How many input devices were found (omitted when unknown). */
+  micCount?: number;
+}
+export interface DiagnosticCheckDto {
+  id: string;
+  title: string;
+  level: "ok" | "warn" | "fail";
+  detail: string;
+  /** The fix, present only when the check is not ok. */
+  fix?: string;
+  /** Settings tab that resolves it. */
+  tab?: string;
+}
+export interface AppDiagnoseResponse {
+  checks: DiagnosticCheckDto[];
+  /** True when nothing is blocking dictation. */
+  healthy: boolean;
+}
+
 /** Renderer → main PCM chunk (16 kHz mono after AudioWorklet resample). */
 export interface CapturePcmRequest {
   chunk: Float32Array;
@@ -332,6 +360,7 @@ export interface IpcInvokeMap {
   [IPC.AppPickFile]: { request: AppPickFileRequest; response: AppPickFileResponse };
   [IPC.AppPickFolder]: { request: AppPickFolderRequest; response: AppPickFolderResponse };
   [IPC.AppImportBackup]: { request: AppImportBackupRequest; response: AppImportBackupResponse };
+  [IPC.AppDiagnose]: { request: AppDiagnoseRequest; response: AppDiagnoseResponse };
 }
 
 /** Handler signature for an invoke channel. */
@@ -414,6 +443,8 @@ export interface WhisperflowApi {
     pickFile(request?: AppPickFileRequest): Promise<AppPickFileResponse>;
     pickFolder(request?: AppPickFolderRequest): Promise<AppPickFolderResponse>;
     importBackup(request: AppImportBackupRequest): Promise<AppImportBackupResponse>;
+    /** Setup diagnostics: why dictation might not be working. */
+    diagnose(request?: AppDiagnoseRequest): Promise<AppDiagnoseResponse>;
   };
   updates: {
     /** Update banner status: available / downloaded / error / up-to-date. */

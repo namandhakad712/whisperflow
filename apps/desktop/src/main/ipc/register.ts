@@ -300,6 +300,17 @@ export function registerIpc(deps: {
     // Hold-to-talk availability is reported honestly to the settings UI.
     return { available: hookAvailable(), reason: hookUnavailableReason() };
   });
+  // Setup diagnostics. The pure checks live in the engine; the host supplies
+  // the facts only it can see (hook state, and whether a mic was enumerated —
+  // the renderer reports that, so it is passed in rather than probed here).
+  ipcMain.handle(IPC.AppDiagnose, async (_e, req?: { micAvailable?: boolean; micCount?: number }) => {
+    return engine.diagnose({
+      hookAvailable: hookAvailable(),
+      hookUnavailableReason: hookUnavailableReason() || undefined,
+      micAvailable: req?.micAvailable ?? true,
+      ...(req?.micCount !== undefined ? { micCount: req.micCount } : {}),
+    });
+  });
   ipcMain.handle(IPC.AppHardware, async () => {
     const cpus = os.cpus();
     let gpu = "unknown";

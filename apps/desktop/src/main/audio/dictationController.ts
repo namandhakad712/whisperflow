@@ -166,15 +166,18 @@ export class DictationController {
       this.hideTimer = null;
     }
     this.deps.windows.resizeOverlay(120);
-    // Show the pill the INSTANT the combo registers — before any awaits. The
-    // UIA classification probe can cold-start PowerShell for seconds on first
-    // use, and hold-to-talk users must see the listening pill while they're
-    // still holding, not when classification finishes (was: hold → nothing →
-    // release → pill flashes and dies). Repositioned once config loads below.
+    // Show the pill the INSTANT the combo registers. getConfig() is an
+    // in-memory structuredClone (no I/O), so awaiting it first costs
+    // microseconds — and it means the FIRST placement is already the user's
+    // configured anchor. It used to hardcode "cursor" here and glide to the
+    // real anchor only after the slow UIA/foreground probes (~seconds on a
+    // cold PowerShell), so the pill visibly opened in the wrong place every
+    // time. Position is now decided before anything is shown.
+    const cfg = await this.deps.engine.getConfig().catch(() => null);
+    const anchor = cfg?.general?.overlayPosition ?? "cursor";
     this.broadcast({ state: "listening", recording: false });
-    this.deps.windows.showOverlay(undefined, "cursor");
+    this.deps.windows.showOverlay(undefined, anchor);
     try {
-      const cfg = await this.deps.engine.getConfig().catch(() => null);
       // Feedback chime (instant — getConfig is in-memory, so this still fires
       // before the slow UIA classification probe).
       this.sounds = cfg?.general?.sounds ?? true;
@@ -247,10 +250,12 @@ export class DictationController {
         return;
       }
       this.deps.hotkeys.bindEscape();
-      // The reposition onto the configured anchor GLIDES from wherever the
-      // instant cursor-show left the pill — no more teleport ~1s into the
-      // dictation (the launch glitch, P0).
-      this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor", true);
+      // Already placed at the configured anchor before anything was shown —
+      // only re-assert if the anchor somehow changed mid-start (it can't, but
+      // keeping this cheap guards against a raced settings save).
+      if ((cfg?.general?.overlayPosition ?? "cursor") !== anchor) {
+        this.deps.windows.showOverlay(undefined, cfg?.general?.overlayPosition ?? "cursor", true);
+      }
       this.armRecordingCap(cfg?.audio?.maxRecordingLengthMs ?? 0);
       // Their email-signature eligibility: never add a signature when one is
       // already in the box we're about to type into.

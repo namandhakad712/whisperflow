@@ -73,6 +73,8 @@ const api: WhisperflowApi = {
     pickFile: (request) => ipcRenderer.invoke(IPC.AppPickFile, request ?? {}),
     pickFolder: (request) => ipcRenderer.invoke(IPC.AppPickFolder, request ?? {}),
     importBackup: (request) => ipcRenderer.invoke(IPC.AppImportBackup, request),
+    // Setup diagnostics — what to check when "nothing happens" after speaking.
+    diagnose: (request) => ipcRenderer.invoke(IPC.AppDiagnose, request),
   },
   updates: {
     onStatus: (listener) => subscribe(IPC.UpdateStatus, listener),

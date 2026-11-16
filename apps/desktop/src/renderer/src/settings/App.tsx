@@ -1,26 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
-import {
-  Mic,
-  Volume2,
-  Webhook,
-  UserRound,
-  Cpu,
-  Book,
-  Command,
-  SlidersHorizontal,
-  History,
-  Keyboard,
-  ShieldCheck,
-  Info,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Palette,
-  BarChart3,
-  StickyNote,
-  AppWindow,
-  Layers,
-} from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Palette } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
@@ -39,50 +19,20 @@ import { InsightsTab } from "./tabs/InsightsTab";
 import { ScratchpadTab } from "./tabs/ScratchpadTab";
 import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
+import { DiagnoseTab } from "./tabs/DiagnoseTab";
 import { Onboarding } from "./Onboarding";
+import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
-/** Rail layout mirrors the measured reference hub: 192px rail, 36px items, 6px radius.
- *  Grouped so the five things everyone touches sit apart from the collections and
- *  the system tools — the flat 13-item list read as one wall of options.
- *  Labels match each tab's own page title (and the docs) — one word per screen. */
-const ESSENTIALS = [
-  { id: "general", label: "Dictation", icon: Mic },
-  { id: "audio", label: "Audio", icon: Volume2 },
-  { id: "models", label: "Models", icon: Cpu },
-  { id: "overlay", label: "Overlay", icon: AppWindow },
-  { id: "advanced", label: "Advanced", icon: SlidersHorizontal },
-] as const;
-
-const COLLECTIONS = [
-  { id: "modes", label: "Modes", icon: Layers },
-  { id: "profiles", label: "Profiles", icon: UserRound },
-  { id: "dictionary", label: "Dictionary", icon: Book },
-  { id: "commands", label: "Commands", icon: Command },
-  { id: "hooks", label: "Hooks", icon: Webhook },
-  { id: "history", label: "History", icon: History },
-  { id: "insights", label: "Insights", icon: BarChart3 },
-  { id: "scratchpad", label: "Scratchpad", icon: StickyNote },
-] as const;
-
-const SYSTEM = [
-  { id: "shortcuts", label: "Shortcuts", icon: Keyboard },
-  { id: "privacy", label: "Privacy", icon: ShieldCheck },
-  { id: "about", label: "About", icon: Info },
-] as const;
-
-const RAIL_GROUPS = [
-  { label: "Essentials", items: ESSENTIALS },
-  { label: "Your stuff", items: COLLECTIONS },
-  { label: "System", items: SYSTEM },
-] as const;
-
-type TabId =
-  | (typeof ESSENTIALS)[number]["id"]
-  | (typeof COLLECTIONS)[number]["id"]
-  | (typeof SYSTEM)[number]["id"];
+/**
+ * Settings shell.
+ *
+ * Five pages, each with its own sub-nav. The previous flat sixteen-item rail
+ * read as a wall of options; grouping by intent fixed that without deleting a
+ * single control. `#/advanced`-style routes still work — see nav.ts.
+ */
 
 function currentRoute(): string {
-  return window.location.hash.replace(/^#\/?/, "") || "general";
+  return window.location.hash.replace(/^#\/?/, "");
 }
 
 /** First-run gate. Onboarding's finish/skip writes "wf-onboarded"; nothing
@@ -140,8 +90,8 @@ const SKIN_LABEL: Record<Skin, string> = {
 export function App() {
   // First run starts on onboarding (lazily checked so a completed user is
   // never re-triggered, whatever the hash says); everyone else resumes on
-  // whatever tab the URL points at.
-  const [route, setRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
+  // whatever screen the URL points at.
+  const [rawRoute, setRawRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
   const [collapsed, setCollapsed] = useState(false);
   const [skin, setSkin] = useState<Skin>(() => readSkin());
   const version = useAppVersion();
@@ -150,11 +100,12 @@ export function App() {
   useEffect(() => {
     void loadConfig();
     applySkin(readSkin());
-    const onHash = () => setRoute(currentRoute());
+    const onHash = () => setRawRoute(currentRoute());
     window.addEventListener("hashchange", onHash);
     const unsubNavigate = window.whisperflowExtras.app.onNavigate((r) => {
-      window.location.hash = r.startsWith("/") ? r : `/${r}`;
-      setRoute(r.replace(/^\//, ""));
+      const target = r.replace(/^\//, "");
+      window.location.hash = `/${target}`;
+      setRawRoute(target);
     });
     if (!hasOnboarded()) window.location.hash = "/onboarding";
     return () => {
@@ -163,9 +114,10 @@ export function App() {
     };
   }, [loadConfig]);
 
-  if (route === "onboarding" && !hasOnboarded()) return <Onboarding />;
-  const allTabs: Array<{ id: string }> = RAIL_GROUPS.flatMap((g) => [...g.items]);
-  const tab = (allTabs.find((t) => t.id === route)?.id ?? "general") as TabId;
+  if (rawRoute === "onboarding" && !hasOnboarded()) return <Onboarding />;
+
+  // An empty hash lands on the first screen, not on a blank page.
+  const { page, sub, route } = resolveRoute(rawRoute || DEFAULT_ROUTE);
 
   const cycleSkin = () => {
     const next: Skin = skin === "nocturne" ? "classic" : skin === "classic" ? "dawn" : "nocturne";
@@ -204,7 +156,7 @@ export function App() {
       <UpdateBanner />
 
       <div className="flex min-h-0 flex-1">
-        {/* rail — measured: 192px, items 36px, 6px radius, icon+label */}
+        {/* rail — 192px, items 36px, 6px radius, icon+label */}
         <aside
           className={`flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3 transition-[width] ${
             collapsed ? "w-[68px]" : "w-[216px]"
@@ -216,26 +168,17 @@ export function App() {
               WhisperFlow
             </p>
           )}
-          {RAIL_GROUPS.map((group, gi) => (
-            <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
-              {!collapsed && (
-                <p className="px-3 pb-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-rail-text-dim/70">
-                  {group.label}
-                </p>
-              )}
-              {collapsed && gi > 0 && <div className="mx-3 my-2 border-t border-white/10" />}
-              {group.items.map((item) => (
-                <RailItem
-                  key={item.id}
-                  active={tab === item.id}
-                  collapsed={collapsed}
-                  label={item.label}
-                  href={`#/${item.id}`}
-                >
-                  <item.icon size={17} strokeWidth={1.75} />
-                </RailItem>
-              ))}
-            </div>
+          {PAGES.map((item, i) => (
+            <RailItem
+              key={item.id}
+              active={page.id === item.id}
+              collapsed={collapsed}
+              label={item.label}
+              href={`#/${pageHome(item)}`}
+              first={i === 0}
+            >
+              <item.icon size={17} strokeWidth={1.75} />
+            </RailItem>
           ))}
           <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-rail-text-dim">
             {collapsed ? `v${version}` : <>local-first · apache-2.0<br />v{version} · no telemetry</>}
@@ -244,25 +187,59 @@ export function App() {
 
         <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-bg px-8 py-7">
           <div className="mx-auto min-w-0 max-w-2xl">
-            {tab === "general" && <GeneralTab />}
-            {tab === "shortcuts" && <ShortcutsTab />}
-            {tab === "audio" && <AudioTab />}
-            {tab === "models" && <ModelsTab />}
-            {tab === "overlay" && <OverlayTab />}
-            {tab === "dictionary" && <DictionaryTab />}
-            {tab === "modes" && <ModesTab />}
-            {tab === "commands" && <CommandsTab />}
-            {tab === "hooks" && <HooksTab />}
-            {tab === "profiles" && <ProfilesTab />}
-            {tab === "history" && <HistoryTab />}
-            {tab === "privacy" && <PrivacyTab />}
-            {tab === "advanced" && <AdvancedTab />}
-            {tab === "about" && <AboutTab />}
-            {tab === "insights" && <InsightsTab />}
-            {tab === "scratchpad" && <ScratchpadTab />}
+            <SubNav page={page} active={sub.id} />
+            {sub.id === "general" && <GeneralTab />}
+            {sub.id === "audio" && <AudioTab />}
+            {sub.id === "shortcuts" && <ShortcutsTab />}
+            {sub.id === "overlay" && <OverlayTab />}
+            {sub.id === "models" && <ModelsTab />}
+            {sub.id === "advanced" && <AdvancedTab />}
+            {sub.id === "modes" && <ModesTab />}
+            {sub.id === "profiles" && <ProfilesTab />}
+            {sub.id === "dictionary" && <DictionaryTab />}
+            {sub.id === "commands" && <CommandsTab />}
+            {sub.id === "history" && <HistoryTab />}
+            {sub.id === "insights" && <InsightsTab />}
+            {sub.id === "scratchpad" && <ScratchpadTab />}
+            {sub.id === "diagnose" && <DiagnoseTab />}
+            {sub.id === "hooks" && <HooksTab />}
+            {sub.id === "privacy" && <PrivacyTab />}
+            {sub.id === "about" && <AboutTab />}
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Sub-navigation for one page. Rendered above the tab body, which keeps
+ * owning its own `PageHeader` — one screen per view, unchanged.
+ */
+function SubNav({ page, active }: { page: SettingsPage; active: string }) {
+  return (
+    <div className="mb-5 border-b border-line pb-4">
+      <p className="text-[12px] leading-5 text-ink-dim">{page.hint}</p>
+      <nav
+        className="mt-3 flex flex-wrap items-center gap-1"
+        aria-label={`${page.label} sections`}
+      >
+        {page.subs.map((s) => {
+          const on = s.id === active;
+          return (
+            <a
+              key={s.id}
+              href={`#/${page.id}/${s.id}`}
+              aria-current={on ? "page" : undefined}
+              className={`rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
+                on ? "bg-surface-2 text-ink" : "text-ink-dim hover:text-ink"
+              }`}
+            >
+              {s.label}
+            </a>
+          );
+        })}
+      </nav>
     </div>
   );
 }
@@ -337,17 +314,20 @@ function summarizeReleaseNotes(raw: string): string {
   return firstLine.length > 180 ? `${text.slice(0, 177)}…` : firstLine;
 }
 
-function RailItem({  active,
+function RailItem({
+  active,
   collapsed,
   label,
   href,
   children,
+  first,
 }: {
   active: boolean;
   collapsed: boolean;
   label: string;
   href: string;
   children: React.ReactNode;
+  first?: boolean;
 }) {
   return (
     <a
@@ -356,7 +336,11 @@ function RailItem({  active,
       aria-current={active ? "page" : undefined}
       className={`flex h-9 items-center rounded-md text-[15px] font-[550] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
         collapsed ? "justify-center px-0" : "gap-3 px-3"
-      } ${active ? "bg-rail-active text-rail-text ring-1 ring-inset ring-white/[0.06]" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
+      } ${first ? "" : "mt-1"} ${
+        active
+          ? "bg-rail-active text-rail-text ring-1 ring-inset ring-white/[0.06]"
+          : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"
+      }`}
     >
       {children}
       {!collapsed && <span>{label}</span>}

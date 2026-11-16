@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { createEngine, type DictationResult, type WhisperFlowEngine } from "@whisperflow/engine";
+import { createEngine, diagnose as engineDiagnose, type DictationResult, type WhisperFlowEngine } from "@whisperflow/engine";
+import type { DiagnosticsInput, DiagnosticsReport } from "@whisperflow/engine";
 import type {
   DictationStateEvent,
   HistoryQuery,
@@ -58,6 +59,8 @@ export interface EnginePort {
   testCloudStt(): Promise<{ ok: boolean; message: string }>;
   /** One-token probe of the configured cloud polish endpoint. */
   testCloudPolish(): Promise<{ ok: boolean; message: string }>;
+  /** Raw setup checks; the host fills in the facts it alone can see. */
+  diagnose(input: Omit<DiagnosticsInput, "config" | "models">): Promise<DiagnosticsReport>;
   /** Their "lens": AI-edit the given text with a free-form instruction. */
   transformText(text: string, instruction: string): Promise<string>;
   dispose(): Promise<void>;
@@ -121,6 +124,14 @@ export async function createEnginePort(dirs: EngineDirs): Promise<EnginePort> {
     deleteUnusedModels: () => engine.models.deleteUnused(),
     testCloudStt: () => engine.stt.testCloud(),
     testCloudPolish: () => engine.polish.testCloud(),
+    // The port supplies config + model status; the caller supplies the host
+    // facts (hook, mic). Keeps the pure checks in the engine testable.
+    diagnose: async (input) =>
+      engineDiagnose({
+        ...input,
+        config: await engine.getConfig(),
+        models: await engine.models.status(),
+      }),
     transformText: (text, instruction) => engine.polish.transform(text, instruction),
     dispose: () => engine.dispose(),
   };

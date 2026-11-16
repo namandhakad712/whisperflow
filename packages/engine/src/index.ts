@@ -98,6 +98,9 @@ export interface WhisperFlowEngine {
 
 export { DictationSession, CATALOG };
 export type { DictationResult } from "./orchestrator/DictationSession.js";
+// Setup diagnostics: pure checks the host feeds with facts it already has.
+export { diagnose } from "./diagnostics/diagnose.js";
+export type { DiagnosticCheck, DiagnosticLevel, DiagnosticsInput, DiagnosticsReport } from "./diagnostics/diagnose.js";
 export type { HistoryStore } from "./history/historyStore.js";
 // Post-dictation automation (used by the desktop host on every completed turn).
 export { runHooks } from "./hooks/runHooks.js";

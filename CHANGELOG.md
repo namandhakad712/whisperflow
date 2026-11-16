@@ -2,6 +2,17 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.38] — 2026-11-16
+
+### Added — settings overhaul, health checks, and the end of option-clutter
+- **Settings restructured into five pages**: Dictation, Models, Personalize, Activity, System — each with its own sub-nav. Every one of the 16 previous screens still exists; nothing was deleted, only grouped by intent so the "wall of options" is gone.
+- **Duplicate control removed**: cloud polish was configurable from both Advanced and Models; it now lives only on the Writing style screen.
+- **Health tab (System → Health)**: the answer to "I spoke and nothing happened". Runs setup checks — hotkey, transcription engine, AI polish, microphone, cloud-lock, personal dictionary — and every failing check shows the fix plus a deep-link to the screen that resolves it.
+- **Overlay position fixed**: the pill now opens at your configured anchor on the first frame instead of opening at the cursor then sliding away.
+
+### Changed
+- `apps/desktop/package.json`: bumped to 0.1.38.
+
 ## [0.1.37] — 2026-11-14
 
 ### Added — profiles, spring physics, and cloud-first transcription
