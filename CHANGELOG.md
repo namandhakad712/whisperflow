@@ -2,6 +2,15 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.39] — 2026-11-17
+
+### Added — settings search and tray health
+- **Settings search**: press Ctrl+K (or Cmd+K) anywhere in Settings and type to jump straight to the screen you want — "health", "hook", "scratch", "privacy". Matches show with their page; Enter takes you there instantly.
+- **Tray → Health**: the tray menu now has a Health item that opens Settings directly on System → Health, so "I spoke and nothing happened" is one click away from a diagnosis.
+
+### Changed
+- `apps/desktop/package.json`: bumped to 0.1.39.
+
 ## [0.1.38] — 2026-11-16
 
 ### Added — settings overhaul, health checks, and the end of option-clutter

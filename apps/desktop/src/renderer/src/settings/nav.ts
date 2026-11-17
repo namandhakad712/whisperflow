@@ -147,3 +147,22 @@ export function resolveRoute(raw: string): ResolvedRoute {
 export function pageHome(page: SettingsPage): string {
   return `${page.id}/${page.subs[0].id}`;
 }
+
+/** Flat list of every screen — for search and for "where does this live?" */
+export interface ScreenInfo {
+  route: string;
+  label: string;
+  page: string;
+  pageId: string;
+}
+
+export function allScreens(): ScreenInfo[] {
+  return PAGES.flatMap((p) =>
+    p.subs.map((s) => ({
+      route: `${p.id}/${s.id}`,
+      label: s.label,
+      page: p.label,
+      pageId: p.id,
+    })),
+  );
+}

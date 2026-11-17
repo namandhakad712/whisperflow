@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
-import { PanelLeftClose, PanelLeftOpen, Palette } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Palette, Search } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
@@ -21,7 +21,7 @@ import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { DiagnoseTab } from "./tabs/DiagnoseTab";
 import { Onboarding } from "./Onboarding";
-import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
+import { DEFAULT_ROUTE, PAGES, allScreens, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
 /**
  * Settings shell.
@@ -94,8 +94,21 @@ export function App() {
   const [rawRoute, setRawRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
   const [collapsed, setCollapsed] = useState(false);
   const [skin, setSkin] = useState<Skin>(() => readSkin());
+  const [search, setSearch] = useState("");
   const version = useAppVersion();
   const loadConfig = useSettings((s) => s.loadConfig);
+
+  // Ctrl/⌘+K focuses the search box — the fastest way to reach any screen.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        document.getElementById("wf-settings-search")?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     void loadConfig();
@@ -119,6 +132,15 @@ export function App() {
   // An empty hash lands on the first screen, not on a blank page.
   const { page, sub, route } = resolveRoute(rawRoute || DEFAULT_ROUTE);
 
+  // Search filters the flat screen list; Enter jumps straight there.
+  const screens = allScreens();
+  const q = search.trim().toLowerCase();
+  const matches = q
+    ? screens.filter(
+        (s) => s.label.toLowerCase().includes(q) || s.page.toLowerCase().includes(q) || s.route.includes(q),
+      )
+    : [];
+
   const cycleSkin = () => {
     const next: Skin = skin === "nocturne" ? "classic" : skin === "classic" ? "dawn" : "nocturne";
     setSkin(next);
@@ -139,6 +161,41 @@ export function App() {
             {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
             {!collapsed && <span>Toggle sidebar</span>}
           </button>
+        </div>
+        <div className="relative mx-auto w-full max-w-sm">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
+          <input
+            id="wf-settings-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearch("");
+                (e.target as HTMLInputElement).blur();
+              } else if (e.key === "Enter" && matches.length > 0) {
+                window.location.hash = `/${matches[0]!.route}`;
+                setSearch("");
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            placeholder="Find a setting…  (Ctrl+K)"
+            className="h-8 w-full rounded-full border border-line bg-surface-2/60 pl-9 pr-3 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-dim/60 focus:border-accent/50 focus:ring-2 focus:ring-accent/30"
+          />
+          {q && matches.length > 0 && (
+            <div className="absolute left-0 right-0 top-9 z-20 max-h-64 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
+              {matches.slice(0, 8).map((s) => (
+                <a
+                  key={s.route}
+                  href={`#/${s.route}`}
+                  onClick={() => setSearch("")}
+                  className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[13px] text-ink hover:bg-surface-2"
+                >
+                  <span>{s.label}</span>
+                  <span className="text-[11px] text-ink-dim">{s.page}</span>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button

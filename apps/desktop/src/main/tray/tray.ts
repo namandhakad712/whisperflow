@@ -115,6 +115,7 @@ function menuTemplate(
     { type: "separator" },
     { label: "Settings", click: () => c.openSettings() },
     { label: "History", click: () => c.openSettings("/history") },
+    { label: "Health", click: () => c.openSettings("/system/diagnose") },
     { label: "Model", submenu: modelItems },
     { type: "separator" },
     {
