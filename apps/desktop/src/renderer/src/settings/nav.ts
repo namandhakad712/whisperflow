@@ -89,6 +89,7 @@ export const PAGES: readonly [SettingsPage, ...SettingsPage[]] = [
     subs: [
       { id: "diagnose", label: "Health" },
       { id: "hooks", label: "Hooks" },
+      { id: "experiments", label: "Experiments" },
       { id: "privacy", label: "Privacy" },
       { id: "about", label: "About" },
     ],
@@ -111,6 +112,7 @@ const LEGACY: Record<string, string> = {
   insights: "activity/insights",
   scratchpad: "activity/scratchpad",
   hooks: "system/hooks",
+  experiments: "system/experiments",
   privacy: "system/privacy",
   about: "system/about",
   diagnose: "system/diagnose",

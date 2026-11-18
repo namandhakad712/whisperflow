@@ -10,6 +10,7 @@ import { ModelsTab } from "./tabs/ModelsTab";
 import { DictionaryTab } from "./tabs/DictionaryTab";
 import { CommandsTab } from "./tabs/CommandsTab";
 import { HooksTab } from "./tabs/HooksTab";
+import { ExperimentsTab } from "./tabs/ExperimentsTab";
 import { ProfilesTab } from "./tabs/ProfilesTab";
 import { HistoryTab } from "./tabs/HistoryTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
@@ -260,6 +261,7 @@ export function App() {
             {sub.id === "scratchpad" && <ScratchpadTab />}
             {sub.id === "diagnose" && <DiagnoseTab />}
             {sub.id === "hooks" && <HooksTab />}
+            {sub.id === "experiments" && <ExperimentsTab />}
             {sub.id === "privacy" && <PrivacyTab />}
             {sub.id === "about" && <AboutTab />}
           </div>

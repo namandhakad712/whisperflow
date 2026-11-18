@@ -2,6 +2,23 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.40] — 2026-11-18
+
+### Added — sequential dictation (experiment)
+- **Keep talking while the last sentence is still processing.** With sequential
+  dictation on, a pause no longer ends your turn: the mic stays open, each
+  finished utterance is transcribed and polished on its own, and the text is
+  pasted in order the moment it is ready. A slow AI polish never blocks your
+  next thought.
+- The pill shows how many utterances are already in, with the last one it
+  delivered, so you can see the queue draining while you keep speaking.
+- Turn it on in **Settings → System → Experiments**.
+- The turn ends only when you stop it (hotkey / second press / Escape) — silence
+  never cuts you off in this mode.
+
+### Changed
+- `apps/desktop/package.json`: bumped to 0.1.40.
+
 ## [0.1.39] — 2026-11-17
 
 ### Added — settings search and tray health

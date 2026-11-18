@@ -371,6 +371,10 @@ export function Overlay() {
   const [hovered, setHovered] = useState(false);
   /** The hotkey hint shown on the resting pill hover. */
   const [hotkey, setHotkey] = useState("");
+  /** Sequential mode: finished utterances pasted so far (the "queued" meter). */
+  const [pastedCount, setPastedCount] = useState(0);
+  /** Latest finished utterance text (shown dimmed while the mic stays open). */
+  const [lastPasted, setLastPasted] = useState("");
 
   useEffect(() => {
     void window.whisperflowExtras.system.theme().then((t) => setSystemDark(t.dark));
@@ -469,6 +473,15 @@ export function Overlay() {
       setRecording(Boolean(ev.recording));
       if (ev.recording) startedAtRef.current = Date.now();
       if (ev.state === "idle" || ev.state === "done" || ev.state === "cancelled") startedAtRef.current = null;
+      // Sequential mode: a finished utterance arrives on `appendText` while
+      // still listening — count it and remember its text for the meter.
+      if (ev.appendText) {
+        setPastedCount((n) => n + 1);
+        setLastPasted(ev.appendText);
+      } else if (ev.state !== "listening") {
+        setPastedCount(0);
+        setLastPasted("");
+      }
       // Typing-hold: the user typed mid-dictation. Show it briefly so they know
       // the session is deliberately still live.
       if (ev.typing) {
@@ -639,6 +652,10 @@ export function Overlay() {
               <span className="meta">{hotkey ? `Press ${hotkey} or click to dictate` : "Click to dictate"}</span>
             ) : typing && !recording ? (
               TYPING_DOTS
+            ) : pastedCount > 0 ? (
+              <span className="meta" title={lastPasted} data-sequential="true">
+                {pastedCount} in{lastPasted ? ` · ${lastPasted.slice(0, 24)}${lastPasted.length > 24 ? "…" : ""}` : ""}
+              </span>
             ) : meta ? (
               <span className="meta">{meta}</span>
             ) : null}

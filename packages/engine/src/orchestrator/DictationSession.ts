@@ -96,11 +96,26 @@ export class DictationSession {
    *  turn — repeating it on every silence-separated segment would spam the pill. */
   private engineErrorShown = false;
 
+  /** Sequential mode: the session emits per-utterance finished text (`final`)
+   *  via `onUtterance` while the mic stays open; the turn ends only on an
+   *  explicit stop/cancel. */
+  private readonly sequential: boolean;
+  /** Serializes per-utterance processing (transcribe + polish). */
+  private utteranceQueue: Promise<void> = Promise.resolve();
+  /** Everything already emitted as a finished utterance this turn. */
+  private emittedUtterances: string[] = [];
+
   constructor(private readonly deps: DictationSessionDeps) {
+    this.sequential = deps.config.audio.sequential === true;
     this.vad = new RmsVad({
       sensitivity: deps.config.audio.vad.sensitivity,
       silenceMs: deps.config.audio.vad.silenceMs,
-      autoStopMs: deps.config.audio.vad.autoStopMs ?? 0,
+      // Sequential mode must NEVER end the turn on silence: the point is that
+      // the user keeps dictating while the previous utterance processes. The
+      // auto-end budget would otherwise kill the VAD (autoEnded → feed() dead)
+      // after the first long pause. Segments still close on `silenceMs` as
+      // usual, and the turn ends only on an explicit stop.
+      autoStopMs: this.sequential ? 0 : (deps.config.audio.vad.autoStopMs ?? 0),
       onSpeechStart: () => this.startInterim(),
     });
     this.emit("listening");
@@ -162,7 +177,11 @@ export class DictationSession {
       // The user stopped talking long enough that the turn is over. Hold mode
       // (ptt) ends on key release, not silence — only toggle/command turns
       // auto-end, so holding while thinking never cuts you off.
-      if (this.deps.triggerSource !== "ptt") this.deps.onAutoEnd?.();
+      //
+      // Sequential mode never auto-ends: the point is that the user keeps
+      // dictating while the previous utterance processes. The turn ends only
+      // on an explicit stop (hotkey release / second press / Escape).
+      if (!this.sequential && this.deps.triggerSource !== "ptt") this.deps.onAutoEnd?.();
       return;
     }
     this.enqueueSegment(ev.pcm);
@@ -185,6 +204,23 @@ export class DictationSession {
 
     this.setState("transcribing");
     await this.sttQueue;
+
+    // Sequential mode: every utterance was already delivered as `appendText`
+    // while the mic stayed open. Await the (possibly still-running) per-utterance
+    // queue so the LAST utterance spoken before the stop is also delivered,
+    // then return the accumulated transcript for history.
+    if (this.sequential) {
+      await this.utteranceQueue;
+      const raw = this.raw;
+      const final = offlinePolish(fuzzyCorrect(raw, this.deps.config.dictionary).corrected);
+      return {
+        raw,
+        final,
+        ...(this.deps.config.general.historyEnabled && this.deps.history
+          ? { transcriptId: this.recordHistory(raw, final, this.deps.audioPath)?.id }
+          : {}),
+      };
+    }
 
     const { corrected } = fuzzyCorrect(this.raw, this.deps.config.dictionary);
     const raw = this.raw;
@@ -338,9 +374,82 @@ export class DictationSession {
         this.emit("listening", this.raw, clean);
         return;
       }
+      if (this.sequential) {
+        // Queue the full per-utterance pipeline (transcribe → polish) so a
+        // long polish of utterance 1 never blocks utterance 2's transcribe.
+        // The finished text is emitted as `appendText` for the host to paste.
+        this.utteranceQueue = this.utteranceQueue.then(() =>
+          this.processSequentialUtterance(cleaned),
+        );
+        return;
+      }
       this.raw = this.raw ? `${this.raw} ${cleaned}` : cleaned;
       if (this.state === "listening") this.emit("listening", this.raw);
     }).catch((err) => this.deps.logger?.(`stt segment failed: ${String(err)}`));
+  }
+
+  /** One sequential utterance: dictionary → command → polish → emit `appendText`. */
+  private async processSequentialUtterance(cleaned: string): Promise<void> {
+    // Only `cancelled` gates here — `finished` is set when stop() begins, and
+    // the LAST utterance spoken before the stop must still be delivered
+    // (stop() awaits this queue before returning).
+    if (this.cancelled) return;
+    const config = this.deps.config;
+    // Keep the raw accumulation current — later utterances prompt off it.
+    this.raw = this.raw ? `${this.raw} ${cleaned}` : cleaned;
+    this.emittedUtterances.push(cleaned);
+    const { corrected } = fuzzyCorrect(cleaned, config.dictionary);
+    let final = corrected;
+    const outcome = detectCommand(corrected, config.commands);
+    let action: DictationResult["action"];
+    if (outcome.kind === "matched") {
+      const applied = applyCommand(outcome.match);
+      final = applied.final;
+      action = applied.action;
+    }
+    const rawFormat =
+      config.polish.format === "raw" || config.polish.cleanup === "none";
+    const polish =
+      !rawFormat &&
+      this.deps.polish &&
+      config.polish.provider !== "none" &&
+      config.polish.enabled !== false
+        ? this.deps.polish
+        : null;
+    if (!action && final && polish) {
+      const input: PolishInput = {
+        raw: final,
+        tone: config.polish.tone,
+        modelId: config.polish.modelId,
+        app: this.deps.app,
+        appType: this.deps.appType,
+        isMessaging: this.deps.isMessaging,
+        emailSignature:
+          this.deps.appType === "email" &&
+          config.polish.emailSignature &&
+          !this.deps.skipSignature
+            ? config.polish.emailSignatureText
+            : undefined,
+        language: resolveSttLanguage(config.stt),
+        dictionary: config.dictionary.map((d) => d.term),
+        instructions: config.polish.customInstructions,
+        format: config.polish.format,
+        cleanup: config.polish.cleanup,
+      };
+      try {
+        let text = "";
+        for await (const chunk of polish.polish(input)) text += chunk;
+        if (text.trim()) final = text.trim();
+      } catch (err) {
+        this.deps.logger?.(`polish failed, using offline cleanup: ${String(err)}`);
+        final = offlinePolish(final);
+      }
+      if (config.polish.format === "lowercase") final = final.toLowerCase();
+    } else if (!action && final) {
+      final = offlinePolish(final);
+    }
+    if (this.cancelled) return;
+    if (final) this.emit("listening", this.raw, final);
   }
 
   private setState(next: DictationState): void {

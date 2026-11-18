@@ -135,6 +135,12 @@ export const AudioConfigSchema = z.object({
    * debug override of exactly this cap.
    */
   maxRecordingLengthMs: z.number().int().nonnegative().default(20 * 60_000),
+  /**
+   * Sequential dictation (experiment): while one utterance is being
+   * transcribed and polished, keep the mic open — the next utterance queues
+   * and is processed in order, instead of the turn ending on silence.
+   */
+  sequential: z.boolean().default(false),
 });
 export type AudioConfig = z.infer<typeof AudioConfigSchema>;
 

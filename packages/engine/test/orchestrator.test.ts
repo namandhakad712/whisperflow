@@ -294,4 +294,90 @@ describe("DictationSession", () => {
     const error = events.find((e) => e.state === "error");
     expect(error?.error).toContain("isn't downloaded");
   });
+
+  describe("sequential dictation", () => {
+    /** Deps whose STT returns a distinct line per call and whose polish just
+     *  shouts it, so utterance identity and order are easy to assert. */
+    function sequentialDeps(events: DictationStateEvent[]): DictationSessionDeps {
+      let n = 0;
+      return makeDeps({
+        config: WhisperFlowConfigSchema.parse({
+          audio: { sequential: true, vad: { silenceMs: 300, autoStopMs: 500, livePartial: false } },
+          general: { historyEnabled: true },
+        }),
+        onEvent: (ev) => events.push(ev),
+        stt: {
+          async transcribe() {
+            n++;
+            return `utterance ${n}`;
+          },
+          modelPathFor: () => "/models/fake.bin",
+        },
+        polish: {
+          id: "llama-local",
+          async *polish(input) {
+            yield input.raw.toUpperCase();
+          },
+          async available() {
+            return true;
+          },
+        },
+      });
+    }
+
+    it("delivers every utterance in order without ending the turn on silence", async () => {
+      const events: DictationStateEvent[] = [];
+      const deps = sequentialDeps(events);
+      let autoEnded = 0;
+      deps.onAutoEnd = () => autoEnded++;
+
+      const session = new DictationSession(deps);
+      // Calibration, then the first utterance.
+      for (let i = 0; i < 12; i++) session.feed(silenceFrame());
+      for (let i = 0; i < 8; i++) session.feed(speechFrame());
+      for (let i = 0; i < 8; i++) session.feed(silenceFrame()); // closes utterance 1
+      // A pause far past autoStopMs (500 ms): sequential mode must NOT end the
+      // turn here — that is the whole point of the mode.
+      for (let i = 0; i < 30; i++) session.feed(silenceFrame());
+      // Second utterance, spoken while the first is still being polished.
+      for (let i = 0; i < 8; i++) session.feed(speechFrame());
+      for (let i = 0; i < 8; i++) session.feed(silenceFrame()); // closes utterance 2
+
+      expect(autoEnded).toBe(0);
+      // The mic never closed: every event so far is still "listening".
+      expect(events.every((e) => e.state === "listening")).toBe(true);
+
+      await session.stop();
+
+      const delivered = events.filter((e) => e.appendText).map((e) => e.appendText);
+      expect(delivered).toEqual(["UTTERANCE 1", "UTTERANCE 2"]);
+    });
+
+    it("stop() waits for an utterance still in flight instead of dropping it", async () => {
+      const events: DictationStateEvent[] = [];
+      const deps = sequentialDeps(events);
+      deps.polish = {
+        id: "llama-local",
+        async *polish(input) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          yield input.raw.toUpperCase();
+        },
+        async available() {
+          return true;
+        },
+      };
+
+      const session = new DictationSession(deps);
+      for (let i = 0; i < 12; i++) session.feed(silenceFrame());
+      for (let i = 0; i < 8; i++) session.feed(speechFrame());
+      for (let i = 0; i < 8; i++) session.feed(silenceFrame());
+
+      // Stop immediately — the utterance is mid-polish.
+      const result = await session.stop();
+
+      const delivered = events.filter((e) => e.appendText).map((e) => e.appendText);
+      expect(delivered).toEqual(["UTTERANCE 1"]);
+      expect(result.raw).toBe("utterance 1");
+    });
+  });
 });
