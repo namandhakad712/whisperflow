@@ -14,7 +14,7 @@ import type { Rectangle } from "electron";
  */
 export type OverlayAnchor = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom" | "free";
 
-/** Inset used by the corner anchors (matches the reference app: 14 px). */
+/** Inset used by the corner anchors (authored: 14 px). */
 export const ANCHOR_INSET = 14;
 
 export interface WorkAreaLike {

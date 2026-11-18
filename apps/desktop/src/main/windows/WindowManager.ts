@@ -153,7 +153,7 @@ export class WindowManager {
   private animateTimer: ReturnType<typeof setInterval> | null = null;
 
   /**
-   * Places the overlay. Anchor semantics replicated from the reference app:
+   * Places the overlay. Anchor semantics replicated from the spec:
    * everything is clamped inside the target display's *work area* (so it never
    * hides under the taskbar), the target display is the one nearest the anchor
    * point, and corner anchors are re-applied when monitors are added/removed.

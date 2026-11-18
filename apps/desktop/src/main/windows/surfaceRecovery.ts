@@ -1,5 +1,5 @@
 /**
- * Unresponsive-window recovery — the port of the reference app's StatusSurface
+ * Unresponsive-window recovery — the StatusSurface
  * ladder (report 02): when a surface's renderer goes unresponsive, escalate
  * through three repairs with exponential backoff, and never restart a fix
  * while a dictation is mid-flight.

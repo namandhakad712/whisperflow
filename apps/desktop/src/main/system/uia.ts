@@ -1,10 +1,10 @@
 /**
  * Focused-element inspection via Windows UI Automation — the port of the
- * reference app's `GetTextBoxInfo` helper request:
+ * spec'd `GetTextBoxInfo` helper request:
  *   `{ accessibilityIsFunctioning, beforeText, afterText, selectedText,
  *      contents, isEditable, couldNotGetTextBoxInfo }`
  * and, when the focused element is a browser document, its `ValuePattern` is
- * the page URL — which also gives us the reference app's `GetActiveAppInfo`
+ * the page URL — which also gives us the spec `GetActiveAppInfo`
  * url field without a native helper.
  *
  * Read-only for the other process: UIA property reads are not blocked by
@@ -13,7 +13,7 @@
  *
  * The probe runs in ONE long-lived PowerShell child: `Add-Type
  * -AssemblyName UIAutomationClient` costs seconds cold, so per-call spawning
- * makes every observation poll slow. The reference app keeps its helper
+ * makes every observation poll slow. Our helper is kept
  * resident for exactly the same reason.
  */
 import { spawn, type ChildProcessByStdio } from "node:child_process";

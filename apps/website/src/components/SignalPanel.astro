@@ -1,0 +1,24 @@
+---
+/**
+ * SignalPanel — the instrument panel card of the Signal Standard.
+ * Header strip with mono label + status LED; body slot.
+ */
+interface Props {
+  label: string;
+  led?: "live" | "busy" | "off";
+  breathe?: boolean;
+  meta?: string;
+  class?: string;
+}
+const { label, led = "off", breathe = false, meta, class: className = "" } = Astro.props;
+---
+<div class:list={["panel", className]}>
+  <div class="panel-head">
+    <span class="flex items-center gap-2.5">
+      <span class="led" data-on={led} class:list={breathe ? ["led-breathe"] : []} aria-hidden="true"></span>
+      <span class="mono-label text-ink-dim">{label}</span>
+    </span>
+    {meta && <span class="font-mono text-[11px] text-ink-faint">{meta}</span>}
+  </div>
+  <slot />
+</div>

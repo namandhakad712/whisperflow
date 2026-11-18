@@ -1,114 +1,83 @@
 @import "tailwindcss";
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/inter";
+
+/* ============================================================
+   THE SIGNAL STANDARD — WhisperFlow desktop tokens
+   "Phosphor Lab". Authored 2026-11. The copied "classic" skin
+   and every measured-from-reference value were removed on
+   purpose — see INSPIRATION.md / MOTION.md at the repo root.
+   ============================================================ */
 
 @theme {
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
-  /* NOCTURNE */
-  --color-bg: #050505;
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-2: rgba(255, 255, 255, 0.06);
-  --color-line: rgba(245, 245, 247, 0.1);
-  --color-accent: #2952e3;
-  --color-accent-strong: #4c6fff;
-  --color-ink: #f5f5f7;
-  --color-ink-dim: rgba(245, 245, 247, 0.62);
-  --color-forest: #2952e3;
-  --color-coral: #8fb0ff;
+  /* LAB — dark, default */
+  --color-bg: #0A0B0D;
+  --color-paper: #111318;
+  --color-paper-2: #16191F;
+  --color-ink: #EDEBE4;
+  --color-ink-dim: rgba(237, 235, 228, 0.58);
+  --color-ink-faint: rgba(237, 235, 228, 0.34);
+  --color-line: rgba(237, 235, 228, 0.14);
+  --color-line-soft: rgba(237, 235, 228, 0.08);
 
-  /* rail + pill (nocturne defaults; classic overrides below) */
-  --color-rail: rgba(255, 255, 255, 0.02);
-  --color-rail-item: rgba(255, 255, 255, 0.05);
-  --color-rail-active: rgba(41, 82, 227, 0.2);
-  --color-rail-text: #f5f5f7;
-  --color-rail-text-dim: rgba(245, 245, 247, 0.55);
-  --color-pill: rgba(255, 255, 255, 0.06);
+  /* THE signal color — scarce on purpose */
+  --color-phosphor: #5CE1A9;
+  --color-phosphor-hot: #8CFFC7;
+  --color-phosphor-deep: #2E6B57;
+  --color-amber: #E8B84B;
+  --color-violet: #8F7BE8;
+  --color-coral: #E86A5E;
+
+  /* rail + pill (Lab defaults; Daylight below) */
+  --color-rail: #0D0F13;
+  --color-rail-item: rgba(237, 235, 228, 0.05);
+  --color-rail-active: rgba(92, 225, 169, 0.1);
+  --color-rail-text: #EDEBE4;
+  --color-rail-text-dim: rgba(237, 235, 228, 0.55);
+  --color-pill: #16191F;
+
+  /* legacy aliases keep old classes working */
+  --color-surface: #111318;
+  --color-surface-2: #16191F;
+  --color-accent: #5CE1A9;
+  --color-accent-strong: #8CFFC7;
+  --color-ink-dim: rgba(237, 235, 228, 0.58);
 }
 
-/* NOCTURNE DAWN — light variant (all tokens, incl. rail/pill — they were invisible before) */
+/* DAYLIGHT — light variant, same design at sunrise */
 body.light {
-  --color-bg: #f7f7fa;
-  --color-surface: #ffffff;
-  --color-surface-2: #f1f2f6;
-  --color-line: rgba(12, 13, 18, 0.1);
-  --color-ink: #0c0d12;
-  --color-ink-dim: rgba(12, 13, 18, 0.62);
-  --color-rail: #ffffff;
-  --color-rail-item: rgba(12, 13, 18, 0.05);
-  --color-rail-active: rgba(41, 82, 227, 0.12);
-  --color-rail-text: #0c0d12;
-  --color-rail-text-dim: rgba(12, 13, 18, 0.55);
-  --color-pill: #ffffff;
-}
+  --color-bg: #F4F2EC;
+  --color-paper: #FFFFFF;
+  --color-paper-2: #ECE9E0;
+  --color-ink: #16181D;
+  --color-ink-dim: rgba(22, 24, 29, 0.62);
+  --color-ink-faint: rgba(22, 24, 29, 0.38);
+  --color-line: rgba(22, 24, 29, 0.14);
+  --color-line-soft: rgba(22, 24, 29, 0.08);
 
-/* ================= CLASSIC — measured 1:1 from the reference app =================
-   Dark hub: #141414 content · #1A1A1A cards r24 + layered shadows · #1C1C1C rail
-   cream #E9E8E1 text · #30302F ink buttons · 0.15s eased transitions */
-html[data-theme="classic"] {
-  --color-bg: #141414;
-  --color-surface: #1a1a1a;
-  --color-surface-2: #262626;
-  --color-line: rgba(233, 232, 225, 0.09);
-  --color-ink: #e9e8e1;
-  --color-ink-dim: rgba(233, 232, 225, 0.62);
-  --color-accent: #30302f;
-  --color-accent-strong: #3a3a38;
-  --color-forest: #30302f;
-  --color-coral: #d4704c;
-  --color-rail: #1c1c1c;
-  --color-rail-item: #202020;
-  --color-rail-active: #30302f;
-  --color-rail-text: #e9e8e1;
-  --color-rail-text-dim: rgba(233, 232, 225, 0.55);
-  --color-pill: #e9e8e1;
-}
-/* measured card physics: r24, #1A1A1A, layered shadow */
-html[data-theme="classic"] .card {
-  border-radius: 24px;
-  background: #1a1a1a;
-  border: 0;
-  box-shadow:
-    0 4px 8px -2px rgba(0, 0, 0, 0.45),
-    0 1px 3px 0 rgba(0, 0, 0, 0.3);
-}
-html[data-theme="classic"] .card > * {
-  transition: all 0.2s ease;
-}
-/* measured motion: 0.15s eased background transitions everywhere */
-html[data-theme="classic"] button,
-html[data-theme="classic"] a,
-html[data-theme="classic"] input,
-html[data-theme="classic"] select {
-  transition: background-color 0.15s cubic-bezier(0.2, 0.6, 0.35, 1), color 0.15s ease, border-color 0.15s ease;
-}
-/* top-bar pills: cream bg + ink text on the dark hub */
-html[data-theme="classic"] .bg-pill {
-  background: #e9e8e1 !important;
-  color: #1a1a1a !important;
-}
-html[data-theme="classic"] .bg-accent {
-  background: #30302f;
-  color: #e9e8e1;
-}
-html[data-theme="classic"] .seg button.on {
-  background: #30302f;
-  color: #e9e8e1;
-}
-html[data-theme="classic"] body.light {
-  /* Classic is already light; dawn vars stay consistent */
-  --color-bg: #ffffff;
-}
-html[data-theme="classic"] .font-display {
-  font-family: "Figtree Variable", "Figtree", ui-sans-serif, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-html[data-theme="classic"] ::selection {
-  background: rgba(48, 48, 47, 0.18);
-  color: #1a1a1a;
+  --color-phosphor: #0E8A62;
+  --color-phosphor-hot: #066748;
+  --color-phosphor-deep: #9CC7B4;
+  --color-amber: #B07C1F;
+  --color-violet: #5B49B8;
+  --color-coral: #C23A2E;
+
+  --color-rail: #ECE9E0;
+  --color-rail-item: rgba(22, 24, 29, 0.05);
+  --color-rail-active: rgba(14, 138, 98, 0.12);
+  --color-rail-text: #16181D;
+  --color-rail-text-dim: rgba(22, 24, 29, 0.55);
+  --color-pill: #FFFFFF;
+
+  --color-surface: #FFFFFF;
+  --color-surface-2: #ECE9E0;
+  --color-accent: #0E8A62;
+  --color-accent-strong: #066748;
 }
 
 html,
@@ -122,6 +91,7 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -130,20 +100,68 @@ body.overlay-body {
 }
 
 .font-display {
-  font-family: "Instrument Serif", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* the /// section marker — our signature, same as the website */
+.sec-mark {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-phosphor);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.sec-mark::before {
+  content: "///";
+  letter-spacing: 0.05em;
+  color: var(--color-ink-faint);
+}
+
+/* status LED — 2px dot, instrument language */
+.led {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-ink-faint);
+  flex: none;
+}
+.led[data-on="live"] {
+  background: var(--color-phosphor);
+  box-shadow: 0 0 8px rgba(92, 225, 169, 0.6);
+}
+.led[data-on="busy"] {
+  background: var(--color-amber);
+  box-shadow: 0 0 8px rgba(232, 184, 75, 0.55);
+}
+.led[data-on="error"] {
+  background: var(--color-coral);
+  box-shadow: 0 0 8px rgba(232, 106, 94, 0.55);
+}
+@keyframes led-breathe {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+.led-breathe {
+  animation: led-breathe 3.2s ease-in-out infinite;
 }
 
 ::selection {
-  background: rgba(41, 82, 227, 0.4);
-  color: #fff;
+  background: rgba(92, 225, 169, 0.28);
+  color: var(--color-ink);
+}
+body.light ::selection {
+  background: rgba(14, 138, 98, 0.22);
 }
 
-/* One focus ring everywhere: accent halo, never the browser default.
-   Keyboard-visible only, so mouse clicks stay clean. */
+/* One focus ring everywhere: phosphor halo, keyboard-visible only. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-phosphor);
   outline-offset: 2px;
 }
 
@@ -158,6 +176,24 @@ body.overlay-body {
 *::-webkit-scrollbar-thumb {
   background: var(--color-line);
   border-radius: 4px;
+}
+
+/* card → instrument panel (same geometry as the website .panel) */
+.card {
+  position: relative;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+body.light .card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(22, 24, 29, 0.05);
+}
+
+/* seg control accent (settings segmented pickers) */
+.seg button.on {
+  background: var(--color-paper-2);
+  color: var(--color-phosphor);
 }
 
 @keyframes wave-pulse {

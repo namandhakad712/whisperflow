@@ -1,44 +1,76 @@
 /**
- * Lens window: "AI-edit the selected text". A small command bar that takes a
- * free-form instruction ("make it shorter", "translate to French", "fix the
- * tone"), runs the active polish engine, and pastes the result back over the
- * user's selection. Their `lens` action (default Ctrl+Win+Alt).
+ * Lens window: "AI-edit the selected text". Signal Standard edition — the
+ * instrument readout: mono input, phosphor caret, LED status at left,
+ * violet accents while the LLM works. All values authored — see MOTION.md.
  */
 import { useEffect, useRef, useState } from "react";
 
 const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; background: transparent; overflow: hidden;
-  font-family: "Figtree", "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  font-family: "Inter", "Space Grotesk", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 .zone { position: absolute; inset: 0; display: flex; align-items: center; }
 .card {
   width: 100%;
   height: 100%;
-  border-radius: 16px;
-  background: #1f1f1f;
-  border: 1.5px solid #30302f;
+  border-radius: 14px;
+  background: rgba(17, 19, 24, 0.94);
+  border: 1px solid rgba(237, 235, 228, 0.16);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  gap: 10px;
+  padding: 0 14px;
 }
-.count { flex: none; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; }
-.dot { flex: none; width: 6px; height: 6px; border-radius: 2px; background: #878683; }
+/* the LED: idle → live (selected) → busy (violet, LLM working) */
+.led {
+  flex: none; width: 7px; height: 7px; border-radius: 999px;
+  background: rgba(237, 235, 228, 0.3);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.led[data-on="live"] { background: #5CE1A9; box-shadow: 0 0 7px rgba(92, 225, 169, 0.75); }
+.led[data-on="busy"] { background: #8F7BE8; box-shadow: 0 0 7px rgba(143, 123, 232, 0.75); animation: led-pulse 1.2s ease-in-out infinite; }
+@keyframes led-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .led[data-on="busy"] { animation: none; } }
+
+.count {
+  flex: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; line-height: 18px;
+  color: rgba(237, 235, 228, 0.5);
+  white-space: nowrap;
+}
 input {
   flex: 1;
   min-width: 0;
   background: transparent;
   border: none;
   outline: none;
-  color: #fcfcfb;
-  font-size: 15px;
+  color: #EDEBE4;
+  caret-color: #5CE1A9;
+  font-size: 14.5px;
   line-height: 20px;
   font-weight: 500;
   font-family: inherit;
 }
-input::placeholder { color: #71716e; font-weight: 400; }
-.hint { flex: none; font-size: 11px; color: #5b5b59; white-space: nowrap; }
-.error { flex: 1; font-size: 13px; color: #f87171; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+input::placeholder { color: rgba(237, 235, 228, 0.4); font-weight: 400; }
+.hint {
+  flex: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  color: rgba(237, 235, 228, 0.35);
+  white-space: nowrap;
+}
+.error {
+  flex: 1;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: #E86A5E;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 `;
 
 interface LensTextEvent {
@@ -83,26 +115,28 @@ export function Lens() {
       });
   };
 
+  const ledState = error ? "error" : working ? "busy" : count !== null && count > 0 ? "live" : "off";
+
   return (
     <>
       <style>{CSS}</style>
       <div className="zone">
         <div className="card">
           {error ? (
-            <p className="error">{error}</p>
+            <p className="error">[!] {error}</p>
           ) : (
             <>
-              <span className="dot" />
+              <span className="led" data-on={ledState} aria-hidden="true" />
               {count !== null && count > 0 && <span className="count">{count} words</span>}
-              {count === 0 && <span className="count" style={{ color: "#f87171" }}>nothing selected</span>}
+              {count === 0 && <span className="count" style={{ color: "#E86A5E" }}>nothing selected</span>}
               <input
                 ref={inputRef}
                 placeholder={
                   count === null
-                    ? "Select some text, then press the lens hotkey"
+                    ? "select some text, then press the lens hotkey"
                     : count === 0
-                      ? "Highlight the text to edit, then press the hotkey again"
-                      : "Ask AI — 'make it shorter', 'translate', 'fix tone'…"
+                      ? "highlight the text to edit, then press the hotkey again"
+                      : "ask — 'make it shorter', 'translate', 'fix tone'…"
                 }
                 disabled={working}
                 onKeyDown={(e) => {

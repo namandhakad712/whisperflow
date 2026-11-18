@@ -1,0 +1,54 @@
+name: Origin check
+
+# The Signal Standard's anti-copy gate: fails if retired borrowed values
+# (the pre-redesign measured-from-reference palette/geometry) reappear.
+# See INSPIRATION.md before changing this list.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  origin:
+    name: No borrowed values
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grep for retired origin markers
+        run: |
+          set -e
+          # The old "Classic" theme palette (measured from another product's
+          # compiled CSS) and its rail/pill companions.
+          PATTERNS=(
+            '#1a1a1a'
+            '#1c1c1c'
+            '#141414'
+            '#30302f'
+            '#e9e8e1'
+            '#fcfcfb'
+            '#10b981'
+            '#71716e'
+          )
+          FAIL=0
+          for p in "${PATTERNS[@]}"; do
+            # -I skips binaries; docs/ledger may mention them only in MOTION/INSPIRATION
+            hits=$(grep -rIn --exclude-dir=node_modules --exclude-dir=.git \
+              --exclude="INSPIRATION.md" --exclude="origin-check.yml" \
+              "$p" apps packages 2>/dev/null || true)
+            if [ -n "$hits" ]; then
+              echo "::error::Retired borrowed value $p found:"
+              echo "$hits"
+              FAIL=1
+            fi
+          done
+          # The old comments that admitted measurement from a reference app.
+          ref_hits=$(grep -rIn --exclude-dir=node_modules --exclude-dir=.git \
+            -e "their typing indicator" -e "their exact" -e "reference app" -e "rebuilt 1:1" \
+            apps packages 2>/dev/null || true)
+          if [ -n "$ref_hits" ]; then
+            echo "::error::Reference-app lineage comments found:"
+            echo "$ref_hits"
+            FAIL=1
+          fi
+          exit $FAIL

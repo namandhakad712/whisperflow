@@ -1,19 +1,19 @@
 import { useState, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 
+/**
+ * Signal Standard primitives.
+ * Instrument-panel cards, phosphor accents, LED states, mono metadata.
+ * Every value authored for WhisperFlow — see MOTION.md.
+ */
+
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      className={`rounded-2xl border border-line bg-surface/60 p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.35)] ${className}`}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`card p-5 ${className}`}>{children}</div>;
 }
 
 /**
- * A card with a titled header — the consistent way to name a group of rows.
- * One short hint line max; anything longer belongs in the row hints.
+ * An instrument panel — the consistent way to name a group of rows.
+ * Header strip with mono label + status LED; one short hint line max.
  */
 export function SettingGroup({
   title,
@@ -21,19 +21,28 @@ export function SettingGroup({
   actions,
   children,
   className = "",
+  led = "off",
 }: {
   title: string;
   hint?: string;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  led?: "live" | "busy" | "off";
 }) {
   return (
     <Card className={className}>
-      <div className="mb-1 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold">{title}</h3>
-          {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
+      <div className="mb-1 flex items-start justify-between gap-3 border-b border-line-soft pb-3">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <span
+            className={`led mt-1.5 ${led === "live" ? "led-breathe" : ""}`}
+            data-on={led}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <h3 className="font-mono text-[13px] font-medium uppercase tracking-[0.06em]">{title}</h3>
+            {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
+          </div>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
@@ -62,12 +71,12 @@ export function Disclosure({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={`rounded-2xl border border-line bg-surface/60 ${className}`}>
+    <div className={`card ${className}`}>
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-surface-2/40"
+        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-paper-2/40"
       >
         <ChevronRight
           size={15}
@@ -76,13 +85,11 @@ export function Disclosure({
           className={`shrink-0 text-ink-dim transition-transform ${open ? "rotate-90" : ""}`}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{title}</p>
+          <p className="font-mono text-[13px] font-medium">{title}</p>
           {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
         </div>
       </button>
-      {open && (
-        <div className="border-t border-line/60 px-5 pb-4 pt-3">{children}</div>
-      )}
+      {open && <div className="border-t border-line-soft px-5 pb-4 pt-3">{children}</div>}
     </div>
   );
 }
@@ -90,7 +97,7 @@ export function Disclosure({
 export function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="mb-5">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="font-display text-lg">{title}</h2>
       {hint && <p className="mt-1 text-sm text-ink-dim">{hint}</p>}
     </div>
   );
@@ -98,7 +105,7 @@ export function SectionTitle({ title, hint }: { title: string; hint?: string }) 
 
 export function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-6 border-b border-line/60 py-3.5 last:border-0">
+    <div className="flex items-center justify-between gap-6 border-b border-line-soft py-3.5 last:border-0">
       <div className="min-w-0">
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
@@ -109,9 +116,9 @@ export function Row({ label, hint, children }: { label: string; hint?: string; c
 }
 
 /**
- * The boolean control — an animated toggle switch, the only thing that should
- * ever appear at the right edge of a Row. Track shrinks the knob when off so
- * the state reads at a glance, even at a 44px glance.
+ * The boolean control — a phosphor signal switch. The track glows while on
+ * (live signal), dims to a well while off. The only thing that should ever
+ * appear at the right edge of a Row.
  */
 export function Toggle({
   checked,
@@ -133,21 +140,24 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-40 ${
-        checked ? "bg-accent" : "bg-ink/15 ring-1 ring-inset ring-white/[0.06]"
+        checked
+          ? "bg-phosphor/25 shadow-[inset_0_0_8px_rgba(92,225,169,0.25)]"
+          : "bg-ink/15 ring-1 ring-inset ring-line"
       }`}
     >
-      {/* knob: explicit left + translate so it can never escape the track; white-on-accent
-          stays legible on every theme (blue Nocturne, ink Classic, light Dawn) */}
+      {/* knob: phosphor when live (carries the glow), paper when off */}
       <span
-        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow ring-1 ring-black/10 transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
-          checked ? "translate-x-[20px] scale-[0.92]" : "translate-x-0 scale-100"
+        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          checked
+            ? "translate-x-[20px] scale-[0.92] bg-phosphor shadow-[0_0_10px_rgba(92,225,169,0.8)]"
+            : "translate-x-0 scale-100 bg-paper-2 ring-1 ring-black/20"
         }`}
       />
     </button>
   );
 }
 
-/** Canonical name for the boolean control — same premium switch. */
+/** Canonical name for the boolean control — same signal switch. */
 export const Switch = Toggle;
 
 export function Button({
@@ -165,16 +175,16 @@ export function Button({
 }) {
   const styles =
     variant === "primary"
-      ? "bg-accent text-bg shadow-[0_1px_2px_rgba(0,0,0,0.2)] hover:bg-accent-strong"
+      ? "bg-phosphor font-mono text-[#07120D] shadow-[0_0_18px_rgba(92,225,169,0.15)] hover:bg-phosphor-hot hover:shadow-[0_0_28px_rgba(92,225,169,0.3)]"
       : variant === "danger"
-        ? "border border-red-500/40 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
-        : "border border-line bg-surface-2 text-ink hover:border-accent/50";
+        ? "border border-coral/40 bg-coral/5 font-mono text-coral hover:bg-coral/10 hover:border-coral/60"
+        : "border border-line bg-paper-2 font-mono text-ink hover:border-phosphor/50 hover:text-phosphor";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-40 ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 focus-visible:ring-offset-1 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-40 ${styles} ${className}`}
     >
       {children}
     </button>
@@ -203,14 +213,14 @@ export function TextInput({
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={onKeyDown}
-      className={`w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-ink-dim/60 focus:border-accent/60 focus:ring-2 focus:ring-accent/25 ${className}`}
+      className={`w-full rounded-lg border border-line bg-paper-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-ink-dim/60 focus:border-phosphor/60 focus:ring-2 focus:ring-phosphor/20 ${className}`}
     />
   );
 }
 
 /**
- * Mutually-exclusive option picker — the control for "pick exactly one of
- * these". The selected segment mirrors PageHeader's accent pill.
+ * Mutually-exclusive option picker. The selected segment lights phosphor
+ * (the live path); the rest wait in mono grey.
  */
 export function Segmented<T extends string>({
   value,
@@ -222,7 +232,7 @@ export function Segmented<T extends string>({
   options: Array<{ value: T; label: string; disabled?: boolean }>;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group">
+    <div className="inline-flex rounded-lg border border-line bg-paper-2 p-0.5" role="group">
       {options.map((o) => (
         <button
           key={o.value}
@@ -230,8 +240,8 @@ export function Segmented<T extends string>({
           aria-pressed={o.value === value}
           disabled={o.disabled}
           onClick={() => onChange(o.value)}
-          className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40 ${
-            o.value === value ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
+          className={`rounded-md px-3.5 py-1.5 font-mono text-[12px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 disabled:cursor-not-allowed disabled:opacity-40 ${
+            o.value === value ? "bg-bg text-phosphor shadow-[inset_0_0_0_1px_rgba(92,225,169,0.3)]" : "text-ink-dim hover:text-ink"
           }`}
         >
           {o.label}
@@ -254,7 +264,7 @@ export function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/25"
+      className="rounded-lg border border-line bg-paper-2 px-3 py-2 font-mono text-[13px] outline-none transition-colors focus:border-phosphor/60 focus:ring-2 focus:ring-phosphor/20"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
@@ -267,8 +277,10 @@ export function Select({
 
 export function EmptyState({ icon, title, body }: { icon: string; title: string; body?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line py-14 text-center">
-      <span className="text-3xl">{icon}</span>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line py-14 text-center">
+      <span className="font-mono text-2xl text-phosphor/70" aria-hidden="true">
+        {icon}
+      </span>
       <p className="mt-3 text-sm font-medium">{title}</p>
       {body && <p className="mt-1 max-w-sm text-xs leading-5 text-ink-dim">{body}</p>}
     </div>
@@ -278,21 +290,22 @@ export function EmptyState({ icon, title, body }: { icon: string; title: string;
 export function Spinner({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <span
-      className={`inline-block animate-spin rounded-full border-2 border-line border-t-accent ${className}`}
+      className={`inline-block animate-spin rounded-full border-2 border-line border-t-phosphor ${className}`}
       aria-label="loading"
     />
   );
 }
 
+/** Mono kbd chip — inset well. */
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded-md border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-ink-dim">
+    <kbd className="rounded border border-line bg-paper-2 px-1.5 py-0.5 font-mono text-[11px] text-ink-dim shadow-[inset_0_1px_2px_rgba(0,0,0,0.25)]">
       {children}
     </kbd>
   );
 }
 
-/** Reference hub page header: H1 + action buttons, optional segmented filter + tagline. */
+/** Settings page header: display H1 + actions, optional segmented filter + tagline. */
 export function PageHeader({
   title,
   actions,
@@ -317,14 +330,14 @@ export function PageHeader({
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
       {segmented && (
-        <div className="mt-4 inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
+        <div className="mt-4 inline-flex rounded-lg border border-line bg-paper-2 p-0.5">
           {segmented.map((seg) => (
             <button
               key={seg}
               type="button"
               onClick={() => onSegChange?.(seg)}
-              className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
-                seg === activeSeg ? "bg-accent text-accent-ink" : "text-ink-dim hover:text-ink"
+              className={`rounded-md px-3.5 py-1.5 font-mono text-[12px] transition-colors ${
+                seg === activeSeg ? "bg-bg text-phosphor" : "text-ink-dim hover:text-ink"
               }`}
             >
               {seg}

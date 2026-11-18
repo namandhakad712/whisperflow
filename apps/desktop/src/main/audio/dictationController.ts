@@ -70,8 +70,7 @@ export class DictationController {
   }
 
   /** Hard cap on one dictation: 0 disables. Prevents a stuck hotkey from
-   *  recording for hours (the reference app ships the same guard, default 20
-   *  minutes, warning one minute before the cap). */
+   *  recording for hours (default cap 20 minutes, warning one minute before). */
   private recordingCap: NodeJS.Timeout | null = null;
   /** Pending overlay collapse — cleared whenever a new dictation starts. */
   private hideTimer: NodeJS.Timeout | null = null;
@@ -200,7 +199,7 @@ export class DictationController {
       }
 
       // Attribute the dictation to the app that will receive it (per-app stats,
-      // history filters) — the reference app stores this too. The type drives
+      // history filters) — the type drives
       // per-app formatting: signature in email apps, no trailing period in
       // chat, cleanup skipped in AI apps.
       const fg = await getForegroundApp().catch((e) => {
@@ -230,7 +229,7 @@ export class DictationController {
           ...(fg ? { triggerSource: cfg?.hotkey?.mode === "hold" ? "ptt" : "popo" } : {}),
           ...(this.audioPath ? { audioPath: this.audioPath } : {}),
           // The session ends itself when the user falls silent (toggle mode) —
-          // the reference behavior, so the pill collapses without a second
+          // the spec behavior, so the pill collapses without a second
           // press. Hold mode never fires this (release ends the turn).
           onAutoEnd: () => {
             log("dictation: silence ended the turn");

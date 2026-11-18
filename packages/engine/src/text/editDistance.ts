@@ -1,5 +1,5 @@
 /**
- * Normalized Levenshtein distance — the reference app's `editDistanceToDictated`
+ * Normalized Levenshtein distance — the spec `editDistanceToDictated`
  * (migration 20260717): "normalized Levenshtein distance from the last trusted
  * live-region read", i.e. the distance between the dictated text and the
  * anchored dictation region at the last read, **relative to the dictated

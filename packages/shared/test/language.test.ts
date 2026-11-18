@@ -13,7 +13,7 @@ const stt = (over: Partial<WhisperFlowConfig["stt"]> = {}) =>
     ...over,
   }) as WhisperFlowConfig["stt"];
 
-describe("resolveSttLanguage (the reference app's language model)", () => {
+describe("resolveSttLanguage", () => {
   it("auto-detects by default, even with languages selected", () => {
     expect(resolveSttLanguage(stt())).toBe("auto");
     expect(resolveSttLanguage(stt({ languages: ["en", "es"] }))).toBe("auto");

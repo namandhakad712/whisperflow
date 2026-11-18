@@ -1,5 +1,5 @@
 /**
- * Dictionary learning from user edits — a port of the reference app's
+ * Dictionary learning from user edits — a port of the spec
  * `learnFromEdits` (module 92967): when the user edits the pasted text, align
  * the dictated original with the edited text and extract substitution pairs
  * `{ word: editedWord, observedSource: originalWord }` that become dictionary

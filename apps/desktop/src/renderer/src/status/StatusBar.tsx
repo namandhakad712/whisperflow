@@ -1,104 +1,70 @@
 /**
- * The persistent resting "flow bar" — their exact rest dash (from their
- * compiled CSS):
+ * The persistent resting "status bar" — Signal Standard edition.
  *
- *   rest → 30×6, border-radius 6, background rgba(0,0,0,.5),
- *          border 1.5px hsla(0,0%,100%,.5), no shadow
- *
- * On hover it morphs into the mini dictation pill (416×48 #1f1f1f system —
- * same values as the overlay) with the hotkey hint, then back. Clicking it
- * starts a dictation.
+ * Rest state: the same breathing phosphor dot as the overlay's standby LED
+ * (one language, everywhere). Hover expands it into a small capsule with the
+ * hotkey hint; click starts a dictation. All values authored — see MOTION.md.
  */
 import { useEffect, useState } from "react";
 
-const SPRING_EASING =
-  "linear(0, 0.0015, 0.0057 1.07%, 0.0214 2.13%, 0.0739 4.26%, 0.1638 6.93%, 0.479 15.46%, 0.5791 18.66%, 0.6512 21.32%, 0.7243, 0.784, 0.832 30.92%, 0.8757 34.65%, 0.9126 38.91%, 0.9418 43.71%, 0.9633 49.04%, 0.9781 54.9%, 0.9882 61.83%, 0.9948 70.89%, 0.9982 82.09%, 0.9997 99.68%)";
-
 const CSS = `
-:root { --spring-easing: ${SPRING_EASING}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; background: transparent; overflow: hidden;
-  font-family: "Inter", "Figtree", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-/* #root must carry the full height or the zone's height:100% collapses and
- * the dash/capsule render at the top of the window instead of the middle. */
+  font-family: "Inter", "Space Grotesk", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 #root { width: 100%; height: 100%; }
 
 .zone { position: relative; width: 100%; height: 100%; cursor: pointer;
   display: flex; align-items: center; justify-content: center; }
 
-/* Rest dash (rotated for side docks via data-edge). */
-.dash {
-  width: 30px;
-  height: 6px;
-  border-radius: 6px;
-  /* Visible on light AND dark desktops: mid-gray fill with a light inner ring
-   * — the pure black-on-black version was effectively invisible (a human
-   * reviewer found zero non-black pixels over a dark window). */
-  background: rgba(38, 38, 37, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6);
-  transition: all 0.42s var(--spring-easing);
+/* Rest state: the standby LED — a 20px breathing dot. */
+.dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(17, 19, 24, 0.85);
+  border: 1px solid rgba(92, 225, 169, 0.35);
+  animation: dot-breathe 3.2s ease-in-out infinite;
+  transition: width 0.26s cubic-bezier(0.7, 0, 0.2, 1), height 0.26s cubic-bezier(0.7, 0, 0.2, 1);
 }
-.zone[data-edge="left"] .dash, .zone[data-edge="right"] .dash {
-  width: 6px;
-  height: 30px;
+@keyframes dot-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92, 225, 169, 0.0), inset 0 0 5px rgba(92, 225, 169, 0.3); }
+  50% { box-shadow: 0 0 16px 2px rgba(92, 225, 169, 0.35), inset 0 0 9px rgba(92, 225, 169, 0.65); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot { animation: none; box-shadow: inset 0 0 7px rgba(92, 225, 169, 0.5); }
 }
 
-/* Hover capsule — their exact status-bar capsule: a 30px circle that expands
- * to 54px width, vast-950 bg, 1.5px border fading from transparent to
- * vast-900, all on the 0.2s capsule spring. (The invented 416px "Dictate +
- * hotkey" pill is gone — it didn't exist in the reference.) */
-.capsule {
+/* the core pip, always present; fades when the capsule opens */
+.zone .pip {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  height: 30px;
-  width: 30px;
-  border-radius: 999px;
-  background: #1a1a1a;
-  border: 1.5px solid transparent;
-  overflow: hidden;
+  width: 6px; height: 6px; border-radius: 999px;
+  background: #5CE1A9; box-shadow: 0 0 7px rgba(92, 225, 169, 0.9);
+  transition: opacity 0.12s ease;
+}
+.zone:hover .pip { opacity: 0; }
+
+.zone .hint {
+  position: absolute;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px; letter-spacing: 0.06em;
+  color: rgba(237, 235, 228, 0.75);
+  white-space: nowrap;
   opacity: 0;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s var(--spring-easing), border-color 0.05s ease, opacity 0.18s ease;
+  transition: opacity 0.14s ease 0.08s;
 }
-.zone:hover .capsule, .zone[data-hover="true"] .capsule {
-  opacity: 1;
-  width: 54px;
-  border-color: #30302f;
-}
-.zone:hover .dash, .zone[data-hover="true"] .dash { opacity: 0; }
-
-/* Inner circle button: shade-black with a vast-900 ring; hover fills
- * vast-900 and lightens the ring to vast-700 (their hover). */
-.cap-btn {
-  flex: none;
-  width: 30px;
+.zone:hover .dot {
+  width: 108px;
   height: 30px;
-  border-radius: 999px;
-  background: #000;
-  border: 1.5px solid #30302f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  border-color: rgba(237, 235, 228, 0.2);
+  animation: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
-.zone:hover .cap-btn { background: #30302f; border-color: #5b5b59; }
+.zone:hover .hint { opacity: 1; }
 
-/* The chevron: vast-500, 22px, hover shade-white, rotated per dock edge. */
-.cap-chevron {
-  width: 22px;
-  height: 22px;
-  color: #878683;
-  transition: color 0.12s ease, transform 0.12s ease;
-}
-.zone:hover .cap-chevron { color: #fff; }
-.zone[data-edge="left"] .cap-chevron { transform: rotate(90deg); }
-.zone[data-edge="right"] .cap-chevron { transform: rotate(-90deg); }
+/* side docks rotate the whole bar */
+.zone[data-edge="left"], .zone[data-edge="right"] { transform: none; }
+.zone[data-edge="left"] .dot, .zone[data-edge="right"] .dot { width: 30px; height: 108px; }
+.zone[data-edge="left"] .hint, .zone[data-edge="right"] .hint { display: none; }
 `;
 
 const DEFAULT_HOTKEY = "Ctrl+Shift+Space";
@@ -161,15 +127,9 @@ export function StatusBar() {
           void window.whisperflowExtras.status.contextMenu();
         }}
       >
-        <span className="dash" />
-        {/* Their hover capsule: circle button + chevron; expanding 30→54px. */}
-        <div className="capsule" aria-label={`Start dictation (${hotkey})`}>
-          <span className="cap-btn">
-            <svg className="cap-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </span>
-        </div>
+        <span className="dot" />
+        <span className="pip" aria-hidden="true" />
+        <span className="hint" aria-hidden="true">{hotkey} · click to dictate</span>
       </div>
     </>
   );

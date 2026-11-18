@@ -129,7 +129,7 @@ export const AudioConfigSchema = z.object({
   vad: VadConfigSchema.prefault({}),
   /**
    * Hard cap on a single dictation, in milliseconds (0 = unlimited). Default
-   * is the reference app's DICTATION_DURATION_TIMEOUT — 20 minutes, with a
+   * is the spec DICTATION_DURATION_TIMEOUT — 20 minutes, with a
    * warning one minute before — so a hotkey held by accident cannot fill the
    * disk with a 6-hour recording. `maxRecordingLengthMs` in their build is the
    * debug override of exactly this cap.
@@ -411,7 +411,7 @@ export const PolishConfigSchema = z.object({
   provider: z
     .enum(["llama-local", "openai-compat", "none"])
     .default("llama-local"),
-  /** Master switch — "Apply AI formatting" in the reference app's settings. */
+  /** Master switch — "Apply AI formatting" in the spec settings. */
   enabled: z.boolean().default(true),
   /** Catalog id of the local GGUF model. Qwen3.5 2B (Q4) is the smallest
    *  competent option — polish is text cleanup, not frontier reasoning, so the
@@ -442,7 +442,7 @@ export const PolishConfigSchema = z.object({
     ),
   /**
    * "Add a signature when dictating an email" — only appends when the target
-   * app is classified as an email client (the reference app's emailAutoSignature).
+   * app is classified as an email client.
    */
   emailSignature: z.boolean().default(false),
   /** Signature body appended after a blank line. */
@@ -564,13 +564,13 @@ const GeneralFieldsSchema = z.object({
      */
     dockEdge: z.enum(["none", "left", "right", "bottom"]).default("none"),
     /**
-     * Custom overlay tint — overrides the reference #1f1f1f card background.
-     * Empty string = the reference look.
+     * Custom overlay tint — overrides the spec #1f1f1f card background.
+     * Empty string = the spec look.
      */
     overlayTint: z.string().default(""),
     /**
      * Follow the OS theme: the pill reads light/dark from the OS and flips
-     * its card + text colors. Off = always the reference dark pill.
+     * its card + text colors. Off = always the spec dark pill.
      */
     overlayFollowSystemTheme: z.boolean().default(false),
 });

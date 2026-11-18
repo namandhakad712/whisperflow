@@ -4,7 +4,7 @@ import { log } from "../lib/log";
 
 /**
  * Daily local backups of the two files that hold everything the user cares
- * about: config.json and history.json. The reference app does the same thing
+ * about: config.json and history.json. Backups follow the same policy
  * (a cron at 12:00 into `backups/`, next to its SQLite file) — losing settings
  * or transcripts to a bad write is unrecoverable otherwise.
  *
