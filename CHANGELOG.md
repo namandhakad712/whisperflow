@@ -2,6 +2,32 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.43] — 2026-11-19
+
+### Added — the ASCII revolution
+- **Engine E: GlyphScene** (`packages/signal-engine/src/glyph.ts`) — the TRUE
+  ASCII renderer: tone → glyph ramp (Bayer-dithered), scene color INSIDE the
+  glyphs (truecolor), living lattice re-raster, pointer parallax, mode-reactive
+  paper. Canvas2D fallback included.
+- **GLYPH_SCENE_BLOOM** — the orchid hero printed as real `x X # @` glyphs,
+  plum/violet ink, green lip, whisper plate for the copy.
+- **GLYPH_SCENE_GARDEN** — seven procedural ASCII tulips on swaying stems
+  over a dithered soil band; station 3 in accent green, station 5 in coral.
+- **Website**: hero now prints in ASCII glyphs (was halftone dots); the
+  privacy specimen band is now the ASCII garden; CTA prints the orchid.
+- **Desktop overlay**: the voice trace is now an ASCII GLYPH WAVE — mic
+  level maps through ` .:=+x#@`, bright #8CFFC7 peaks, so the capsule
+  literally shows voice becoming text.
+- Desktop settings rail nameplate gets `printed in ascii` mark.
+
+### Fixed
+- Glyph atlas now rebuilds when webfonts finish loading (boot race left the
+  hero printing ghost glyphs when the mono font arrived late).
+- Photo textures no longer set `crossOrigin=anonymous` on same-origin URLs
+  (blocked the orchid on hosts without ACAO headers) and are decoded before
+  upload (`img.decode()`), fixing empty boot renders.
+- All texture uploads bind an explicit unit — no more atlas/image clobbering.
+
 ## [0.1.42] — 2026-11-19
 
 ### Added — the console, refined (desktop settings overhaul)

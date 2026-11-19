@@ -3,9 +3,7 @@
  * Each scene defines `vec4 scene(vec2 uv)`: rgb = ink color, a = tone 0..1.
  * Techniques (dither, halftone, tone mapping) are public knowledge; the
  * compositions are ours. See SPEC.md and INSPIRATION.md for lineage.
- */
-
-/**
+ *//**
  * HERO — "the bloom".
  * A real orchid macro printed as a duotone halftone: the photo's luminance
  * maps to dot tone (quiet highlights, full mid-tone form), the ink is cobalt
@@ -178,6 +176,140 @@ vec4 scene(vec2 uv) {
   vec3 sepia = mix(vec3(0.62, 0.48, 0.33), vec3(0.85, 0.76, 0.60), u_dark);
   vec3 accent = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
   vec3 ink = mix(sepia, accent, sun);
+
+  return vec4(ink, clamp(tone, 0.0, 1.0));
+}
+`;
+
+/* ============================================================
+   GLYPH scenes — authored GLSL for GlyphScene (true ASCII).
+   Same contract: rgb = ink color inside the glyphs, a = tone 0..1.
+   ============================================================ */
+
+/**
+ * GLYPH HERO — "the ascii bloom".
+ * The orchid macro printed as TRUE ASCII: the photo's tone maps through the
+ * glyph ramp (dark petals = `@#%`, lights = ` .·`), and the ink is
+ * truecolor — plum/violet for petals, green for the lip, silver for the
+ * stem. The whisper plate still thins the print where type lands.
+ */
+export const GLYPH_SCENE_BLOOM = /* glsl */ `
+vec4 scene(vec2 uv) {
+  vec2 suv = uv + vec2(sin(u_time * 0.18) * 0.004, cos(u_time * 0.13) * 0.003);
+
+  float t = imgTone(suv);
+
+  // the whisper plate: type sits on a whisper of glyphs
+  float narrow = 1.0 - smoothstep(500.0, 900.0, u_res.x);
+  float px0 = mix(0.62, 0.97, narrow);
+  float px1 = mix(0.72, 1.05, narrow);
+  float bandX = 1.0 - smoothstep(px0, px1, uv.x);
+  float bandY = 1.0 - smoothstep(0.42, 0.52, uv.y);
+  float quiet = bandX * bandY;
+  float tone = min(t, mix(0.16, 1.0, 1.0 - quiet));
+
+  // darks print as solid glyph mass outside the quiet zone
+  tone = max(tone, smoothstep(0.80, 0.92, t) * (1.0 - quiet));
+
+  // load wipe: the print develops from the top-left corner, ~0.9s expo-out
+  float reveal = 1.0 - pow(1.0 - clamp(u_time / 0.9, 0.0, 1.0), 4.0);
+  float dw = distance(uv, vec2(0.0, 1.0));
+  tone *= 1.0 - smoothstep(reveal * 1.5, reveal * 1.5 + 0.12, dw);
+
+  // hue inks: sample the photo's color, map to the print triad
+  vec3 c = imgRGB(suv);
+  // petal hue: violet-magenta when r > g (the orchid's family)
+  float petalness = clamp((c.r - c.g) * 2.6, 0.0, 1.0) * step(0.08, t);
+  // lip hue: the yellow-green throat (g dominates)
+  float lipness = clamp((c.g - c.r) * 3.0, 0.0, 1.0) * step(0.10, t) * (1.0 - petalness);
+
+  if (u_dark > 0.5) {
+    // the dark run: luminous violet → silver where dense, mint lip
+    vec3 body  = vec3(0.667, 0.627, 0.882);
+    vec3 dense = vec3(0.878, 0.871, 0.973);
+    vec3 acc   = vec3(0.208, 0.702, 0.494);
+    vec3 ink = mix(body, dense, smoothstep(0.45, 0.95, t));
+    ink = mix(ink, acc, lipness * 0.9);
+    float dust = 0.07 * smoothstep(0.35, 0.05, t);
+    return vec4(ink, max(tone, dust));
+  }
+
+  // the light run: plum → deep violet, green lip
+  vec3 plum = vec3(0.478, 0.325, 0.549);
+  vec3 deep = vec3(0.286, 0.220, 0.404);
+  vec3 acc  = vec3(0.055, 0.478, 0.333);
+  vec3 ink = mix(plum, deep, smoothstep(0.55, 0.97, t));
+  ink = mix(ink, acc, lipness * 0.9);
+  return vec4(ink, tone);
+}
+`;
+
+/**
+ * GLYPH SECTION — "the ascii garden".
+ * A botanical band of authored tulips: cup blooms on swaying stems over a
+ * dithered ground, one in accent green, one in coral. Fully procedural —
+ * no photo — so the glyphs themselves draw the petals (ramp = shading).
+ * Stations are aspect-relative (p spans [0,aspect]) so they survive every
+ * viewport width. Verified via CPU raster preview before porting.
+ */
+export const GLYPH_SCENE_GARDEN = /* glsl */ `
+vec4 scene(vec2 uv) {
+  vec2 p = uv * vec2(u_res.x / u_res.y, 1.0);
+  float aspect = u_res.x / u_res.y;
+  float t = u_time * 0.05;
+
+  float tone = 0.0;
+  vec3 ink = mix(vec3(0.28, 0.30, 0.33), vec3(0.62, 0.64, 0.74), u_dark);
+  float accentMix = 0.0;
+  float coralMix = 0.0;
+
+  // the ground: a dithered soil band, bottom quarter
+  float ground = smoothstep(0.24, 0.20, p.y);
+  tone += ground * (0.30 + 0.10 * fbm(p * vec2(6.0, 3.0) + vec2(t, 0.0)));
+
+  // seven tulips, each on its own sway phase — the garden breathes
+  for (int i = 0; i < 7; i++) {
+    float fi = float(i);
+    float x0 = aspect * (0.08 + fi * 0.14);
+    float sway = sin(t * (0.8 + fi * 0.13) + fi * 1.7) * 0.014;
+    float hx = x0 + sway;
+
+    // the stem: a hairline from ground to bloom
+    float stemD = abs(p.x - hx + (p.y - 0.24) * 0.10);
+    float stem = smoothstep(0.010, 0.003, stemD) * smoothstep(0.24, 0.30, p.y) * smoothstep(0.52, 0.46, p.y);
+
+    // a leaf: a curved blade on the lower stem
+    vec2 lp = p - vec2(hx + 0.05, 0.42);
+    float ang = 0.9;
+    vec2 rp = vec2(lp.x * cos(ang) - lp.y * sin(ang), lp.x * sin(ang) + lp.y * cos(ang));
+    float leaf = smoothstep(0.030, 0.024, abs(rp.x) * (1.0 + abs(rp.y) * 9.0)) * smoothstep(0.16, 0.02, abs(rp.y));
+    leaf *= step(0.0, rp.y);
+
+    // the bloom: a wide cup with a center notch (reads in glyphs)
+    vec2 b = p - vec2(hx, 0.52 + sin(t * 0.7 + fi) * 0.006);
+    b.x /= 0.62;
+    float r = length(vec2(b.x * 0.75, b.y * 1.1));
+    float cup = smoothstep(0.155, 0.138, r);
+    float notch = smoothstep(0.052, 0.042, abs(b.x)) * step(0.0, b.y);
+    float bloom = clamp(cup - notch, 0.0, 1.0) * smoothstep(0.0, 0.012, 0.155 - r + 0.012);
+    // petal ribs: vertical shading inside the cup
+    float ribs = 0.16 * smoothstep(0.05, 0.0, abs(fract(b.x * 14.0) - 0.5) - 0.18);
+
+    float w = stem * 0.55 + leaf * 0.30 + bloom * (0.72 + ribs);
+    tone = max(tone, w);
+
+    if (i == 3) accentMix = clamp(bloom + stem, 0.0, 1.0);
+    if (i == 5) coralMix = clamp(bloom * 0.6, 0.0, 1.0);
+  }
+
+  // sky speckle: sparse dust so the field never reads empty
+  tone += 0.05 * step(0.986, hash21(floor(p * vec2(48.0, 40.0))));
+
+  // inks: slate body; station 3 accent green; station 5 coral
+  vec3 acc = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
+  vec3 coral = vec3(0.910, 0.416, 0.369);
+  ink = mix(ink, acc, accentMix);
+  ink = mix(ink, coral, coralMix);
 
   return vec4(ink, clamp(tone, 0.0, 1.0));
 }

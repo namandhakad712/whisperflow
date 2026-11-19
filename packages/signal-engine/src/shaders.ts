@@ -312,7 +312,146 @@ float imgTone(vec2 uv) {
 }
 `;
 
-/** The printed renderer — wraps a user scene body. */
+/* ============================================================
+   ENGINE E — GlyphScene ("the typewriter press").
+   TRUE ASCII print: tone → glyph ramp (bayer-dithered),
+   scene color → glyph ink. Color lives INSIDE the glyphs.
+   ============================================================ */
+
+/** Helpers available to every glyph scene (same contract as painted). */
+export const GLYPH_COMMON = /* glsl */ `
+precision mediump float;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec3 u_paper;
+uniform float u_cell;
+uniform float u_drift;
+uniform vec2 u_mouse;
+uniform float u_drive;
+uniform sampler2D u_img;
+uniform vec3 u_imgAspect;  // (w, h, hasImage 0/1)
+uniform vec3 u_imgCrop;    // (cx, cy, zoom)
+uniform float u_dark;      // 1 = printing on the dark sheet
+uniform vec2 u_par;        // critically-damped pointer parallax, -1..1
+uniform sampler2D u_atlas; // glyph row atlas
+uniform float u_glyphs;    // glyphs in the atlas
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(234.34, 435.345));
+  p += dot(p, p + 34.23);
+  return fract(p.x * p.y);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  vec2 u3 = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i);
+  float b = hash21(i + vec2(1.0, 0.0));
+  float c = hash21(i + vec2(0.0, 1.0));
+  float d = hash21(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, u3.x), mix(c, d, u3.x), u3.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += a * vnoise(p);
+    p *= 2.03;
+    a *= 0.5;
+  }
+  return v;
+}
+
+// sample the photo at a scene uv, cover-fit + crop (zoom>1 = tighter).
+vec3 imgRGB(vec2 uv) {
+  if (u_imgAspect.z < 0.5) return vec3(0.0);
+  float srcAsp = u_imgAspect.x / u_imgAspect.y;
+  float dstAsp = u_res.x / u_res.y;
+  vec2 size = (srcAsp > dstAsp)
+    ? vec2(dstAsp / srcAsp, 1.0)
+    : vec2(1.0, srcAsp / dstAsp);
+  size /= max(u_imgCrop.z, 0.001);
+  vec2 iuv = u_imgCrop.xy + (uv - 0.5) * size;
+  iuv.y = 1.0 - iuv.y; // flip: image y is down
+  if (iuv.x < 0.0 || iuv.x > 1.0 || iuv.y < 0.0 || iuv.y > 1.0) return vec3(0.0);
+  return texture2D(u_img, iuv).rgb;
+}
+// tone from a photo: ink lands where the photo is DARK (print polarity).
+// Window + gamma tuned to the orchid source histogram (petals 0.42-0.88).
+float imgTone(vec2 uv) {
+  vec3 c = imgRGB(uv);
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float tone = 1.0 - smoothstep(0.42, 0.88, l);
+  return pow(tone, 0.65);
+}
+`;
+
+/** The glyph renderer — wraps a scene body. One pass: cell → glyph → ink. */
+export const GLYPH_FRAG = (sceneGLSL: string) => /* glsl */ `
+${GLYPH_COMMON}
+${sceneGLSL}
+
+// 4x4 Bayer matrix (public-domain ordered dither)
+float bayer4(vec2 q) {
+  int x = int(mod(q.x, 4.0));
+  int y = int(mod(q.y, 4.0));
+  int idx = 0;
+  if (x == 0 && y == 0) idx = 0;  else if (x == 1 && y == 0) idx = 8;
+  else if (x == 2 && y == 0) idx = 2;  else if (x == 3 && y == 0) idx = 10;
+  else if (x == 0 && y == 1) idx = 12; else if (x == 1 && y == 1) idx = 4;
+  else if (x == 2 && y == 1) idx = 14; else if (x == 3 && y == 1) idx = 6;
+  else if (x == 0 && y == 2) idx = 3;  else if (x == 1 && y == 2) idx = 11;
+  else if (x == 2 && y == 2) idx = 1;  else if (x == 3 && y == 2) idx = 9;
+  else if (x == 0 && y == 3) idx = 15; else if (x == 1 && y == 3) idx = 7;
+  else if (x == 2 && y == 3) idx = 13; else idx = 5;
+  return float(idx) / 16.0 + 0.5 / 16.0;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_res;
+
+  // bounded Ken Burns — the print re-composes forever, never runs away
+  float tt = u_time * u_drift;
+  float zoom = 1.0 + 0.05 * sin(tt * 0.16);
+  vec2 suv = (uv - 0.5) / zoom + 0.5;
+  suv += vec2(sin(tt * 0.13) * 0.03, cos(tt * 0.10) * 0.022);
+  suv += u_par * 0.012;
+
+  vec4 s = scene(suv);
+
+  // pointer: the print swells toward your hand
+  float m = exp(-14.0 * distance(uv, u_mouse)) * 0.35;
+
+  float tone = clamp(s.a * (1.0 + u_drive * 0.35) + m, 0.0, 1.0);
+  vec3 ink = s.rgb;
+
+  // the glyph lattice: slides slowly so the print re-rasters every frame
+  vec2 lattice = gl_FragCoord.xy + vec2(sin(tt * 0.21), cos(tt * 0.17)) * (u_cell * 0.5);
+  vec2 cellpx = floor(lattice / u_cell);
+  vec2 cellf = fract(lattice / u_cell) - 0.5;
+
+  // bayer-dither the tone→ramp mapping: the glyph choice itself dithers,
+  // so gradients step like a print, not like a quantized ramp
+  float thr = bayer4(cellpx) - 0.5;
+  float dithered = clamp(tone + thr * 0.18, 0.0, 0.999);
+
+  // glyph = atlas sample; map the cell into the ramp row (atlas y runs down)
+  vec2 auv = vec2((floor(dithered * u_glyphs) + clamp(cellf.x + 0.5, 0.02, 0.98)) / u_glyphs,
+                  clamp(1.0 - (cellf.y + 0.5), 0.02, 0.98));
+  float glyph = texture2D(u_atlas, auv).r;
+
+  // faint lattice structure so dense zones keep print texture
+  float weave = 0.035 * step(0.96, bayer4(cellpx + 3.0));
+  // alpha: the ramp carries the density — tone picks WHICH glyph; a high
+  // floor keeps every selected glyph fully inked (the references' look:
+  // midtones print as 'x'/'o' masses, not ghost strokes)
+  float a = glyph * clamp(0.55 + tone * 0.7, 0.0, 1.0) + weave * step(0.12, tone);
+
+  // paper shows through the gaps
+  vec3 col = mix(u_paper, ink, clamp(a, 0.0, 1.0));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+/** The printed (halftone-dot) renderer — wraps a user scene body. */
 export const PAINTED_FRAG = (sceneGLSL: string) => /* glsl */ `
 ${PAINTED_COMMON}
 ${sceneGLSL}

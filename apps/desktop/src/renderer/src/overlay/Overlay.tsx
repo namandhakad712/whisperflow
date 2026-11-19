@@ -461,23 +461,33 @@ export function Overlay() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = "source-over";
       ctx.scale(dpr, dpr);
+      // ASCII GLYPH WAVE — the signal printed as text, not a polyline.
+      // Voice maps through the glyph ramp: silence = ":", speech = "#%@"
+      // — the product made literally visible (voice → glyphs).
       const levels = levelsRef.current;
       const mid = h / 2;
-      ctx.beginPath();
-      for (let i = 0; i < levels.length; i++) {
-        const x = (i / (levels.length - 1)) * w;
-        const env = Math.sin((i / (levels.length - 1)) * Math.PI) ** 0.5; // edge fade
-        const y = mid - (levels[i] ?? 0.04) * (h / 2 - 1) * env;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      const RAMP = " .:=+x#@";
+      const colW = 9;
+      const cols = Math.max(8, Math.floor(w / colW));
+      ctx.font = "600 13px 'JetBrains Mono', ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (let c = 0; c < cols; c++) {
+        const i = Math.floor((c / Math.max(1, cols - 1)) * (levels.length - 1));
+        const env = Math.sin((c / Math.max(1, cols - 1)) * Math.PI) ** 0.5; // edge fade
+        const amp = Math.min(1, (levels[i] ?? 0.04) * 1.35 * env + 0.05);
+        const glyph = RAMP[Math.min(RAMP.length - 1, Math.floor(amp * RAMP.length))] ?? "#";
+        const x = (c + 0.5) * colW;
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = amp > 0.55 ? "#8CFFC7" : "#5CE1A9";
+        ctx.fillText(glyph, x, mid);
+        if (amp > 0.3) {
+          ctx.globalAlpha = 0.45;
+          ctx.fillText(RAMP[Math.max(0, Math.floor(amp * RAMP.length) - 2)] ?? "+", x, mid - 13);
+          ctx.fillText(RAMP[Math.max(0, Math.floor(amp * RAMP.length) - 2)] ?? "+", x, mid + 13);
+        }
       }
-      ctx.strokeStyle = "#5CE1A9";
-      ctx.lineWidth = 1.6;
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.shadowColor = "rgba(92, 225, 169, 0.55)";
-      ctx.shadowBlur = 6;
-      ctx.stroke();
+      ctx.globalAlpha = 1;
       if (!reduced) raf = requestAnimationFrame(draw);
     };
     draw();
