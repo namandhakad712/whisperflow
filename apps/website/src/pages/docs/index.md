@@ -43,4 +43,4 @@ lock, which makes network calls impossible.
 - License: Apache-2.0
 - Status: v0.1 in active development (Windows)
 
-Next: [Getting started](/docs/getting-started/)
+Next: [Getting started](/whisperflow/docs/getting-started/)

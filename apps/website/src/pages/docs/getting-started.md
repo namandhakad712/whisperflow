@@ -46,4 +46,4 @@ Press **Esc** while the overlay is up to cancel — nothing gets pasted.
 - **Slow first response** — the first run loads the model into RAM; subsequent dictations
   reuse it.
 
-Next: [Hotkeys & overlay](/docs/hotkeys/)
+Next: [Hotkeys & overlay](/whisperflow/docs/hotkeys/)

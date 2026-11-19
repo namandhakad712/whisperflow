@@ -2,118 +2,133 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import Base from "../layouts/Base.astro";
-import SignalPanel from "../components/SignalPanel.astro";
 
 // the real shipped version — same source of truth as the footer
 const desktopPkg = JSON.parse(
   readFileSync(resolve(process.cwd(), "../desktop/package.json"), "utf-8"),
 ) as { version: string };
+
+const steps = [
+  ["01", "mic check", "the wizard checks your microphone and draws your voice as a live trace — you see yourself on the instrument before you ever speak to it."],
+  ["02", "model pick", "language, engine and sensitivity, recommended for your hardware. downloads resume if interrupted."],
+  ["03", "first word", "hold the hotkey, say a sentence, watch it land. about two minutes from install to first dictation."],
+];
 ---
 <Base
   title="Download — WhisperFlow"
   description="Download WhisperFlow for Windows, or build from source. Free, open-source, Apache-2.0."
 >
-  <section class="relative min-h-[70vh] overflow-hidden">
-    <canvas id="dl-dither" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
-    <!-- v2: the field dissolves toward the fold on both axes, no hard seam -->
-    <div
-      class="pointer-events-none absolute inset-0"
-      style="background:
-        linear-gradient(to bottom, transparent 55%, var(--color-bg) 96%),
-        radial-gradient(ellipse 120% 90% at 50% 42%, transparent 55%, var(--color-bg) 92%)"
-      aria-hidden="true"
-    ></div>
+  <!-- the press proof: the app window, printed -->
+  <section class="relative overflow-hidden border-b border-rule">
+    <canvas id="dl-scene" class="absolute inset-0 h-full w-full opacity-70" aria-hidden="true"></canvas>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[52%]" style="background:linear-gradient(to top, var(--color-paper) 46%, color-mix(in srgb, var(--color-paper) 80%, transparent) 68%, transparent)" aria-hidden="true"></div>
 
-    <div class="relative mx-auto flex max-w-6xl flex-col items-center px-4 py-20 sm:px-6">
-      <p class="sec-mark">acquire the instrument</p>
-      <h1 class="font-display mt-5 text-center text-5xl font-bold leading-[1.02] tracking-[-0.045em] sm:text-6xl">
-        get <span class="text-phosphor">whisperflow.</span>
+    <div class="relative mx-auto max-w-6xl px-5 pb-24 pt-28 sm:px-8 sm:pt-36">
+      <p class="eyebrow">acquire the instrument</p>
+      <h1 class="font-serif mt-6 max-w-2xl text-6xl font-normal leading-[0.98] text-ink sm:text-8xl">
+        take it<br />home<span class="text-accent">.</span>
       </h1>
-      <p class="mt-4 text-center text-ink-dim">
-        free, unlimited, open-source. windows today — macos &amp; linux on the roadmap.
+      <p class="mt-7 max-w-md text-[16px] leading-7 text-ink-2">
+        free, unlimited, open-source. windows today — macos &amp; linux are
+        <a class="font-medium text-accent underline decoration-dotted underline-offset-4" href="https://github.com/namandhakad712/whisperflow">in active packaging — star the repo to be pinged</a>.
       </p>
 
-      <div class="panel mt-12 w-full max-w-md">
-        <div class="panel-head">
-          <span class="flex items-center gap-2.5">
-            <span class="led led-breathe" data-on="live" aria-hidden="true"></span>
-            <span class="mono-label text-ink-dim">windows · x64</span>
-          </span>
-          <span class="font-mono text-[11px] text-ink-dim">v{desktopPkg.version}</span>
+      <div class="mt-12 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-start">
+        <!-- the primary artifact -->
+        <div>
+          <div class="specimen-frame">
+            <div class="flex items-center justify-between border-b border-rule px-5 py-3.5">
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">windows · x64</span>
+              <span class="font-mono text-[11px] text-ink-faint">v{desktopPkg.version} · apache-2.0</span>
+            </div>
+            <div class="p-6">
+              <a
+                href="https://github.com/namandhakad712/whisperflow/releases/latest"
+                class="btn-ink w-full justify-center"
+              >
+                ⬇ download for windows
+              </a>
+              <p class="mt-3.5 text-center font-mono text-[11px] leading-5 text-ink-faint">
+                the installer ships with every tagged release — auto-update is built in.
+              </p>
+              <div class="my-6 flex items-center gap-3 font-mono text-[11px] text-ink-faint">
+                <span class="h-px flex-1 bg-rule"></span> or build from source <span class="h-px flex-1 bg-rule"></span>
+              </div>
+              <div class="overflow-x-auto border border-rule bg-paper px-4 py-3.5 font-mono text-[12.5px] leading-7 text-ink-2">
+                <p class="whitespace-nowrap"><span class="text-accent">$</span> git clone</p>
+                <p class="pl-4 [overflow-wrap:anywhere]">https://github.com/namandhakad712/<wbr />whisperflow.git</p>
+                <p class="whitespace-nowrap"><span class="text-accent">$</span> cd whisperflow && npm install</p>
+                <p class="whitespace-nowrap"><span class="text-accent">$</span> npm run dev</p>
+              </div>
+              <ul class="mt-6 space-y-2.5 font-mono text-[12px] text-ink-2">
+                <li class="flex gap-2.5"><span class="text-accent">·</span> models download once, work offline forever</li>
+                <li class="flex gap-2.5"><span class="text-accent">·</span> apache-2.0 — audit every line</li>
+              </ul>
+            </div>
+          </div>
+          <p class="specimen-caption">fig. 04 — the installer · v{desktopPkg.version} · every release tagged on github</p>
         </div>
-        <div class="p-6">
-          <a
-            href="https://github.com/namandhakad712/whisperflow/releases/latest"
-            class="btn btn-primary group relative w-full overflow-hidden"
-          >
-            <span class="relative z-10">⬇ download for windows</span>
-            <span
-              class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-              aria-hidden="true"
-            ></span>
-          </a>
-          <p class="mt-3 text-center font-mono text-[11px] text-ink-dim">
-            the installer ships with every tagged release — auto-update is built in.
-          </p>
 
-          <div class="my-6 flex items-center gap-3 font-mono text-[11px] text-ink-dim">
-            <span class="h-px flex-1 bg-line"></span> or build from source <span class="h-px flex-1 bg-line"></span>
-          </div>
-
-          <!-- v2: overflow-x-auto so the clone URL scrolls instead of clipping -->
-          <div class="overflow-x-auto rounded-sm border border-line bg-bg px-4 py-3.5 font-mono text-[12.5px] leading-7 text-ink-dim">
-            <p class="whitespace-nowrap"><span class="text-phosphor">$</span> git clone</p>
-            <p class="pl-4 text-ink-dim [overflow-wrap:anywhere]">https://github.com/namandhakad712/<wbr />whisperflow.git</p>
-            <p class="whitespace-nowrap"><span class="text-phosphor">$</span> cd whisperflow && npm install</p>
-            <p class="whitespace-nowrap"><span class="text-phosphor">$</span> npm run dev</p>
-          </div>
-
-          <ul class="mt-6 space-y-2.5 font-mono text-[13px] text-ink-dim">
-            <li class="flex gap-2.5"><span class="text-phosphor">[ok]</span> models download once, work offline forever</li>
-            <li class="flex gap-2.5"><span class="text-phosphor">[ok]</span> apache-2.0 — audit every line</li>
-          </ul>
+        <!-- first launch: the calibration sequence, as a numbered field guide -->
+        <div class="lg:pt-2">
+          <p class="eyebrow">first launch</p>
+          <h2 class="font-serif mt-4 text-3xl font-normal text-ink sm:text-4xl">two minutes to the first word.</h2>
+          <ol class="mt-8 space-y-7">
+            {steps.map(([num, title, body]) => (
+              <li class="grid grid-cols-[2.75rem_1fr] gap-4">
+                <span class="font-serif text-3xl leading-none text-accent">{num}</span>
+                <div>
+                  <p class="font-mono text-[13px] font-medium uppercase tracking-[0.08em] text-ink">{title}</p>
+                  <p class="mt-1.5 text-[14px] leading-6 text-ink-2">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- first launch: the calibration sequence -->
-      <div class="mt-14 grid w-full max-w-4xl gap-5 md:grid-cols-3">
-        <SignalPanel label="01 · mic check" led="live">
-          <div class="p-5">
-            <p class="text-sm leading-6 text-ink-dim">
-              the wizard checks your microphone and shows your voice as a live signal trace —
-              you'll see yourself on the instrument before you ever speak to it.
-            </p>
-          </div>
-        </SignalPanel>
-        <SignalPanel label="02 · model pick" led="busy">
-          <div class="p-5">
-            <p class="text-sm leading-6 text-ink-dim">
-              language, engine and sensitivity, recommended for your hardware. downloads resume
-              if interrupted.
-            </p>
-          </div>
-        </SignalPanel>
-        <SignalPanel label="03 · first word" led="live" breathe>
-          <div class="p-5">
-            <p class="text-sm leading-6 text-ink-dim">
-              hold the hotkey, say a sentence, watch it land. about two minutes from install
-              to first dictation.
-            </p>
-          </div>
-        </SignalPanel>
+  <!-- the imprint: honest requirements, printed plainly -->
+  <section class="bg-tint">
+    <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+      <div class="grid gap-10 md:grid-cols-3">
+        <div>
+          <p class="eyebrow">hardware</p>
+          <p class="mt-4 text-[14.5px] leading-7 text-ink-2">
+            any modern windows pc. 8 gb ram runs the balanced setup; 16 gb unlocks the
+            best models. the wizard measures your machine and recommends.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">network</p>
+          <p class="mt-4 text-[14.5px] leading-7 text-ink-2">
+            once — to download models from huggingface. after that: planes, airports,
+            dead zones. the local-only lock makes offline provable.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">cost</p>
+          <p class="mt-4 text-[14.5px] leading-7 text-ink-2">
+            nothing. no account, no card, no word caps. if anyone charges you for
+            whisperflow, you're being scammed — it's apache-2.0.
+          </p>
+        </div>
       </div>
     </div>
   </section>
 </Base>
 
 <script>
-  import { DitherField, DITHER_PALETTES } from "@whisperflow/signal-engine";
-  const light = document.documentElement.dataset.mode === "light";
-  const canvas = document.getElementById("dl-dither") as HTMLCanvasElement | null;
+  import { PaintedScene, SCENE_PRESS_PROOF } from "@whisperflow/signal-engine";
+  const canvas = document.getElementById("dl-scene") as HTMLCanvasElement | null;
   if (canvas) {
-    new DitherField(canvas, {
-      palette: light ? DITHER_PALETTES.light : DITHER_PALETTES.dark,
-      cell: 3,
+    const dark = document.documentElement.dataset.mode === "dark";
+    new PaintedScene(canvas, {
+      scene: SCENE_PRESS_PROOF,
+      cell: 8,
+      paper: dark ? "ink" : "cream",
+      drift: 0.5,
     }).mount();
   }
 </script>

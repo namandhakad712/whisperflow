@@ -39,7 +39,9 @@ vec4 scene(vec2 uv) {
   float edge = reveal * 1.35 - 0.1;
   float curtain = 1.0 - smoothstep(edge - 0.02, edge + 0.18, uv.y);
 
-  float tone = t * mat * curtain;
+  // light falloff toward the top-right corner — cream breathes there
+  float falloff = 1.0 - 0.35 * smoothstep(0.35, 1.0, distance(uv, vec2(0.25, 0.75)));
+  float tone = t * mat * curtain * falloff;
 
   // inks: cobalt body, deep shadows, accent lip — a committed duotone
   vec3 cobalt  = vec3(0.176, 0.294, 0.557);  // #2D4B8E

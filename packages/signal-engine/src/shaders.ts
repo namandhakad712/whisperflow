@@ -342,31 +342,25 @@ void main() {
 
   float tone = clamp(s.a * (1.0 + u_drive * 0.35) + m, 0.0, 1.0);
   vec3 ink = s.rgb;
-  // print S-curve: preserves deep ink + clean paper, boosts midtone steps
-  tone = tone * tone * (3.0 - 2.0 * tone) * 0.82 + tone * 0.18;
+  // print curve: soft S blended with linear — midtone steps without crushing
+  float sCurve = tone * tone * (3.0 - 2.0 * tone);
+  tone = mix(tone, sCurve, 0.55);
 
   // the halftone cell: square grid, one dot per cell
   vec2 cellpx = floor(gl_FragCoord.xy / u_cell);
   vec2 cellf = fract(gl_FragCoord.xy / u_cell) - 0.5;
 
-  // dithered tone: bayer4 jitter inside the cell's radius decision
-  float thr = bayer4(cellpx) * 0.22;
-  // 5-radius dot ramp (· ∙ • ⦁ ●): tone selects the radius
-  float r = 0.0;
-  if      (tone > 0.84) r = 0.50; // ●
-  else if (tone > 0.62) r = 0.36; // ⦁
-  else if (tone > 0.42) r = 0.26; // •
-  else if (tone > 0.24) r = 0.16; // ∙
-  else if (tone > 0.10) r = 0.07; // ·
-  float dithered = tone + (thr - 0.11);
-  if (dithered > 0.84) r = 0.50;
-  else if (dithered > 0.62) r = 0.36;
-  else if (dithered > 0.42) r = 0.26;
-  else if (dithered > 0.24) r = 0.16;
-  else if (dithered > 0.10) r = 0.07;
-  else r = 0.0;
+  // lithograph dots: CONTINUOUS radius from tone (no stepped bands),
+  // with a bayer4 micro-jitter so gradients dither instead of banding.
+  float thr = bayer4(cellpx) - 0.5;
+  float dithered = clamp(tone + thr * 0.16, 0.0, 1.0);
+  float r = dithered * 0.42;   // capped max coverage — cream breathes
 
-  float dot_ = 1.0 - smoothstep(r - 0.06, r + 0.06, length(cellf));
+  // edge feather: soften the coverage AA so silhouettes don't moiré
+  float aa = 1.5 / u_cell;     // ~1.5 device px of feather
+  float dot_ = 1.0 - smoothstep(r - aa, r + aa, length(cellf));
+  // floor: a faint grain everywhere so paper is never dead-flat
+  dot_ = max(dot_, step(0.9985, bayer4(cellpx + 7.0)) * 0.06);
 
   // quiet the darks: ink fades toward paper at low tone (print, not screen)
   vec3 painted = mix(u_paper, ink, dot_);

@@ -1,35 +1,33 @@
 ---
 import Base from "../layouts/Base.astro";
-import SignalPanel from "../components/SignalPanel.astro";
-import FeatureCard from "../components/FeatureCard.astro";
 
 const groups = [
   {
     num: "01",
     heading: "dictation",
     items: [
-      { icon: "mic", title: "push-to-talk", body: "Ctrl+Shift+Space by default, fully rebindable. optional toggle mode for hands-free continuous dictation." },
-      { icon: "sliders", title: "live overlay", body: "the phosphor capsule appears near your cursor: signal trace, streaming transcript, polish status. esc cancels instantly — nothing is injected." },
-      { icon: "wand", title: "smart polish", body: "the local llm removes filler, fixes punctuation and capitalization, and structures rambling speech into clean prose." },
-      { icon: "cpu", title: "tone presets", body: "neutral, casual, or professional output — plus custom instructions for total control over how your voice gets written down." },
+      { title: "push-to-talk", body: "Ctrl+Shift+Space by default, fully rebindable. optional toggle mode for hands-free continuous dictation." },
+      { title: "live overlay", body: "the capsule appears near your cursor: signal trace, streaming transcript, polish status. esc cancels instantly — nothing is injected." },
+      { title: "smart polish", body: "the local llm removes filler, fixes punctuation and capitalization, and structures rambling speech into clean prose." },
+      { title: "tone presets", body: "neutral, casual, or professional output — plus custom instructions for total control over how your voice gets written down." },
     ],
   },
   {
     num: "02",
     heading: "accuracy that learns you",
     items: [
-      { icon: "book", title: "personal dictionary", body: "add names, product terms, acronyms. fuzzy matching corrects near-misses after transcription, and every entry feeds the polisher's context." },
-      { icon: "slash", title: "voice commands", body: "“scratch that” undoes the last dictation out of the box. define any phrase to insert snippets or replace text." },
-      { icon: "history", title: "dictation history", body: "everything you've dictated, stored in a local sqlite database. search by keyword, replay, delete anything, clear all." },
+      { title: "personal dictionary", body: "add names, product terms, acronyms. fuzzy matching corrects near-misses after transcription, and every entry feeds the polisher's context." },
+      { title: "voice commands", body: "“scratch that” undoes the last dictation out of the box. define any phrase to insert snippets or replace text." },
+      { title: "dictation history", body: "everything you've dictated, stored in a local sqlite database. search by keyword, replay, delete anything, clear all." },
     ],
   },
   {
     num: "03",
     heading: "yours, technically",
     items: [
-      { icon: "shield", title: "local-only lock", body: "a hard network block enforced at the provider layer. when it's on, whisperflow cannot call out — provably." },
-      { icon: "cpu", title: "model manager", body: "curated huggingface catalog with hardware-tiered recommendations. download gguf models with progress and resume, switch per task, delete anytime." },
-      { icon: "sliders", title: "open providers", body: "clean stt and polish provider interfaces. local whisper.cpp and llama.cpp ship by default; byo openai-compatible endpoints if you insist on cloud." },
+      { title: "local-only lock", body: "a hard network block enforced at the provider layer. when it's on, whisperflow cannot call out — provably." },
+      { title: "model manager", body: "curated huggingface catalog with hardware-tiered recommendations. download gguf models with progress and resume, switch per task, delete anytime." },
+      { title: "open providers", body: "clean stt and polish provider interfaces. local whisper.cpp and llama.cpp ship by default; byo openai-compatible endpoints if you insist on cloud." },
     ],
   },
 ];
@@ -50,51 +48,56 @@ const spec = [
   title="Features — WhisperFlow"
   description="Push-to-talk dictation, AI polish, personal dictionary, voice commands, local history and a model manager — all running locally."
 >
-  <section class="relative border-b border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <p class="sec-mark">spec sheet</p>
-      <h1 class="font-display mt-5 text-5xl font-bold leading-[1.02] tracking-[-0.045em] sm:text-6xl">
-        the full <span class="text-phosphor">rack.</span>
+  <section class="relative overflow-hidden border-b border-rule">
+    <!-- Engine D: the contour field behind the spec sheet -->
+    <canvas id="feat-scene" class="absolute inset-0 h-full w-full opacity-55" aria-hidden="true"></canvas>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[55%]" style="background:linear-gradient(to top, var(--color-paper) 42%, color-mix(in srgb, var(--color-paper) 80%, transparent) 66%, transparent)" aria-hidden="true"></div>
+
+    <div class="relative mx-auto max-w-6xl px-5 pb-24 pt-28 sm:px-8 sm:pt-36">
+      <p class="eyebrow">spec sheet</p>
+      <h1 class="font-serif mt-6 max-w-2xl text-6xl font-normal leading-[0.98] text-ink sm:text-8xl">
+        the full<br />instrument<span class="text-accent">.</span>
       </h1>
-      <p class="mt-5 max-w-2xl text-ink-dim">
-        the complete dictation loop — capture, transcribe, polish, inject — on your machine,
-        with open models you choose.
+      <p class="mt-7 max-w-md text-[16px] leading-7 text-ink-2">
+        the complete dictation loop — capture, transcribe, polish, inject — on your
+        machine, with open models you choose.
       </p>
-      <!-- the signal path, rendered as an ASCII readout -->
-      <pre class="mt-8 select-none overflow-x-auto font-mono text-[12px] leading-6 text-phosphor/80" aria-hidden="true">mic ▸ vad ▸ whisper.cpp ▸ llama.cpp ▸ paste
-      ▾     ▾       ▾            ▾         ▾
-    local local    local        local     local</pre>
+      <pre class="mt-9 select-none overflow-x-auto font-mono text-[11.5px] leading-6 text-ink-2" aria-hidden="true">mic ▸ vad ▸ whisper.cpp ▸ llama.cpp ▸ paste
+     ▾     ▾       ▾            ▾         ▾
+   local local    local        local     local</pre>
     </div>
   </section>
 
   {groups.map((g) => (
-    <section class="border-b border-line-soft">
-      <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <p class="sec-mark">section {g.num} — {g.heading}</p>
-        <div class:list={["mt-8 grid gap-5", g.num === "01" ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"]}>
-          {g.items.map((f) => <FeatureCard icon={f.icon} title={f.title} body={f.body} />)}
+    <section class="border-b border-rule">
+      <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+        <p class="eyebrow">section {g.num} — {g.heading}</p>
+        <div class:list={["mt-10 grid gap-x-10 gap-y-12", g.num === "01" ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"]}>
+          {g.items.map((f) => (
+            <article class="group">
+              <h2 class="font-serif text-2xl font-normal leading-tight text-ink transition-colors group-hover:text-accent">{f.title}</h2>
+              <p class="mt-3 text-[14px] leading-6 text-ink-2">{f.body}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
   ))}
 
-  <!-- spec table -->
-  <section class="border-b border-line-soft bg-paper/30">
-    <div class="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <p class="sec-mark">appendix — technical readout</p>
-      <div class="panel mt-8">
-        <div class="panel-head">
-          <span class="flex items-center gap-2.5">
-            <span class="led led-breathe" data-on="live" aria-hidden="true"></span>
-            <span class="mono-label text-ink-dim">whisperflow · runtime</span>
-          </span>
-          <span class="font-mono text-[11px] text-ink-faint">all values local</span>
+  <!-- spec table: the imprint -->
+  <section class="bg-tint">
+    <div class="mx-auto max-w-4xl px-5 py-20 sm:px-8">
+      <p class="eyebrow">appendix — the imprint</p>
+      <div class="proof-card mt-8">
+        <div class="flex items-center justify-between border-b border-rule px-6 py-3.5">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">whisperflow · runtime</span>
+          <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">all values local</span>
         </div>
-        <dl class="divide-y divide-line-soft">
+        <dl class="divide-y divide-rule">
           {spec.map(([k, v]) => (
-            <div class="grid grid-cols-[9rem_1fr] gap-4 px-5 py-3.5 sm:grid-cols-[13rem_1fr]">
-              <dt class="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-faint">{k}</dt>
-              <dd class="font-mono text-[13px] text-ink-dim">{v}</dd>
+            <div class="grid grid-cols-[8.5rem_1fr] gap-4 px-6 py-3.5 sm:grid-cols-[12rem_1fr]">
+              <dt class="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">{k}</dt>
+              <dd class="font-mono text-[13px] text-ink-2">{v}</dd>
             </div>
           ))}
         </dl>
@@ -103,8 +106,22 @@ const spec = [
   </section>
 
   <section>
-    <div class="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
-      <a href="/whisperflow/download/" class="btn btn-primary">download whisperflow</a>
+    <div class="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8">
+      <a href="/whisperflow/download/" class="btn-ink">download whisperflow</a>
     </div>
   </section>
 </Base>
+
+<script>
+  import { PaintedScene, SCENE_CONTOURS } from "@whisperflow/signal-engine";
+  const canvas = document.getElementById("feat-scene") as HTMLCanvasElement | null;
+  if (canvas) {
+    const dark = document.documentElement.dataset.mode === "dark";
+    new PaintedScene(canvas, {
+      scene: SCENE_CONTOURS,
+      cell: 8,
+      paper: dark ? "ink" : "cream",
+      drift: 0.5,
+    }).mount();
+  }
+</script>

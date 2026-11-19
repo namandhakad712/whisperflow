@@ -20,7 +20,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
       try {
-        if (localStorage.getItem("wf-mode") === "light") document.documentElement.dataset.mode = "light";
+        // v3: light (paper) is the default; only "dark" flips the print
+        if (localStorage.getItem("wf-mode") === "dark") document.documentElement.dataset.mode = "dark";
       } catch (e) {}
     </script>
     <title>{title}</title>
