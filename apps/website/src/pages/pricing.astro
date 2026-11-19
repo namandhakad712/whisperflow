@@ -35,7 +35,7 @@ import SignalPanel from "../components/SignalPanel.astro";
   <section class="relative border-b border-line-soft">
     <div class="mx-auto max-w-6xl px-4 pt-24 text-center sm:px-6 sm:pt-32">
       <p class="sec-mark mx-auto">open-core, honestly</p>
-      <h1 class="font-display mx-auto mt-7 max-w-3xl text-5xl leading-[1.03] sm:text-7xl">
+      <h1 class="font-display mx-auto mt-7 max-w-3xl text-5xl font-bold leading-[1.03] tracking-[-0.045em] sm:text-7xl">
         we're not selling <span class="text-phosphor">anything</span> yet.
       </h1>
       <p class="mx-auto mt-6 max-w-xl text-lg leading-8 text-ink-dim">
@@ -56,7 +56,7 @@ import SignalPanel from "../components/SignalPanel.astro";
         <span class="font-mono text-[11px] text-ink-faint">zero tracking · just an email</span>
       </div>
       <div class="p-8 sm:p-10">
-        <h2 class="font-display text-3xl">design the plan <span class="text-phosphor">you'd</span> pay for</h2>
+        <h2 class="font-display text-3xl font-bold tracking-[-0.04em]">design the plan <span class="text-phosphor">you'd</span> pay for</h2>
         <p class="mt-2 text-sm text-ink-dim">
           drag, tick, and see what it's worth to you. zero obligation — this literally just opens
           an email. no tracking, no accounts, no storage.
@@ -74,7 +74,7 @@ import SignalPanel from "../components/SignalPanel.astro";
             ["team", "team dictionary & snippets sharing"],
             ["priority", "priority support"],
           ].map(([id, label]) => (
-            <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-line bg-paper/60 px-4 py-3 text-sm transition-colors hover:border-phosphor/60">
+            <label class="flex cursor-pointer items-center gap-3 rounded-none border border-line bg-paper/60 px-4 py-3 text-sm transition-colors hover:border-phosphor/60">
               <input type="checkbox" name="feat" value={id} class="h-4 w-4 accent-[#5CE1A9]" />
               {label}
             </label>
@@ -110,7 +110,7 @@ import SignalPanel from "../components/SignalPanel.astro";
   </section>
 
   <section class="mx-auto max-w-6xl px-4 pb-24 text-center sm:px-6">
-    <h2 class="font-display text-4xl sm:text-5xl">
+    <h2 class="font-display text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
       meanwhile, it's <span class="text-phosphor">yours</span>.
     </h2>
     <div class="mt-8"><a href="/whisperflow/download/" class="btn btn-primary">download whisperflow</a></div>

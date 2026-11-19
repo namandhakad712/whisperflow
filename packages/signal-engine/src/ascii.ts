@@ -154,7 +154,7 @@ export class AsciiRender {
         pu.tex("u_scene", fbTex, 0);
         pu.tex("u_atlas", atlas, 1);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        void color;
+        pu.f3("u_color", color[0], color[1], color[2]);
       },
     });
 
