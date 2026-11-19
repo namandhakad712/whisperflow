@@ -79,7 +79,7 @@ void main() {
     m = smoothstep(220.0, 0.0, d) * 0.5;
   }
 
-  float luma = 0.5 + w * 0.5 + m;
+  float luma = 0.40 + w * 0.5 + m;
   float thr = bayer8(cell);
   float on = step(thr, luma);
 
@@ -109,8 +109,8 @@ uniform float u_density;   // 0..1 glyph detail (hover/scroll driven)
 float trace(vec2 p) {
   float t = u_time;
   float y = 0.5;
-  y += sin(p.x * 6.0 + t * 1.4) * 0.12 * (0.4 + u_drive);
-  y += sin(p.x * 11.0 - t * 2.3) * 0.06 * (0.3 + u_drive * 0.8);
+  y += sin(p.x * 6.0 + t * 1.4) * 0.12 * (0.58 + u_drive);
+  y += sin(p.x * 11.0 - t * 2.3) * 0.06 * (0.45 + u_drive * 0.8);
   y += sin(p.x * 23.0 + t * 3.7) * 0.02 * (0.2 + u_drive);
   // an envelope shaped like speech: bursts and gaps
   float env = smoothstep(0.25, 0.6, sin(p.x * 2.4 - t * 0.5) * 0.5 + 0.5);
@@ -123,11 +123,11 @@ void main() {
   float y = trace(p);
   float d = abs(p.y - y);
   // beam width tightens with density; plus a soft afterglow band
-  float beam = smoothstep(0.012 + (1.0 - u_density) * 0.01, 0.0, d);
-  float glow = smoothstep(0.10, 0.0, d) * 0.22;
+  float beam = smoothstep(0.016 + (1.0 - u_density) * 0.012, 0.0, d);
+  float glow = smoothstep(0.14, 0.0, d) * 0.3;
   float luma = clamp(beam + glow, 0.0, 1.0);
   // faint grid ticks so the field reads as an instrument screen
-  float grid = step(0.985, fract(p.x * 24.0)) * step(0.985, fract(p.y * 12.0)) * 0.08;
+  float grid = step(0.985, fract(p.x * 24.0)) * step(0.985, fract(p.y * 12.0)) * 0.12;
   gl_FragColor = vec4(vec3(luma + grid), 1.0);
 }
 `;
@@ -139,6 +139,7 @@ uniform sampler2D u_atlas;    // glyph atlas: N glyphs in a row
 uniform vec2 u_res;
 uniform float u_cells;        // columns across the viewport
 uniform float u_glyphs;       // glyph count in atlas
+uniform vec3 u_color;         // trace color (phosphor)
 
 void main() {
   vec2 cellCount = vec2(u_cells, u_cells * u_res.y / u_res.x);
@@ -159,7 +160,7 @@ void main() {
   vec2 glyphUv = vec2((cellUv.x + idx) / u_glyphs, cellUv.y);
   float glyph = texture2D(u_atlas, glyphUv).r;
 
-  gl_FragColor = vec4(vec3(glyph * clamp(l * 1.6, 0.0, 1.0)), 1.0);
+  gl_FragColor = vec4(u_color * glyph * clamp(l * 2.6, 0.0, 1.0), 1.0);
 }
 `;
 

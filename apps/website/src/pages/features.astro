@@ -53,13 +53,17 @@ const spec = [
   <section class="relative border-b border-line-soft">
     <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <p class="sec-mark">spec sheet</p>
-      <h1 class="font-display mt-5 text-5xl leading-[1.02] sm:text-6xl">
+      <h1 class="font-display mt-5 text-5xl font-bold leading-[1.02] tracking-[-0.045em] sm:text-6xl">
         the full <span class="text-phosphor">rack.</span>
       </h1>
       <p class="mt-5 max-w-2xl text-ink-dim">
         the complete dictation loop — capture, transcribe, polish, inject — on your machine,
         with open models you choose.
       </p>
+      <!-- the signal path, rendered as an ASCII readout -->
+      <pre class="mt-8 select-none overflow-x-auto font-mono text-[12px] leading-6 text-phosphor/80" aria-hidden="true">mic ▸ vad ▸ whisper.cpp ▸ llama.cpp ▸ paste
+      ▾     ▾       ▾            ▾         ▾
+    local local    local        local     local</pre>
     </div>
   </section>
 
@@ -67,7 +71,7 @@ const spec = [
     <section class="border-b border-line-soft">
       <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <p class="sec-mark">section {g.num} — {g.heading}</p>
-        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class:list={["mt-8 grid gap-5", g.num === "01" ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"]}>
           {g.items.map((f) => <FeatureCard icon={f.icon} title={f.title} body={f.body} />)}
         </div>
       </div>
@@ -82,7 +86,7 @@ const spec = [
         <div class="panel-head">
           <span class="flex items-center gap-2.5">
             <span class="led led-breathe" data-on="live" aria-hidden="true"></span>
-            <span class="mono-label text-ink-dim">whisperflow v0.1 · runtime</span>
+            <span class="mono-label text-ink-dim">whisperflow · runtime</span>
           </span>
           <span class="font-mono text-[11px] text-ink-faint">all values local</span>
         </div>

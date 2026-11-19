@@ -5,15 +5,17 @@
 @import "@fontsource-variable/inter";
 
 /* ============================================================
-   THE SIGNAL STANDARD — WhisperFlow design system
+   THE SIGNAL STANDARD v2 — WhisperFlow design system
    "Phosphor Lab": ink, paper, and one scarce live-signal green.
-   Authored 2026-11 for the Signal redesign. No values borrowed
-   from any other product. See MOTION.md for timing rationale.
+   v2 (2026-11-19): display type is now MONO (the terminal owns
+   the big statements), buttons are instrument-panel commands,
+   panels get corner brackets, contrast raised to AA. No values
+   borrowed from any other product. See MOTION.md for timings.
    ============================================================ */
 
 @theme {
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --font-display: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* LAB (dark, default) — the instrument at power-on */
@@ -21,10 +23,10 @@
   --color-paper: #111318;
   --color-paper-2: #16191F;
   --color-ink: #EDEBE4;
-  --color-ink-dim: rgba(237, 235, 228, 0.58);
-  --color-ink-faint: rgba(237, 235, 228, 0.34);
-  --color-line: rgba(237, 235, 228, 0.14);
-  --color-line-soft: rgba(237, 235, 228, 0.08);
+  --color-ink-dim: rgba(237, 235, 228, 0.68);
+  --color-ink-faint: rgba(237, 235, 228, 0.45);
+  --color-line: rgba(237, 235, 228, 0.16);
+  --color-line-soft: rgba(237, 235, 228, 0.09);
 
   /* THE signal color — scarce on purpose */
   --color-phosphor: #5CE1A9;
@@ -39,7 +41,7 @@
   --color-surface-2: #16191F;
   --color-accent: #5CE1A9;
   --color-accent-strong: #8CFFC7;
-  --color-ink-soft: rgba(237, 235, 228, 0.58);
+  --color-ink-soft: rgba(237, 235, 228, 0.68);
 }
 
 /* DAYLIGHT (light) — the instrument in the sun. Newsprint dither. */
@@ -48,10 +50,10 @@
   --color-paper: #FFFFFF;
   --color-paper-2: #ECE9E0;
   --color-ink: #16181D;
-  --color-ink-dim: rgba(22, 24, 29, 0.62);
-  --color-ink-faint: rgba(22, 24, 29, 0.38);
-  --color-line: rgba(22, 24, 29, 0.14);
-  --color-line-soft: rgba(22, 24, 29, 0.08);
+  --color-ink-dim: rgba(22, 24, 29, 0.72);
+  --color-ink-faint: rgba(22, 24, 29, 0.48);
+  --color-line: rgba(22, 24, 29, 0.16);
+  --color-line-soft: rgba(22, 24, 29, 0.09);
 
   --color-phosphor: #0E8A62;
   --color-phosphor-hot: #066748;
@@ -64,11 +66,12 @@
   --color-surface-2: #ECE9E0;
   --color-accent: #0E8A62;
   --color-accent-strong: #066748;
-  --color-ink-soft: rgba(22, 24, 29, 0.62);
+  --color-ink-soft: rgba(22, 24, 29, 0.72);
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -78,6 +81,7 @@ body {
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
   transition: background-color 0.25s ease, color 0.25s ease;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -102,12 +106,20 @@ body {
   border-radius: 4px;
 }
 
-/* ---------- type helpers ---------- */
+/* ---------- type system ----------
+   v2 rule: display = MONO. The terminal voice owns every headline.
+   Inter stays for prose only; mono carries all UI, labels, display. */
 
 .font-display {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+/* keep display sizes one notch heavier-tracked at small sizes */
+@media (max-width: 640px) {
+  .font-display {
+    letter-spacing: -0.035em;
+  }
 }
 
 /* the /// section marker — like a comment in code, our signature */
@@ -136,20 +148,23 @@ body {
   text-transform: uppercase;
 }
 
-/* ---------- buttons — 8px radius, instrument-panel style ---------- */
+/* ---------- buttons — instrument commands, not pills ----------
+   Square-cornered, bracketed, mono. Primary carries the phosphor;
+   ghost is a bordered switch. The [ ] affordance is the house style. */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  border-radius: 8px;
+  border-radius: 3px;
   padding: 0.72rem 1.35rem;
   font-size: 0.9rem;
   font-weight: 600;
   font-family: var(--font-mono);
   letter-spacing: 0.01em;
   cursor: pointer;
+  position: relative;
   transition:
     transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1),
@@ -164,11 +179,11 @@ body {
 .btn-primary {
   background: var(--color-phosphor);
   color: #07120D;
-  box-shadow: 0 0 0 1px rgba(92, 225, 169, 0.25), 0 0 24px rgba(92, 225, 169, 0.12);
+  box-shadow: 0 0 20px rgba(92, 225, 169, 0.16);
 }
 .btn-primary:hover {
   background: var(--color-phosphor-hot);
-  box-shadow: 0 0 0 1px rgba(140, 255, 199, 0.35), 0 0 42px rgba(92, 225, 169, 0.28);
+  box-shadow: 0 0 34px rgba(92, 225, 169, 0.3);
   transform: translateY(-1px);
 }
 :root[data-mode="light"] .btn-primary {
@@ -195,6 +210,9 @@ body {
   transform: translateY(-1px);
 }
 
+/* the command button — square, mono, one glow. No ornaments. */
+
+
 /* kbd chip — inset well, mono */
 kbd.wf-kbd,
 .kbd-chip {
@@ -213,18 +231,42 @@ kbd.wf-kbd,
   box-shadow: inset 0 1px 2px rgba(22, 24, 29, 0.08);
 }
 
-/* ---------- instrument panel (the card) ---------- */
+/* ---------- instrument panel (the card) ----------
+   v2: corner brackets on every panel — the schematic-frame detail
+   that replaces uniform 1px borders as the only edge treatment. */
 
 .panel {
   position: relative;
   background: var(--color-paper);
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 2px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
 :root[data-mode="light"] .panel {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(22, 24, 29, 0.05);
+}
+/* corner brackets — drawn with box-shadow so they never affect layout */
+.panel::before,
+.panel::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: 1;
+}
+.panel::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1.5px solid var(--color-ink-faint);
+  border-left: 1.5px solid var(--color-ink-faint);
+}
+.panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1.5px solid var(--color-ink-faint);
+  border-right: 1.5px solid var(--color-ink-faint);
 }
 .panel > .panel-head {
   display: flex;
@@ -324,8 +366,8 @@ kbd.wf-kbd,
   height: 2px;
   width: 0;
   background: var(--color-phosphor);
-  box-shadow: 0 0 12px rgba(92, 225, 169, 0.6);
-  z-index: 100;
+  box-shadow: 0 1px 10px rgba(92, 225, 169, 0.5);
+  z-index: 60; /* above content, below the sticky header's visual weight */
   transition: width 0.08s linear;
 }
 
@@ -362,6 +404,34 @@ details.faq[open] .faq-glyph {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ---------- transmission log — aligned dot leaders ----------
+   v2: rows are flex; the leader is a repeating-dot border that
+   fills the middle; values right-align. No more hand-counted dots. */
+
+.log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.log-row .log-key {
+  flex: none;
+}
+.log-row .log-dots {
+  flex: 1;
+  min-width: 1.5rem;
+  border-bottom: 1px dotted var(--color-line);
+  transform: translateY(-3px);
+  overflow: hidden;
+  height: 1px;
+}
+.log-row .log-val {
+  flex: none;
+  text-align: right;
 }
 
 /* ---------- docs typography — bound to our tokens ---------- */
@@ -403,22 +473,34 @@ details.faq[open] .faq-glyph {
   padding: 0.1rem 0.35rem;
   font-size: 0.86em;
   font-family: var(--font-mono);
+  overflow-wrap: anywhere;
 }
 .prose :where(code):not(pre code)::before,
 .prose :where(code):not(pre code)::after {
   content: "";
 }
-.prose :where(pre) {
+.prose :where(pre),
+pre.astro-code {
   background: #0D0F12;
   border: 1px solid var(--color-line);
   border-radius: 10px;
   font-family: var(--font-mono);
+  overflow-x: auto;
+  max-width: 100%;
+}
+pre.astro-code code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
 }
 :root[data-mode="light"] .prose :where(pre) {
   background: #16181D;
 }
 .prose :where(table) {
   font-size: 0.9em;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 .prose :where(thead th) {
   color: var(--color-ink);
@@ -436,4 +518,23 @@ details.faq[open] .faq-glyph {
 .prose :where(blockquote p:first-of-type)::before,
 .prose :where(blockquote p:last-of-type)::after {
   content: "";
+}
+
+/* ---------- hard containment: nothing may stretch the page sideways ---------- */
+
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+footer .grid {
+  min-width: 0;
+}
+footer .grid > * {
+  min-width: 0;
+}
+.prose ul,
+.prose li {
+  min-width: 0;
 }

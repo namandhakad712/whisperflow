@@ -17,7 +17,7 @@ export interface DitherPalette {
 }
 
 export const DITHER_PALETTES = {
-  dark: { paper: "#0A0B0D", ink: "#23282B", glow: "#2E6B57" },
+  dark: { paper: "#0A0B0D", ink: "#13161A", glow: "#1C4234" },
   light: { paper: "#F4F2EC", ink: "#D9D5C9", glow: "#9CC7B4" },
 } satisfies Record<string, DitherPalette>;
 
