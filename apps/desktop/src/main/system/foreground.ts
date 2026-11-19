@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 /**
- * Which app is in the foreground — the attribution the reference app stores on
+ * Which app is in the foreground — the attribution the spec stores on
  * every dictation (`history.app`, and it keeps per-app/per-URL stats). We can't
  * read the foreign window from Electron, so this is a short PowerShell one-shot
  * fired asynchronously at dictation start (never blocks the audio path).

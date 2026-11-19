@@ -11,7 +11,7 @@ import {
   TERMINAL_PROCESS_NAMES,
 } from "../src/main/system/appType";
 
-describe("getAppType (reference app's classifier)", () => {
+describe("getAppType (foreground app classifier)", () => {
   it("classifies email clients by process name", () => {
     expect(getAppType("OUTLOOK")).toBe(AppType.Email);
     expect(getAppType("mail")).toBe(AppType.Email);
@@ -37,7 +37,7 @@ describe("getAppType (reference app's classifier)", () => {
     expect(getAppType("WINWORD")).toBe(AppType.Other);
   });
 
-  it("keeps the exported lists verbatim from the reference build", () => {
+  it("keeps the exported lists verbatim from the spec build", () => {
     expect(EMAIL_PROCESS_NAMES).toContain("kiwi for gmail");
     expect(EMAIL_PROCESS_NAMES).toContain("notion mail");
     expect(AI_PROCESS_NAMES).toContain("notebooklm");

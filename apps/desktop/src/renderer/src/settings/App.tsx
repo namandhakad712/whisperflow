@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
-import { PanelLeftClose, PanelLeftOpen, Palette, Search } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Moon, Sun, Search } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
@@ -25,11 +25,11 @@ import { Onboarding } from "./Onboarding";
 import { DEFAULT_ROUTE, PAGES, allScreens, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
 /**
- * Settings shell.
+ * Settings shell — "the console".
  *
- * Five pages, each with its own sub-nav. The previous flat sixteen-item rail
- * read as a wall of options; grouping by intent fixed that without deleting a
- * single control. `#/advanced`-style routes still work — see nav.ts.
+ * Five pages, each with its own sub-nav. The Signal Standard skin: Lab (dark)
+ * and Daylight (light). The copied "Classic" theme was removed with the
+ * redesign — every remaining value is authored (see MOTION.md).
  */
 
 function currentRoute(): string {
@@ -48,21 +48,14 @@ function hasOnboarded(): boolean {
   }
 }
 
-type Skin = "nocturne" | "classic" | "dawn";
+/** Lab = dark instrument, Daylight = light. Two skins, both ours. */
+type Skin = "lab" | "daylight";
 
 function applySkin(skin: Skin): void {
   const root = document.documentElement;
-  if (skin === "classic") {
-    delete root.dataset.theme;
-    root.dataset.theme = "classic";
-    document.body.classList.remove("light");
-  } else if (skin === "dawn") {
-    delete root.dataset.theme;
-    document.body.classList.add("light");
-  } else {
-    delete root.dataset.theme;
-    document.body.classList.remove("light");
-  }
+  delete root.dataset.theme;
+  if (skin === "daylight") document.body.classList.add("light");
+  else document.body.classList.remove("light");
   try {
     localStorage.setItem("wf-skin", skin);
   } catch {
@@ -73,19 +66,19 @@ function applySkin(skin: Skin): void {
 function readSkin(): Skin {
   try {
     const saved = localStorage.getItem("wf-skin");
-    if (saved === "classic" || saved === "dawn" || saved === "nocturne") return saved;
-    // migrate the older light-mode flag
-    if (localStorage.getItem("wf-mode") === "light") return "dawn";
+    if (saved === "lab" || saved === "daylight") return saved;
+    // migrate older flags from before the redesign
+    if (localStorage.getItem("wf-skin") === "classic") return "lab";
+    if (localStorage.getItem("wf-mode") === "light") return "daylight";
   } catch {
     /* first run */
   }
-  return "nocturne";
+  return "lab";
 }
 
 const SKIN_LABEL: Record<Skin, string> = {
-  nocturne: "Nocturne",
-  classic: "Classic",
-  dawn: "Dawn",
+  lab: "Lab",
+  daylight: "Daylight",
 };
 
 export function App() {
@@ -142,8 +135,8 @@ export function App() {
       )
     : [];
 
-  const cycleSkin = () => {
-    const next: Skin = skin === "nocturne" ? "classic" : skin === "classic" ? "dawn" : "nocturne";
+  const toggleSkin = () => {
+    const next: Skin = skin === "lab" ? "daylight" : "lab";
     setSkin(next);
     applySkin(next);
   };
@@ -151,16 +144,16 @@ export function App() {
   return (
     <div className="flex h-screen flex-col">
       {/* top bar with the pill row */}
-      <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
+      <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-rail px-4">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
             aria-label="Toggle sidebar"
-            className="flex h-8 items-center gap-2 rounded-full bg-pill px-3 text-[13px] font-medium text-ink transition-colors duration-150 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
           >
             {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-            {!collapsed && <span>Toggle sidebar</span>}
+            {!collapsed && <span>panel</span>}
           </button>
         </div>
         <div className="relative mx-auto w-full max-w-sm">
@@ -179,20 +172,20 @@ export function App() {
                 (e.target as HTMLInputElement).blur();
               }
             }}
-            placeholder="Find a setting…  (Ctrl+K)"
-            className="h-8 w-full rounded-full border border-line bg-surface-2/60 pl-9 pr-3 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-dim/60 focus:border-accent/50 focus:ring-2 focus:ring-accent/30"
+            placeholder="find a setting… ^K"
+            className="h-8 w-full rounded-md border border-line bg-paper-2/60 pl-9 pr-3 font-mono text-[12.5px] text-ink outline-none transition-colors placeholder:text-ink-dim/60 focus:border-phosphor/50 focus:ring-2 focus:ring-phosphor/25"
           />
           {q && matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-9 z-20 max-h-64 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
+            <div className="absolute left-0 right-0 top-9 z-20 max-h-64 overflow-y-auto rounded-lg border border-line bg-paper p-1 shadow-xl">
               {matches.slice(0, 8).map((s) => (
                 <a
                   key={s.route}
                   href={`#/${s.route}`}
                   onClick={() => setSearch("")}
-                  className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[13px] text-ink hover:bg-surface-2"
+                  className="flex items-center justify-between gap-2 rounded-md px-3 py-2 font-mono text-[12.5px] text-ink hover:bg-paper-2"
                 >
                   <span>{s.label}</span>
-                  <span className="text-[11px] text-ink-dim">{s.page}</span>
+                  <span className="text-[11px] text-ink-faint">{s.page}</span>
                 </a>
               ))}
             </div>
@@ -201,12 +194,12 @@ export function App() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={cycleSkin}
+            onClick={toggleSkin}
             aria-label={`Theme: ${SKIN_LABEL[skin]}. Click to change.`}
-            className="flex h-8 items-center gap-2 rounded-full bg-pill px-3 text-[13px] font-medium text-ink transition-colors duration-150 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
           >
-            <Palette size={15} />
-            <span>Theme · {SKIN_LABEL[skin]}</span>
+            {skin === "lab" ? <Moon size={14} /> : <Sun size={14} />}
+            <span>{SKIN_LABEL[skin]}</span>
           </button>
         </div>
       </div>
@@ -214,7 +207,7 @@ export function App() {
       <UpdateBanner />
 
       <div className="flex min-h-0 flex-1">
-        {/* rail — 192px, items 36px, 6px radius, icon+label */}
+        {/* rail — the channel strip */}
         <aside
           className={`flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3 transition-[width] ${
             collapsed ? "w-[68px]" : "w-[216px]"
@@ -223,7 +216,7 @@ export function App() {
         >
           {!collapsed && (
             <p className="px-3 pb-2 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-rail-text-dim">
-              WhisperFlow
+              whisperflow
             </p>
           )}
           {PAGES.map((item, i) => (
@@ -290,10 +283,11 @@ function SubNav({ page, active }: { page: SettingsPage; active: string }) {
               key={s.id}
               href={`#/${page.id}/${s.id}`}
               aria-current={on ? "page" : undefined}
-              className={`rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
-                on ? "bg-surface-2 text-ink" : "text-ink-dim hover:text-ink"
+              className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 font-mono text-[12.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
+                on ? "bg-paper-2 text-phosphor" : "text-ink-dim hover:text-ink"
               }`}
             >
+              <span className={`led ${on ? "" : "opacity-40"}`} data-on={on ? "live" : "off"} aria-hidden="true" />
               {s.label}
             </a>
           );
@@ -326,20 +320,20 @@ function UpdateBanner() {
   if (status.state === "downloaded") {
     const notes = status.releaseNotes ? summarizeReleaseNotes(status.releaseNotes) : null;
     return (
-      <div className="flex shrink-0 flex-col gap-1 border-b border-accent/30 bg-accent/10 px-4 py-2.5">
+      <div className="flex shrink-0 flex-col gap-1 border-b border-phosphor/30 bg-phosphor/10 px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[13px] font-medium">
-            WhisperFlow v{status.version} is ready — restart to finish installing.
+          <p className="font-mono text-[13px] font-medium">
+            <span className="text-phosphor">[ok]</span> whisperflow v{status.version} is ready — restart to finish installing.
           </p>
           <button
             type="button"
             onClick={() => void window.whisperflow.app.quitAndInstall()}
-            className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink transition-opacity hover:opacity-90"
+            className="shrink-0 rounded-lg bg-phosphor px-3.5 py-1.5 font-mono text-[13px] font-semibold text-[#07120D] transition-opacity hover:opacity-90"
           >
-            Restart now
+            restart now
           </button>
         </div>
-        {notes ? <p className="text-[12px] text-ink-dim">What’s new: {notes}</p> : null}
+        {notes ? <p className="font-mono text-[12px] text-ink-dim">what's new: {notes}</p> : null}
       </div>
     );
   }
@@ -347,10 +341,10 @@ function UpdateBanner() {
   // available — downloading in the background
   if (status.state !== "available") return null;
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2/50 px-4 py-2.5">
-      <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-accent" />
-      <p className="text-[13px] text-ink-dim">
-        WhisperFlow v{status.version} is downloading… it installs when you quit.
+    <div className="flex shrink-0 items-center gap-3 border-b border-line bg-paper-2/50 px-4 py-2.5">
+      <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-phosphor" />
+      <p className="font-mono text-[12.5px] text-ink-dim">
+        whisperflow v{status.version} is downloading… it installs when you quit.
         {status.releaseNotes ? ` ${summarizeReleaseNotes(status.releaseNotes)}` : ""}
       </p>
     </div>
@@ -393,14 +387,21 @@ function RailItem({
       href={href}
       title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
-      className={`flex h-9 items-center rounded-md text-[15px] font-[550] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
+      className={`relative flex h-9 items-center rounded-md font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
         collapsed ? "justify-center px-0" : "gap-3 px-3"
       } ${first ? "" : "mt-1"} ${
         active
-          ? "bg-rail-active text-rail-text ring-1 ring-inset ring-white/[0.06]"
+          ? "bg-rail-active text-phosphor"
           : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"
       }`}
     >
+      {/* the phosphor edge: a 2px signal on the live channel */}
+      {active && (
+        <span
+          className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-phosphor shadow-[0_0_8px_rgba(92,225,169,0.7)]"
+          aria-hidden="true"
+        />
+      )}
       {children}
       {!collapsed && <span>{label}</span>}
     </a>

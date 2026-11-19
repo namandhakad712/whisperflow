@@ -1,55 +1,69 @@
 ---
 import Base from "../layouts/Base.astro";
-import Button from "../components/Button.astro";
+import SignalPanel from "../components/SignalPanel.astro";
+
+const tiers = [
+  {
+    label: "individual",
+    price: "$5",
+    led: "live" as const,
+    items: ["name in the sponsors list", "early access to release candidates", "our genuine gratitude"],
+  },
+  {
+    label: "professional",
+    price: "$25",
+    led: "live" as const,
+    items: ["everything in individual", "logo on this page", "priority feature requests"],
+  },
+  {
+    label: "enterprise",
+    price: "custom",
+    led: "busy" as const,
+    items: ["private builds & packaging", "integration support", "on-site deployment guidance"],
+  },
+];
 ---
 <Base
   title="Sponsors — WhisperFlow"
   description="Fund free, private voice dictation for everyone. Sponsor WhisperFlow development."
 >
-  <section class="hero-backdrop border-b border-line/70">
+  <section class="relative border-b border-line-soft">
     <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Sponsors</h1>
-      <p class="mt-4 max-w-2xl text-lg text-ink-dim">
-        Your sponsorship keeps WhisperFlow free, private, and actively developed.
+      <p class="sec-mark">fund the signal</p>
+      <h1 class="font-display mt-5 text-5xl leading-[1.02] sm:text-6xl">
+        sponsors keep it <span class="text-phosphor">free.</span>
+      </h1>
+      <p class="mt-5 max-w-2xl text-ink-dim">
+        your sponsorship keeps whisperflow free, private, and actively developed. it funds the
+        runway — never a paywall.
       </p>
     </div>
   </section>
 
-  <section class="border-b border-line/70">
+  <section class="border-b border-line-soft">
     <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <div class="grid gap-5 md:grid-cols-3">
-        <div class="rounded-2xl border border-line bg-surface/60 p-8">
-          <h2 class="text-lg font-bold">🤝 Individual</h2>
-          <p class="mt-3 text-3xl font-bold">$5<span class="text-base font-normal text-ink-dim">/mo</span></p>
-          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
-            <li>· Name in the sponsors list</li>
-            <li>· Early access to release candidates</li>
-            <li>· Our genuine gratitude</li>
-          </ul>
-        </div>
-        <div class="rounded-2xl border border-line bg-surface/60 p-8">
-          <h2 class="text-lg font-bold">💼 Professional</h2>
-          <p class="mt-3 text-3xl font-bold">$25<span class="text-base font-normal text-ink-dim">/mo</span></p>
-          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
-            <li>· Everything in Individual</li>
-            <li>· Logo on this page</li>
-            <li>· Priority feature requests</li>
-          </ul>
-        </div>
-        <div class="rounded-2xl border border-line bg-surface/60 p-8">
-          <h2 class="text-lg font-bold">🏢 Enterprise</h2>
-          <p class="mt-3 text-3xl font-bold text-ink-dim">Custom</p>
-          <ul class="mt-6 space-y-2 text-sm text-ink-dim">
-            <li>· Private builds &amp; packaging</li>
-            <li>· Integration support</li>
-            <li>· On-site deployment guidance</li>
-          </ul>
-        </div>
+        {tiers.map((t) => (
+          <SignalPanel label={t.label} led={t.led} breathe={t.label === "individual"}>
+            <div class="p-7">
+              <p class="font-mono text-4xl text-ink">
+                {t.price}{t.price !== "custom" && <span class="text-base font-normal text-ink-dim">/mo</span>}
+              </p>
+              <ul class="mt-6 space-y-2.5 font-mono text-[13px] text-ink-dim">
+                {t.items.map((i) => (
+                  <li class="flex gap-2.5"><span class="text-phosphor">·</span> {i}</li>
+                ))}
+              </ul>
+            </div>
+          </SignalPanel>
+        ))}
       </div>
       <div class="mt-10 text-center">
-        <p class="text-sm text-ink-dim">Sponsorship activates with the first public release — star the repo to be notified.</p>
+        <p class="font-mono text-[13px] text-ink-dim">
+          sponsorship activates with the first public release — star the repo to be notified.
+        </p>
         <div class="mt-6 flex justify-center gap-3">
-          <Button href="https://github.com/namandhakad712/whisperflow">Star on GitHub</Button>
+          <a href="https://github.com/namandhakad712/whisperflow" class="btn btn-ghost">star on github</a>
         </div>
       </div>
     </div>

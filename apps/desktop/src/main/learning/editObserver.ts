@@ -1,5 +1,5 @@
 /**
- * Post-paste edit observation — the port of the reference app's
+ * Post-paste edit observation — the
  * `UpdateEditedText` pipeline (report 06):
  *
  * After the text is pasted, the app watches the target text box (their window:

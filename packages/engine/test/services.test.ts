@@ -40,7 +40,7 @@ describe("promptBuilder", () => {
     expect(wrongTone.system).not.toContain("Pirate speak");
   });
 
-  it("scales cleanup across the reference app's five levels", () => {
+  it("scales cleanup across the spec five levels", () => {
     expect(buildPolishMessages({ ...base, cleanup: "light" }).system).toContain("Remove filler words");
     expect(buildPolishMessages({ ...base, cleanup: "medium" }).system).toContain("clarity and conciseness");
     expect(buildPolishMessages({ ...base, cleanup: "high" }).system).toContain("false starts");

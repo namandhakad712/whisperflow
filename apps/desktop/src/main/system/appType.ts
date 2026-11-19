@@ -1,5 +1,5 @@
 /**
- * Active-app classification — replicated from the reference app (v1.6.1264),
+ * Active-app classification — replicated from the spec (v1.6.1264),
  * module 1576 of its main bundle: the `AppType` enum, the exact
  * WINDOWS_*_PROCESS_NAME lists, and the `getAppType` classifier's match order.
  *

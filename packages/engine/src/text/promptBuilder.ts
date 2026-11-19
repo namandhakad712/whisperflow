@@ -25,7 +25,7 @@ export interface PolishInput {
    */
   format?: "formatted" | "raw" | "casual" | "lowercase";
   /**
-   * Classified target-app type (replicated from the reference app's AppType):
+   * Classified target-app type (replicated from the spec AppType):
    * email apps get a signature, messaging apps drop the trailing period, and
    * AI apps skip cleanup entirely.
    */

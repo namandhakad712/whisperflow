@@ -3,315 +3,207 @@ import { motion } from "framer-motion";
 import type { DictationStateEvent } from "@whisperflow/shared";
 import { startCapture, type Capture } from "./capture";
 
-const BAR_COUNT = 28;
-const BAR_HISTORY_MS = 28;
-
 /**
- * The dictation surface — rebuilt 1:1 from the reference app's compiled CSS
- * (extracted verbatim from its shipped status-window bundle; every value
- * below is theirs, sources noted inline).
+ * The dictation surface — "the capsule". Signal Standard edition.
  *
- *   rest  → 30×6 dash, rgba(0,0,0,.5) bg, hsla(0,0%,100%,.5) border
- *   mini  → 416×48, radius 16, #1f1f1f, 1.5px #30302f border
- *   card  → 416×80, column content, status line with a 6×6 #10b981 dot
- *   l4    → 416×322 (expanded transcript)
- * All morphs run on their exact spring easing at 0.42s.
+ * Every geometry, color and timing below is AUTHORED for WhisperFlow
+ * (see MOTION.md at the repo root). The previous build carried values
+ * measured from another product's compiled CSS; that lineage is gone.
+ *
+ *   rest    → a 22×22 breathing phosphor dot (standby LED)
+ *   mini    → 384×56 capsule: paper glass, hairline, phosphor trace
+ *   card    → 384×88 (status row + transcript line)
+ *   l4      → 384×336 (expanded transcript)
+ *   morph   → 380ms cubic-bezier(0.7,0,0.2,1) — "scope" easing: quick in,
+ *             slow settle, like a VU needle coming to rest
  */
-// Root pill morph curve (reference status bundle @665034) — drives the
-// 0.42s width/height/border-radius morphs below.
-const SPRING_EASING =
-  "linear(0, 0.005, 0.019 1.8%, 0.079 3.9%, 0.476 13.5%, 0.72 24%, 0.867 34%, 0.948 43.6%, 0.981 53.4%, 0.994 63.4%, 0.999 76%, 1)";
-// Capsule curve is used by StatusBar.tsx (different bundle position — the
-// status capsule at 0.2s).
-const CAPSULE_SPRING_EASING =
-  "linear(0, 0.0015, 0.0057 1.07%, 0.0214 2.13%, 0.0739 4.26%, 0.1638 6.93%, 0.479 15.46%, 0.5791 18.66%, 0.6512 21.32%, 0.7243, 0.784, 0.832 30.92%, 0.8757 34.65%, 0.9126 38.91%, 0.9418 43.71%, 0.9633 49.04%, 0.9781 54.9%, 0.9882 61.83%, 0.9948 70.89%, 0.9982 82.09%, 0.9997 99.68%)";
 
-const PILL_CSS = `
-:root { --spring-easing: ${SPRING_EASING}; }
+const TRACE_POINTS = 56;
+
+/** Authored morph curve — see MOTION.md "Envelopes". */
+const SCOPE_EASING = "cubic-bezier(0.7, 0, 0.2, 1)";
+
+const CAPSULE_CSS = `
+:root { --scope-easing: ${SCOPE_EASING}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Figtree", "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-body { font-feature-settings: "salt" on; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden;
+  font-family: "Inter", "Space Grotesk", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
-.pill-zone { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 428px; height: 428px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
-.pill-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 428px; height: 54px; background: rgba(0, 0, 0, 0.004); pointer-events: auto; }
-/* Top anchors: the window hangs from the top, so the pill (and everything
- * else) grows DOWNWARD instead of upward. */
-body[data-align="top"] .pill-zone { bottom: auto; top: 6px; align-items: flex-start; }
-body[data-align="top"] .pill-zone::after { bottom: auto; top: 0; }
+.capsule-zone { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  width: 420px; height: 420px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.capsule-zone::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 420px; height: 60px; background: rgba(0, 0, 0, 0.004); pointer-events: auto; }
+body[data-align="top"] .capsule-zone { bottom: auto; top: 8px; align-items: flex-start; }
+body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
 
-/* The card — their pill geometry (shadow dropped on user request: it read as
- * a hard clipped rectangle on the transparent window). */
-.pill-card {
+/* ---- the capsule ---- */
+.capsule {
   position: relative;
-  width: 416px;
-  height: 48px;
-  border-radius: 16px;
-  background: var(--pill-bg, #1f1f1f);
-  border: 1.5px solid var(--pill-border, #30302f);
+  width: 384px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--cap-bg, rgba(17, 19, 24, 0.92));
+  border: 1px solid var(--cap-border, rgba(237, 235, 228, 0.16));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px);
   transition:
-    width 0.42s var(--spring-easing),
-    height 0.42s var(--spring-easing),
-    border-radius 0.42s var(--spring-easing),
+    width 0.38s var(--scope-easing),
+    height 0.38s var(--scope-easing),
+    border-radius 0.38s var(--scope-easing),
     background-color 0.3s ease,
     border-color 0.3s ease,
-    opacity 0.3s ease;
+    opacity 0.3s ease,
+    box-shadow 0.3s ease;
   overflow: hidden;
   pointer-events: auto;
 }
-.pill-card[data-state="card"] { height: 80px; }
-.pill-card[data-state="l4"] { height: 322px; }
-/* The rest state — the pill collapses to a 30×6 dash (exact size). Visible on
- * light AND dark desktops: mid-gray fill with a light inner ring (pure
- * black-on-black was effectively invisible over a dark window). */
-.pill-card[data-state="rest"] {
-  width: 30px;
-  height: 6px;
-  border-radius: 6px;
-  background: rgba(38, 38, 37, 0.85);
-  border-color: rgba(255, 255, 255, 0.28);
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6);
+.capsule[data-state="card"] { height: 88px; }
+.capsule[data-state="l4"] { height: 336px; }
+/* rest = the standby LED: a breathing phosphor dot. */
+.capsule[data-state="rest"] {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(17, 19, 24, 0.85);
+  border-color: rgba(92, 225, 169, 0.35);
+  animation: dot-breathe 3.2s ease-in-out infinite;
+  cursor: pointer;
 }
-.pill-card:focus-visible { outline: 2px solid #10b981; outline-offset: 3px; }
-/* Mini content row: flex, 8px gap, 12px side padding, single line. */
+@keyframes dot-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92, 225, 169, 0.0), inset 0 0 6px rgba(92, 225, 169, 0.3); }
+  50% { box-shadow: 0 0 18px 2px rgba(92, 225, 169, 0.35), inset 0 0 10px rgba(92, 225, 169, 0.65); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .capsule[data-state="rest"] { animation: none; box-shadow: inset 0 0 8px rgba(92, 225, 169, 0.5); }
+}
+.capsule:focus-visible { outline: 2px solid #5CE1A9; outline-offset: 3px; }
+
+/* the standby core: a 6px phosphor pip, visible on any desktop */
+.capsule .standby-core {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+}
+.capsule[data-state="rest"] .standby-core { display: flex; }
+.standby-core span {
+  width: 6px; height: 6px; border-radius: 999px; background: #5CE1A9;
+  box-shadow: 0 0 8px rgba(92, 225, 169, 0.9);
+}
+
+/* ---- mini row ---- */
 .mini-row {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.08s ease;
+  position: absolute; inset: 0; display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; white-space: nowrap; overflow: hidden;
+  opacity: 0; pointer-events: none; transition: opacity 0.08s ease;
 }
-.pill-card[data-state="mini"] .mini-row { opacity: 1; pointer-events: auto; transition: opacity 0.18s ease 0.1s; }
-.pill-card[data-peek="true"] .mini-row { opacity: 0; }
+.capsule[data-state="mini"] .mini-row { opacity: 1; pointer-events: auto; transition: opacity 0.16s ease 0.12s; }
+.capsule[data-peek="true"] .mini-row { opacity: 0; }
 
-/* Frosted avatar circle (their 24px, hsla white .15 + blur 8px). It doubles
- * as the drag handle — grab it to move the pill anywhere. */
-.avatar {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: hsla(0, 0%, 100%, 0.15);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fcfcfb;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  cursor: grab;
-  -webkit-app-region: drag;
+/* mic glyph + drag handle */
+.handle {
+  flex: none; width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cap-ink, #EDEBE4); opacity: 0.7;
+  cursor: grab; -webkit-app-region: drag;
 }
-.avatar:active { cursor: grabbing; }
+.handle:active { cursor: grabbing; }
 
-/* Live text: 15px/20px, weight 500, sand-50, single line with a right-edge
- * fade (their 20px mask). */
 .live-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: clip;
-  font-size: 15px;
-  line-height: 20px;
-  font-weight: 500;
-  color: var(--pill-ink, #fcfcfb);
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+  flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: clip;
+  font-size: 14.5px; line-height: 20px; font-weight: 500;
+  color: var(--cap-ink, #EDEBE4);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
 }
-.live-text[data-multiline="true"] {
-  white-space: normal;
-  -webkit-mask-image: none;
-  mask-image: none;
-}
+.live-text[data-multiline="true"] { white-space: normal; -webkit-mask-image: none; mask-image: none; }
 
-/* Meta (timer / WPM): 12px/18px, vast-500 #71716e. */
+/* meta column — mono, tabular */
 .meta {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  line-height: 18px;
-  color: #71716e;
-  white-space: nowrap;
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; line-height: 18px; color: var(--cap-meta, rgba(237, 235, 228, 0.5));
+  white-space: nowrap; font-variant-numeric: tabular-nums;
 }
+.meta .rec { width: 6px; height: 6px; border-radius: 2px; background: #5CE1A9; box-shadow: 0 0 6px rgba(92,225,169,0.8); }
 
-/* The record dot: 6×6, radius 2, their green #10b981. */
-.rec-dot {
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: #10b981;
-}
-/* Their typing indicator: three dots, 1.4s ease-in-out infinite, .2s stagger,
- * translateY(0)→(-4px at 30%) (css2 @512261). */
-.typing-dots { display: inline-flex; align-items: center; gap: 2px; margin-left: 2px; }
+/* typing indicator: three phosphor pips */
+.typing-dots { display: inline-flex; align-items: center; gap: 2px; }
 .typing-dots span {
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #878683;
+  display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(92, 225, 169, 0.8);
   animation: typing-bounce 1.4s ease-in-out infinite;
 }
 .typing-dots span:nth-child(1) { animation-delay: 0s; }
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.18s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.36s; }
 @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .typing-dots span { animation: none; } }
 
-/* Speaking indicator — a live voice meter across the pill: bars track the
- * mic level in real time (user-requested: visible proof the system is
- * hearing you while you hold to talk). Mini state only. */
-.waveform {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 44px;
-  right: 74px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  pointer-events: none;
-}
-.waveform span {
-  flex: 1;
-  height: 100%;
-  max-height: 30px;
-  min-height: 3px;
-  border-radius: 3px;
-  background: #10b981;
-  transform: scaleY(0.1);
-  transform-origin: center;
-  transition: transform 40ms linear;
-  opacity: 0.9;
-}
-.pill-card[data-state="card"] .waveform,
-.pill-card[data-state="l4"] .waveform,
-.pill-card[data-state="rest"] .waveform { display: none; }
+/* the phosphor trace: canvas, drawn by React (levels → polyline + afterglow) */
+.trace { position: absolute; top: 10px; bottom: 10px; left: 46px; right: 92px; pointer-events: none; }
+.trace canvas { width: 100%; height: 100%; display: block; }
+.capsule:not([data-state="mini"]) .trace { display: none; }
 
-/* Card content: column. Their card is 80px tall — the status row (36px) plus
- * one transcript line (18px) plus tight padding must fit inside it or the
- * text clips (that was the "half-cut heading" bug). */
+/* ---- card content ---- */
 .card-content {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px;
-  gap: 0;
-  opacity: 0;
-  transition: opacity 0.18s ease 0.1s;
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  padding: 12px 14px; gap: 0; opacity: 0; transition: opacity 0.16s ease 0.12s;
 }
-.pill-card[data-state="card"] .card-content,
-.pill-card[data-state="l4"] .card-content { display: flex; opacity: 1; }
-.card-row { display: flex; align-items: center; gap: 8px; height: 36px; flex: none; }
-.status-line { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 18px; color: #71716e; white-space: nowrap; min-width: 0; }
+.capsule[data-state="card"] .card-content,
+.capsule[data-state="l4"] .card-content { display: flex; opacity: 1; }
+.card-row { display: flex; align-items: center; gap: 8px; height: 34px; flex: none; }
+.status-line {
+  display: flex; align-items: center; gap: 7px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; line-height: 18px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--cap-meta, rgba(237, 235, 228, 0.5)); white-space: nowrap; min-width: 0;
+}
+.status-line .rec { width: 6px; height: 6px; border-radius: 2px; background: #5CE1A9; box-shadow: 0 0 6px rgba(92,225,169,0.8); }
 
-/* l4 transcript body (rules L65-L85). */
-.pill-card[data-state="l4"] .l4-body {
-  padding-top: 28px;
-  transition: opacity 0.32s ease 0.12s;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #30302f transparent;
-}
+/* l4 transcript body */
+.capsule[data-state="l4"] .l4-body { padding-top: 26px; transition: opacity 0.3s ease 0.12s; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(237,235,228,0.16) transparent; }
 .l4-body::-webkit-scrollbar { width: 4px; }
-.l4-body::-webkit-scrollbar-thumb { background: #30302f; border-radius: 2px; }
-.l4-body { font-size: 12.5px; line-height: 18px; opacity: 0.92; }
+.l4-body::-webkit-scrollbar-thumb { background: rgba(237,235,228,0.16); border-radius: 2px; }
+.l4-body { font-size: 12.5px; line-height: 19px; opacity: 0.92; }
 .l4-body h1, .l4-body h2, .l4-body h3 { font-size: 13px; line-height: 18px; font-weight: 600; margin-bottom: 5px; }
 .l4-body ul { padding-left: 17px; margin-bottom: 7px; }
-.l4-body li::marker { color: #878683; }
+.l4-body li::marker { color: rgba(92, 225, 169, 0.6); }
 
-/* Shimmer: their generating-text sweep, 90deg #6f6f76→#fff, 220% travel
- * (pillcss @541469). */
-.shimmer {
-  background-image: linear-gradient(90deg, #6f6f76 0%, #6f6f76 35%, #fff 50%, #6f6f76 65%, #6f6f76 100%);
-  background-size: 220% 100%;
-  background-repeat: no-repeat;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-style: italic;
-  letter-spacing: -0.01em;
-  animation: shimmer-sweep 4s ease-in-out infinite;
-}
-@keyframes shimmer-sweep { from { background-position: 220% 0; } to { background-position: -220% 0; } }
+/* the polish sweep styling: violet while the LLM works, phosphor on land. */
+.sweep { font-style: normal; }
+.sweep[data-phase="llm"] { color: #8F7BE8; }
+.sweep[data-phase="done"] { color: #5CE1A9; }
 
-/* Notification badge straddling the top-right (their #2a2a29/#343432 pill). */
-.badge {
-  position: absolute;
-  top: -12px;
-  right: -6px;
-  min-width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background: #2a2a29;
-  border: 1px solid #343432;
-  color: #deddd7;
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  z-index: 3;
-  transition: opacity 0.2s ease;
-}
-.pill-card[data-state="card"] .badge,
-.pill-card[data-state="l4"] .badge { opacity: 0; transition: opacity 0.08s ease; }
+/* error */
+.error-text { color: #E86A5E; }
 
-/* Error text — their destructive-400 #f87171. */
-.error-text { color: #f87171; }
+/* sequential counter tick */
+.seq-tick { font-family: "JetBrains Mono", ui-monospace, monospace; color: #5CE1A9; }
 
-/* Their notification card — geometry only (its dual-white-glow shadow reads
- * as a harsh rectangle on the transparent window; dropped on user request). */
+/* ---- notification card (clipboard rescue) ---- */
 .notification {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 400px;
-  min-height: 200px;
-  max-height: 200px;
-  padding: 20px;
-  background: #000;
-  border-radius: 11px;
-  border: 1px solid #30302f;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transform: translate(-50%, 10px);
-  opacity: 0;
-  animation: notification-in 0.2s ease-in forwards;
+  position: absolute; left: 50%; bottom: 0; width: 384px; min-height: 190px; max-height: 190px;
+  padding: 20px; background: rgba(17, 19, 24, 0.96); border-radius: 12px;
+  border: 1px solid rgba(237, 235, 228, 0.16);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); backdrop-filter: blur(14px);
+  display: flex; flex-direction: column; gap: 10px;
+  transform: translate(-50%, 10px); opacity: 0;
+  animation: notification-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 body[data-align="top"] .notification { bottom: auto; top: 0; }
 @keyframes notification-in {
   from { transform: translate(-50%, 10px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
-.notification h2 { font-size: 14px; font-weight: 600; color: #fcfcfb; }
-.notification p { font-size: 13px; line-height: 18px; color: #a3a29e; }
+.notification h2 { font-size: 14px; font-weight: 600; color: #EDEBE4; }
+.notification h2 .ok { color: #E8B84B; }
+.notification p { font-size: 13px; line-height: 18px; color: rgba(237, 235, 228, 0.55); }
 .notification kbd {
-  font-family: inherit;
-  font-size: 11px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  border: 1px solid #464544;
-  background: #1a1a1a;
-  color: #fcfcfb;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px;
+  padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(237, 235, 228, 0.18);
+  background: rgba(22, 25, 31, 0.9); color: #EDEBE4;
 }
 `;
 
-/** Their typing indicator markup (styled above). */
 const TYPING_DOTS = (
   <span className="typing-dots" aria-label="typing">
     <span />
@@ -321,30 +213,28 @@ const TYPING_DOTS = (
 );
 
 const STATE_LABEL: Record<DictationStateEvent["state"], string> = {
-  idle: "Idle",
-  listening: "Listening",
-  transcribing: "Transcribing",
-  polishing: "Polishing",
-  injecting: "Typing",
-  done: "Done",
-  error: "Error",
-  cancelled: "Cancelled",
+  idle: "idle",
+  listening: "listening",
+  transcribing: "transcribing",
+  polishing: "polishing",
+  injecting: "typing",
+  done: "done",
+  error: "error",
+  cancelled: "cancelled",
 };
 
-// Motion variants for the pill's state morphs. The spring transition is
-// declared inline on the motion element so it is inferred as a Transition
-// (a bare literal widens `type` to string, which framer-motion rejects).
-const pillVariants = {
-  rest: { width: 30, height: 6, borderRadius: 6 },
-  mini: { width: 416, height: 48, borderRadius: 16 },
-  card: { width: 416, height: 80, borderRadius: 16 },
-  l4: { width: 416, height: 322, borderRadius: 16 },
+// Authored morph variants (framer-motion) — same geometry the CSS declares.
+const capsuleVariants = {
+  rest: { width: 22, height: 22, borderRadius: 999 },
+  mini: { width: 384, height: 56, borderRadius: 14 },
+  card: { width: 384, height: 88, borderRadius: 14 },
+  l4: { width: 384, height: 336, borderRadius: 14 },
 } as const;
 
-const PILL_SPRING = { type: "spring", stiffness: 320, damping: 26 } satisfies Record<string, unknown>;
+const CAPSULE_TWEEN = { duration: 0.38, ease: [0.7, 0, 0.2, 1] as const } satisfies Record<string, unknown>;
 
 /**
- * The floating dictation pill. Listens for engine state; captures the mic
+ * The floating dictation capsule. Listens for engine state; captures the mic
  * while `listening` and streams 16 kHz PCM to the main process.
  */
 export function Overlay() {
@@ -358,18 +248,18 @@ export function Overlay() {
   const startingRef = useRef(false);
   const [elapsed, setElapsed] = useState(0);
   const startedAtRef = useRef<number | null>(null);
-  /** Mic levels for the speaking-indicator waveform. */
-  const levelsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0.04));
-  const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
+  /** Mic levels for the phosphor trace. */
+  const levelsRef = useRef<number[]>(new Array(TRACE_POINTS).fill(0.04));
+  const traceRef = useRef<HTMLCanvasElement | null>(null);
   /** OS theme from main (matchMedia lags the OS in Electron). */
   const [systemDark, setSystemDark] = useState(true);
   /** Resting mode: main keeps the window alive between turns and tells the
-   *  renderer to show the small dash (click it to dictate, drag it to move). */
+   *  renderer to show the standby dot (click it to dictate, drag it to move). */
   const [resting, setResting] = useState(false);
-  /** Hover over the resting dash morphs it to the mini pill (their status-bar
-   *  capsule behavior) so the click target and drag handle are easy to hit. */
+  /** Hover over the standby dot morphs it to the mini capsule so the click
+   *  target and drag handle are easy to hit. */
   const [hovered, setHovered] = useState(false);
-  /** The hotkey hint shown on the resting pill hover. */
+  /** The hotkey hint shown on the resting capsule hover. */
   const [hotkey, setHotkey] = useState("");
   /** Sequential mode: finished utterances pasted so far (the "queued" meter). */
   const [pastedCount, setPastedCount] = useState(0);
@@ -430,25 +320,22 @@ export function Overlay() {
     // freshest value without re-running this effect).
     micIdRef.current = c.audio?.deviceId && c.audio.deviceId !== "default" ? c.audio.deviceId : undefined;
     void micId;
-    // Custom tint + OS theme sync: the pill recolors from config (their colors
-    // stay the default). The real OS signal comes from main (nativeTheme).
+    // Adaptive tint: the capsule recolors for light desktops and custom tints.
     const follow = Boolean(c.general?.overlayFollowSystemTheme);
     const systemLight = follow && !systemDark;
     const tint = c.general?.overlayTint?.trim() || "";
-    document.documentElement.style.setProperty("--pill-bg", tint || (systemLight ? "#fcfcfb" : "#1f1f1f"));
-    document.documentElement.style.setProperty(
-      "--pill-border",
-      systemLight && !tint ? "rgba(0,0,0,0.1)" : "#30302f",
-    );
-    document.documentElement.style.setProperty("--pill-ink", systemLight && !tint ? "#1a1a1a" : "#fcfcfb");
-    document.documentElement.style.setProperty("--pill-meta", "#71716e");
-    // The hotkey hint for the hovered rest dash.
+    const root = document.documentElement.style;
+    root.setProperty("--cap-bg", tint || (systemLight ? "rgba(244, 242, 236, 0.94)" : "rgba(17, 19, 24, 0.92)"));
+    root.setProperty("--cap-border", tint ? "rgba(0,0,0,0.1)" : systemLight ? "rgba(22,24,29,0.18)" : "rgba(237,235,228,0.16)");
+    root.setProperty("--cap-ink", systemLight ? "#16181D" : "#EDEBE4");
+    root.setProperty("--cap-meta", systemLight ? "rgba(22,24,29,0.5)" : "rgba(237,235,228,0.5)");
+    // The hotkey hint for the hovered standby dot.
     setHotkey(c.hotkey?.pushToTalk ?? "");
   }, [micId, systemDark]);
 
-  // Click-through by default (like the reference overlay): the window ignores the
-  // mouse so it never blocks the app underneath; we only make it interactive
-  // while the pointer is over a real control.
+  // Click-through by default: the window ignores the mouse so it never blocks
+  // the app underneath; we only make it interactive while the pointer is over
+  // a real control.
   useEffect(() => {
     let interactive = false;
     const report = (next: boolean) => {
@@ -512,10 +399,8 @@ export function Overlay() {
         deviceId: micIdRef.current,
         onChunk: (pcm) => window.whisperflow.capture.sendPcm(pcm),
         onLevel: (rms) => {
-          // Feed the speaking-indicator waveform (user-requested: visible
-          // feedback that the mic is live and picking up speech).
           levelsRef.current.push(Math.min(1, rms * 6));
-          if (levelsRef.current.length > BAR_COUNT) levelsRef.current.shift();
+          if (levelsRef.current.length > TRACE_POINTS) levelsRef.current.shift();
         },
       })
         .then((cap) => {
@@ -533,7 +418,7 @@ export function Overlay() {
     }
   }, [event.state]);
 
-  // Recording timer (their meta column shows duration / WPM).
+  // Recording timer (mono meta shows duration).
   useEffect(() => {
     if (!recording) {
       setElapsed(0);
@@ -545,34 +430,70 @@ export function Overlay() {
     return () => window.clearInterval(timer);
   }, [recording]);
 
-  // Speaking indicator: mic levels drive the waveform bars while listening.
+  /**
+   * The phosphor trace: mic levels → a continuous polyline with afterglow
+   * (previous frames fade ~12%/frame). Redrawn on rAF while listening.
+   */
   useEffect(() => {
     if (event.state !== "listening") {
-      levelsRef.current = new Array(BAR_COUNT).fill(0.04);
+      levelsRef.current = new Array(TRACE_POINTS).fill(0.04);
       return;
     }
-    const timer = window.setInterval(() => {
-      const levels = levelsRef.current;
-      for (let i = 0; i < BAR_COUNT; i++) {
-        const el = barsRef.current[i];
-        if (el) el.style.transform = `scaleY(${Math.max(0.08, levels[Math.min(i, levels.length - 1)] ?? 0.04)})`;
+    const canvas = traceRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    const draw = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if (w === 0 || h === 0) return;
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
       }
-    }, BAR_HISTORY_MS);
-    return () => window.clearInterval(timer);
+      // afterglow: fade previous frame instead of clearing
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.scale(dpr, dpr);
+      const levels = levelsRef.current;
+      const mid = h / 2;
+      ctx.beginPath();
+      for (let i = 0; i < levels.length; i++) {
+        const x = (i / (levels.length - 1)) * w;
+        const env = Math.sin((i / (levels.length - 1)) * Math.PI) ** 0.5; // edge fade
+        const y = mid - (levels[i] ?? 0.04) * (h / 2 - 1) * env;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = "#5CE1A9";
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(92, 225, 169, 0.55)";
+      ctx.shadowBlur = 6;
+      ctx.stroke();
+      if (!reduced) raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(raf);
   }, [event.state]);
 
   if (event.state === "idle" || event.state === "cancelled") return null;
 
   const processing = event.state === "transcribing" || event.state === "polishing" || event.state === "injecting";
   const card = processing;
-  // Their state machine: listening → mini; processing → card; long
-  // transcripts get the 322px l4 expansion; done collapses back to the rest
-  // dash. In rest mode (overlayRestBar) the dash persists between turns;
-  // otherwise the window hides a beat after done.
-  const pillState = resting
-    ? // Hovering the dash morphs it to the mini pill (their capsule behavior)
-      // so the click target is easy to hit; click starts a dictation.
-      hovered
+  // The state machine: listening → mini; processing → card; long transcripts
+  // get the 336px l4 expansion; done collapses back to the standby dot. In
+  // rest mode the dot persists between turns; otherwise the window hides a
+  // beat after done.
+  const capState = resting
+    ? hovered
       ? "mini"
       : "rest"
     : event.state === "done"
@@ -588,90 +509,95 @@ export function Overlay() {
   const seconds = String(elapsed % 60).padStart(2, "0");
   const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const meta = recording ? `${minutes}:${seconds}` : null;
-  /** Their paste-failure notification shows only for the clipboard-fallback error. */
+  /** The paste-failure notification shows only for the clipboard-fallback error. */
   const clipboardFallback =
     event.state === "error" && /clipboard/i.test(event.error ?? "");
 
   const liveText =
     event.state === "listening"
-      ? // Once words arrive they take the space; until then "Listening…" sits
-        // under the voice meter (NOT "press the hotkey" — the user just did).
-        event.partial || "Listening…"
+      ? // Once words arrive they take the space; until then "listening…" sits
+        // under the trace (NOT "press the hotkey" — the user just did).
+        event.partial || "listening…"
       : event.state === "error"
-        ? event.error ?? "Something went wrong"
+        ? event.error ?? "something went wrong"
         : event.partial || `${STATE_LABEL[event.state]}…`;
 
   return (
     <>
-      <style>{PILL_CSS}</style>
-      <div className="pill-zone">
+      <style>{CAPSULE_CSS}</style>
+      <div className="capsule-zone">
         {!clipboardFallback && (
         <motion.div
-          className="pill-card"
-          variants={pillVariants}
-          animate={pillState}
-          transition={{ type: "spring", stiffness: 320, damping: 26 }}
-          data-state={pillState}
+          className="capsule"
+          variants={capsuleVariants}
+          animate={capState}
+          transition={CAPSULE_TWEEN}
+          data-state={capState}
           data-interactive="true"
           onMouseEnter={() => resting && setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           onClick={() => {
-            // The rest dash is a dictation button: click to start talking
-            // (their status-bar behavior). Never fires mid-dictation.
+            // The standby dot is a dictation button: click to start talking.
+            // Never fires mid-dictation.
             if (resting) void window.whisperflow.dictation.start();
           }}
         >
-          {/* The voice meter shows whenever the app is listening and no words
-           * have arrived yet — not only when audio saving is on (the reviewer
-           * found the default config had NO listening indicator at all). */}
+          {/* the standby core — visible only in rest state */}
+          <div className="standby-core" aria-hidden="true">
+            <span />
+          </div>
+
+          {/* the phosphor trace: shows while listening and no words yet */}
           {event.state === "listening" && !event.partial && (
-            <div className="waveform" aria-hidden="true">
-              {Array.from({ length: BAR_COUNT }, (_, i) => (
-                <span key={i} ref={(el) => { barsRef.current[i] = el; }} />
-              ))}
+            <div className="trace" aria-hidden="true">
+              <canvas ref={traceRef} />
             </div>
           )}
+
           <div className="mini-row">
-            {recording && <span className="rec-dot" />}
-            {/* Drag-handle avatar: a mic glyph (the "W" letter was a
-             * placeholder the user rightly flagged). */}
-            <span className="avatar" role="img" aria-label="WhisperFlow (drag to move)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <span className="handle" role="img" aria-label="WhisperFlow (drag to move)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                 <line x1="12" y1="19" x2="12" y2="22" />
               </svg>
             </span>
             <p
-              className={`live-text ${processing ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
-              data-multiline={pillState === "l4"}
+              className={`live-text ${processing ? "sweep" : ""} ${event.state === "error" ? "error-text" : ""}`}
+              data-multiline={capState === "l4"}
+              data-phase={event.state === "polishing" ? "llm" : event.state === "done" ? "done" : undefined}
             >
               {liveText}
             </p>
             {resting && hovered ? (
-              <span className="meta">{hotkey ? `Press ${hotkey} or click to dictate` : "Click to dictate"}</span>
+              <span className="meta">{hotkey ? `${hotkey} · or click` : "click to dictate"}</span>
             ) : typing && !recording ? (
               TYPING_DOTS
             ) : pastedCount > 0 ? (
-              <span className="meta" title={lastPasted} data-sequential="true">
-                {pastedCount} in{lastPasted ? ` · ${lastPasted.slice(0, 24)}${lastPasted.length > 24 ? "…" : ""}` : ""}
+              <span className="meta seq-tick" title={lastPasted} data-sequential="true">
+                +{pastedCount}{lastPasted ? ` · ${lastPasted.slice(0, 22)}${lastPasted.length > 22 ? "…" : ""}` : ""}
               </span>
             ) : meta ? (
-              <span className="meta">{meta}</span>
+              <span className="meta">
+                {recording && <span className="rec" aria-hidden="true" />}
+                {meta}
+              </span>
             ) : null}
           </div>
+
           <div className="card-content">
             <div className="card-row">
-              {recording && <span className="rec-dot" />}
               <span className="status-line">
+                {recording && <span className="rec" aria-hidden="true" />}
                 {STATE_LABEL[event.state]}
                 {recording ? ` · ${minutes}:${seconds}` : ""}
               </span>
             </div>
             <div className="l4-body">
               <p
-                className={`live-text ${processing && !event.partial ? "shimmer" : ""} ${event.state === "error" ? "error-text" : ""}`}
+                className={`live-text ${processing && !event.partial ? "sweep" : ""} ${event.state === "error" ? "error-text" : ""}`}
                 data-multiline="true"
+                data-phase={event.state === "polishing" ? "llm" : event.state === "done" ? "done" : undefined}
               >
                 {liveText}
               </p>
@@ -681,13 +607,15 @@ export function Overlay() {
         )}
       </div>
       {clipboardFallback && (
-        /* Their notification card: when the paste couldn't land, say so with
-         * the clipboard rescue instead of leaving the text stranded. */
+        /* When the paste couldn't land, say so with the clipboard rescue
+         * instead of leaving the text stranded. */
         <div className="notification" data-interactive="true">
-          <h2>Couldn't paste — text is on your clipboard</h2>
+          <h2>
+            <span className="ok">[!]</span> couldn't paste — text is on your clipboard
+          </h2>
           <p>
             WhisperFlow tried to type your dictation into the focused window and it
-            didn’t land (some apps block synthetic input). The full text is on your
+            didn't land (some apps block synthetic input). The full text is on your
             clipboard right now — press <kbd>Ctrl</kbd>+<kbd>V</kbd> to put it there.
           </p>
         </div>

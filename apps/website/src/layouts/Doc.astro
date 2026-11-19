@@ -5,12 +5,12 @@ interface Props { title: string; description?: string }
 const { title, description } = Astro.props;
 
 const sections = [
-  { href: "/whisperflow/docs/", label: "Overview" },
-  { href: "/whisperflow/docs/getting-started/", label: "Getting started" },
-  { href: "/whisperflow/docs/hotkeys/", label: "Hotkeys & overlay" },
-  { href: "/whisperflow/docs/models/", label: "Models & hardware" },
-  { href: "/whisperflow/docs/free-ai/", label: "Free AI (polish + STT)" },
-  { href: "/whisperflow/docs/privacy/", label: "Privacy & data" },
+  { href: "/whisperflow/docs/", label: "overview" },
+  { href: "/whisperflow/docs/getting-started/", label: "getting started" },
+  { href: "/whisperflow/docs/hotkeys/", label: "hotkeys & overlay" },
+  { href: "/whisperflow/docs/models/", label: "models & hardware" },
+  { href: "/whisperflow/docs/free-ai/", label: "free ai (polish + stt)" },
+  { href: "/whisperflow/docs/privacy/", label: "privacy & data" },
 ];
 const path = Astro.url.pathname;
 ---
@@ -18,15 +18,22 @@ const path = Astro.url.pathname;
   <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[230px_1fr]">
     <aside>
       <nav aria-label="Docs" class="space-y-1 lg:sticky lg:top-24">
-        <p class="mb-3 text-xs font-bold uppercase tracking-widest text-ink-faint">Documentation</p>
+        <p class="mono-label mb-3 text-ink-faint">documentation</p>
         {sections.map((s) => (
           <a
             href={s.href}
             class:list={[
-              "block rounded-lg px-3 py-2 text-sm transition-colors",
-              path === s.href ? "bg-forest font-medium text-[#ffffeb]" : "text-ink-soft hover:bg-ink/5 hover:text-ink",
+              "flex items-center gap-2.5 rounded-md px-3 py-2 font-mono text-[13px] transition-colors",
+              path === s.href
+                ? "bg-paper-2 font-medium text-phosphor"
+                : "text-ink-dim hover:bg-paper/60 hover:text-ink",
             ]}
           >
+            <span
+              class:list={["led", path === s.href ? "" : "opacity-40"]}
+              data-on={path === s.href ? "live" : "off"}
+              aria-hidden="true"
+            ></span>
             {s.label}
           </a>
         ))}

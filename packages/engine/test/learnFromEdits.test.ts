@@ -74,7 +74,7 @@ describe("learnFromEdits", () => {
     expect(learnFromEdits("", "")).toEqual([]);
   });
 
-  it("exposes the stopword filter the reference app uses", () => {
+  it("exposes the stopword filter the spec uses", () => {
     expect(STOPWORDS.has("the")).toBe(true);
     expect(STOPWORDS.has("WhisperFlow")).toBe(false);
   });
