@@ -4,13 +4,28 @@ This file is the durable engineering memory for anyone (human or agent) working
 in this repo. It records decisions, procedures and constraints that are easy to
 get wrong the second time.
 
-## Brand: the Signal Standard
+## Brand: the Printed Signal (v3, 2026-11)
 
-- Identity: **the instrument**. Tagline: `your voice, rendered.`
-- One scarce color: the phosphor green marks *live signal* (recording, success,
-  active state). It is never decorative. Ink/paper neutrals carry everything else.
-- Type: Space Grotesk (display) · JetBrains Mono (data/labels) · Inter (body).
+- Identity: **the printed signal** — "a print shop that renders your voice".
+  Tagline: `speak. it writes.`
+- Paper `#F7F4EE` / ink `#1A1916` / ONE accent `#0E7A55` (print green, not
+  phosphor — it lives inside the glyph scenes first, UI second).
+- Type cast (roles are strict): **Instrument Serif** (display ONLY) ·
+  Space Grotesk (UI/body) · JetBrains Mono (labels/eyebrows/captions — never
+  display). Inter is retired from the site.
+- The engine is `PaintedScene` (Engine D): halftone dots with CONTINUOUS
+  radius from tone, bayer4 micro-dither, edge feathering, truecolor glyphs,
+  image-driven duotone (`imgRGB`/`imgTone`, ink-coverage polarity). Scenes:
+  SCENE_BLOOM (orchid hero), SCENE_CONTOURS, SCENE_PRESS_PROOF, SCENE_DUNE.
+  GLSL note: **inverted smoothstep edges are undefined** — always write
+  `1.0 - smoothstep(a, b, x)` for falling masks, never `smoothstep(b, a, x)`.
+- Product artifacts are **specimens**: print border, exhibit, mono caption
+  (`fig. NN — …`). Demos must be honest: real Web Speech when possible,
+  simulations labeled as simulations, zero fabricated metrics.
+- Dark mode is a second print (`paper:"ink"` → deep ink-blue sheet), not a
+  re-skin. Default is light; `data-mode="dark"` opts in.
 - Motion specs live in `MOTION.md`. Technique lineage lives in `INSPIRATION.md`.
+  The v3 brief + research corpus summary: `SPEC.md`.
 - `origin-check.yml` fails CI if retired borrowed values (`#1a1a1a`, `#30302f`,
   `#10b981`) or "reference app" comments reappear. Do not work around it; it is
   the anti-copy gate.
