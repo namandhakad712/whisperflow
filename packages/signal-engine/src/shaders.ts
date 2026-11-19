@@ -248,6 +248,7 @@ uniform sampler2D u_img;
 uniform vec3 u_imgAspect;  // (w, h, hasImage 0/1)
 uniform vec3 u_imgCrop;    // (cx, cy, zoom)
 uniform float u_dark;      // 1 = printing on the dark sheet
+uniform vec2 u_par;        // critically-damped pointer parallax, -1..1
 
 float hash21(vec2 p) {
   p = fract(p * vec2(234.34, 435.345));
@@ -299,14 +300,15 @@ vec3 imgRGB(vec2 uv) {
 }
 // tone from a photo: print polarity. Ink lands where the photo is DARK;
 // paper-white areas print clean (like a risograph of the subject).
-// Window tuned to the source print: petals (luma 0.55-0.8) build a dense
-// tonal mass, petal edges (~0.85) thin out to lavender, the white field
-// (0.95+) stays clean paper.
+// Window tuned to THIS source: petals live at luma 0.55-0.8 — the window
+// is tightened so midtone petals print as a dense mass (reference look),
+// while the white field (0.88+) stays clean paper. Gamma 0.65 lifts the
+// whole midrange: 0.5-luma → ~0.63 tone, not a whisper.
 float imgTone(vec2 uv) {
   vec3 c = imgRGB(uv);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  float tone = 1.0 - smoothstep(0.55, 0.93, l);
-  return pow(tone, 0.9);
+  float tone = 1.0 - smoothstep(0.42, 0.88, l);
+  return pow(tone, 0.65);
 }
 `;
 
@@ -320,7 +322,6 @@ float bayer4(vec2 q) {
   int x = int(mod(q.x, 4.0));
   int y = int(mod(q.y, 4.0));
   int idx = 0;
-  // unrolled 4x4 Bayer lookup
   if (x == 0 && y == 0) idx = 0;  else if (x == 1 && y == 0) idx = 8;
   else if (x == 2 && y == 0) idx = 2;  else if (x == 3 && y == 0) idx = 10;
   else if (x == 0 && y == 1) idx = 12; else if (x == 1 && y == 1) idx = 4;
@@ -336,13 +337,12 @@ void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
 
   // bounded Ken Burns — the print re-composes forever but NEVER runs away
-  // (sin/cos orbit: pan ±3%, zoom ±5%, slow periods you feel, not watch)
   float tt = u_time * u_drift;
   float zoom = 1.0 + 0.05 * sin(tt * 0.16);
   vec2 suv = (uv - 0.5) / zoom + 0.5;
   suv += vec2(sin(tt * 0.13) * 0.03, cos(tt * 0.10) * 0.022);
+  suv += u_par * 0.012;
 
-  // the scene paints ink + tone
   vec4 s = scene(suv);
 
   // pointer: the print swells toward you (the sheet "hears" your hand)
@@ -350,7 +350,6 @@ void main() {
 
   float tone = clamp(s.a * (1.0 + u_drive * 0.35) + m, 0.0, 1.0);
   vec3 ink = s.rgb;
-  // print curve: gentle S — keeps deep ink dense, highlights clean
   float sCurve = tone * tone * (3.0 - 2.0 * tone);
   tone = mix(tone, sCurve, 0.35);
 
@@ -360,16 +359,12 @@ void main() {
   vec2 cellpx = floor(lattice / u_cell);
   vec2 cellf = fract(lattice / u_cell) - 0.5;
 
-  // lithograph dots: CONTINUOUS radius from tone — petals reach near-solid
-  // coverage (the risograph mass), highlights thin to single grains
   float thr = bayer4(cellpx) - 0.5;
   float dithered = clamp(tone + thr * 0.14, 0.0, 1.0);
   float r = dithered * 0.55;
 
-  // edge feather: soften the coverage AA so silhouettes don't moiré
   float aa = 1.5 / u_cell;
   float dot_ = 1.0 - smoothstep(r - aa, r + aa, length(cellf));
-  // floor: a faint grain everywhere so paper is never dead-flat
   dot_ = max(dot_, step(0.9985, bayer4(cellpx + 7.0)) * 0.06);
 
   vec3 painted = mix(u_paper, ink, dot_);

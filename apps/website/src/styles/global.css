@@ -443,3 +443,33 @@ details.faq[open] .faq-glyph { transform: rotate(45deg); color: var(--color-acce
   padding-bottom: 0.08em;   /* keep serif descenders inside the slit */
   margin-bottom: -0.08em;
 }
+
+/* v5 — the litho pass */
+.eyebrow-halo {
+  /* letterspaced mono over mid-density dots: a 1px paper halo, no chip */
+  text-shadow:
+    0 0 1px var(--color-paper),
+    0 0 3px var(--color-paper),
+    0 0 6px var(--color-paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow-halo { text-shadow: none; }
+}
+
+/* CTA hover: the ink inverts — press feel, 150ms linear */
+.btn-ink {
+  transition: background-color 0.15s linear, color 0.15s linear,
+    border-color 0.15s linear, transform 0.15s linear;
+}
+.btn-ink:hover {
+  background-color: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+}
+.btn-quiet {
+  transition: color 0.15s linear, letter-spacing 0.15s linear;
+}
+.btn-quiet:hover {
+  color: var(--color-ink);
+  letter-spacing: 0.02em;
+}
