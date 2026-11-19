@@ -415,3 +415,31 @@ details.faq[open] .faq-glyph { transform: rotate(45deg); color: var(--color-acce
 .log-row { display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
 .log-row .log-dots { flex: 1; min-width: 1.5rem; border-bottom: 1px dotted var(--color-rule); transform: translateY(-3px); height: 1px; }
 .log-row .log-val { text-align: right; }
+
+/* ============================================================
+   v4 — the living print: ticker, slits, motion polish
+   ============================================================ */
+
+/* the press ticker */
+.marquee {
+  overflow: hidden;
+}
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  padding-block: 0.85rem;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* paper slits for the headline mask reveal */
+[data-lines] .inline-block.overflow-hidden {
+  padding-bottom: 0.08em;   /* keep serif descenders inside the slit */
+  margin-bottom: -0.08em;
+}

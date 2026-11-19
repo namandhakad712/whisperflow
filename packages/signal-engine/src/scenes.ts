@@ -24,26 +24,32 @@ vec4 scene(vec2 uv) {
   vec3 c = imgRGB(suv);
   float lipness = clamp((c.r - c.g) * 3.0, 0.0, 1.0) * step(0.10, t);
 
-  // the type zone: a clean-paper plate behind the whole text block.
-  // uv.y is up (GL), so the copy band is uv.y < 0.45, uv.x < 0.55 —
-  // a soft-cornered rectangle fading IN from the top-right of the band.
-  float bandX = 1.0 - smoothstep(0.30, 0.62, uv.x);   // 1 on the left
-  float bandY = 1.0 - smoothstep(0.34, 0.52, uv.y);   // 1 at the bottom
+  // the type plate: clean paper ONLY behind the copy block (bottom-left).
+  // The flower owns the rest of the sheet — full bleed, dense mass.
+  float bandX = 1.0 - smoothstep(0.28, 0.50, uv.x);   // 1 on the left
+  float bandY = 1.0 - smoothstep(0.26, 0.44, uv.y);   // 1 at the bottom
   float typeZone = bandX * bandY;
-  // and a global bottom fade: the print lifts off the bottom edge
-  float horizon = smoothstep(0.08, 0.40, uv.y);
+  // tiny lift off the very bottom edge so the print sits on the band
+  float horizon = smoothstep(0.01, 0.12, uv.y);
   float mat = max(typeZone, horizon);
 
-  // bloom reveal: bottom-up develop on load (2.4s ease-out)
-  float reveal = clamp(u_time / 2.4, 0.0, 1.0);
-  float edge = reveal * 1.35 - 0.1;
-  float curtain = 1.0 - smoothstep(edge - 0.02, edge + 0.18, uv.y);
+  // bloom reveal: bottom-up develop on load (1.8s)
+  float reveal = clamp(u_time / 1.8, 0.0, 1.0);
+  float edge = reveal * 1.30 - 0.08;
+  float curtain = 1.0 - smoothstep(edge - 0.02, edge + 0.16, uv.y);
 
-  // light falloff toward the top-right corner — cream breathes there
-  float falloff = 1.0 - 0.35 * smoothstep(0.35, 1.0, distance(uv, vec2(0.25, 0.75)));
-  float tone = t * mat * curtain * falloff;
+  float tone = t * mat * curtain;
 
-  // inks: cobalt body, deep shadows, accent lip — a committed duotone
+  // inks: a committed duotone, adapted per sheet.
+  if (u_dark > 0.5) {
+    // the dark run: luminous lavender body, near-white where ink is densest
+    vec3 body  = vec3(0.635, 0.698, 0.898);  // #A2B2E5
+    vec3 dense = vec3(0.843, 0.878, 0.973);  // #D7E0F8
+    vec3 acc   = vec3(0.208, 0.702, 0.494);  // #35B37E mint lip
+    vec3 ink = mix(body, dense, smoothstep(0.45, 0.95, t));
+    ink = mix(ink, acc, lipness * 0.9);
+    return vec4(ink, tone);
+  }
   vec3 cobalt  = vec3(0.176, 0.294, 0.557);  // #2D4B8E
   vec3 deep    = vec3(0.10, 0.19, 0.42);
   vec3 accent  = vec3(0.055, 0.478, 0.333);  // #0E7A55
@@ -79,8 +85,8 @@ vec4 scene(vec2 uv) {
 
   float tone = line * (0.30 + 0.25 * h) + ridge * 0.22 + peak * 0.34 * line;
 
-  vec3 slate = vec3(0.28, 0.30, 0.33);
-  vec3 accent = vec3(0.055, 0.478, 0.333); // #0E7A55
+  vec3 slate = mix(vec3(0.28, 0.30, 0.33), vec3(0.62, 0.65, 0.72), u_dark);
+  vec3 accent = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
   vec3 ink = mix(slate, accent, clamp(peak * 1.8, 0.0, 1.0));
 
   return vec4(ink, clamp(tone, 0.0, 1.0));
@@ -124,8 +130,8 @@ vec4 scene(vec2 uv) {
 
   float tone = sheet * 0.18 + win * 0.16 + bar * 0.42 + text * 0.34 + reg * 0.30;
 
-  vec3 slate = vec3(0.26, 0.27, 0.30);
-  vec3 accent = vec3(0.055, 0.478, 0.333);
+  vec3 slate = mix(vec3(0.26, 0.27, 0.30), vec3(0.60, 0.63, 0.70), u_dark);
+  vec3 accent = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
   vec3 ink = mix(slate, accent, bar * 0.5);
 
   return vec4(ink, clamp(tone, 0.0, 1.0));
@@ -159,8 +165,8 @@ vec4 scene(vec2 uv) {
   // sky speckle: a few faint dots so the field never reads empty
   tone += 0.05 * step(0.985, hash21(floor(p * 42.0)));
 
-  vec3 sepia = vec3(0.62, 0.48, 0.33); // #9E7A54 print ochre
-  vec3 accent = vec3(0.055, 0.478, 0.333);
+  vec3 sepia = mix(vec3(0.62, 0.48, 0.33), vec3(0.85, 0.76, 0.60), u_dark);
+  vec3 accent = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
   vec3 ink = mix(sepia, accent, sun);
 
   return vec4(ink, clamp(tone, 0.0, 1.0));

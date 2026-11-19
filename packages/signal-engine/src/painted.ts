@@ -55,6 +55,8 @@ export class PaintedScene {
   private io: IntersectionObserver | null = null;
   private disposed = false;
   private smoothDrive = 0;
+  private crop: [number, number, number] | null = null;
+  private driveOverride: number | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -85,7 +87,17 @@ export class PaintedScene {
     gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0);
     this.u = new Uniforms(gl, prog);
 
-    const paper = PALETTES[this.opts.paper ?? "cream"] ?? PALETTES.cream;
+    let paperName = this.opts.paper ?? "cream";
+    let paper = PALETTES[paperName] ?? PALETTES.cream;
+    // the print follows the sheet: switching data-mode re-inks every scene live
+    const modeObs = new MutationObserver(() => {
+      const next = document.documentElement.dataset.mode === "dark" ? "ink" : "cream";
+      if (next !== paperName) {
+        paperName = next;
+        paper = PALETTES[paperName] ?? PALETTES.cream;
+      }
+    });
+    modeObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-mode"] });
 
     const resize = () => {
       const dpr = cappedDpr();
@@ -137,15 +149,16 @@ export class PaintedScene {
         resize();
         const u = this.u!;
         u.f3("u_paper", paper.paper[0], paper.paper[1], paper.paper[2]);
+        u.f1("u_dark", paperName === "ink" ? 1 : 0);
         u.f2("u_res", this.canvas.width, this.canvas.height);
         u.f1("u_time", time);
         u.f1("u_cell", (this.opts.cell ?? 7) * cappedDpr());
         u.f1("u_drift", this.opts.drift ?? 1);
         u.f2("u_mouse", mx, my);
-        const target = this.opts.drive?.() ?? 0;
+        const target = this.driveOverride ?? this.opts.drive?.() ?? 0;
         this.smoothDrive += (target - this.smoothDrive) * 0.1;
         u.f1("u_drive", this.smoothDrive);
-        const crop = this.opts.imageCrop ?? [0.5, 0.5, 1];
+        const crop = this.crop ?? this.opts.imageCrop ?? [0.5, 0.5, 1];
         u.f3("u_imgCrop", crop[0], crop[1], crop[2]);
         if (imgTex) {
           u.tex("u_img", imgTex, 0);
@@ -169,6 +182,7 @@ export class PaintedScene {
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
       this.io?.disconnect();
+      modeObs.disconnect();
       gl.deleteBuffer(buf);
       gl.deleteProgram(prog);
     };
@@ -207,6 +221,22 @@ export class PaintedScene {
     pre.setAttribute("aria-hidden", "true");
     host.appendChild(pre);
     this.cleanup = () => pre.remove();
+  }
+
+  /** Re-compose the printed image live: [cx, cy, zoom] (scroll morphs). */
+  setCrop(crop: [number, number, number]): void {
+    this.crop = crop;
+  }
+
+  /** Re-register the halftone screen live: cell size in CSS px. */
+  setCell(px: number): void {
+    this.opts.cell = px;
+  }
+
+  /** Drive the print directly (scroll velocity, audio…), overriding the
+   *  constructor's drive callback for this frame and on. */
+  setDrive(v: number): void {
+    this.driveOverride = v;
   }
 
   dispose(): void {
