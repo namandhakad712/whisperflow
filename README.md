@@ -15,6 +15,7 @@
 <p align="center">
   <a href="#license"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-2952E3?style=flat-square"></a>
   <a href="https://namandhakad712.github.io/whisperflow/"><img alt="Site" src="https://img.shields.io/badge/site-live-8FB0FF?style=flat-square"></a>
+  <a href="https://github.com/namandhakad712/whisperflow/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1.41-5CE1A9?style=flat-square"></a>
   <img alt="Telemetry" src="https://img.shields.io/badge/telemetry-none-1a1a1a?style=flat-square">
   <img alt="Word caps" src="https://img.shields.io/badge/word%20caps-none-DB704C?style=flat-square">
 </p>
@@ -23,8 +24,8 @@
 
 WhisperFlow turns your voice into typed text in **any** app — email, chat, documents, browser
 boxes, editors. Press a hotkey, speak naturally, and the words appear where your cursor is.
-A small floating pill shows your text as it comes in, and optional polish cleans up the "ums"
-and the punctuation before the text lands.
+A small floating capsule shows a live signal trace and your words as they come in, and optional
+polish cleans up the "ums" and the punctuation before the text lands.
 
 It runs on your machine by default: transcription through [whisper.cpp](https://github.com/ggml-org/whisper.cpp),
 text cleanup through a small local model. No accounts, no word caps, no telemetry. If you'd
@@ -34,9 +35,27 @@ you turn the local-only lock off. Your API key is stored on your machine and now
 > WhisperFlow is an independent, clean-room project. Not affiliated with Wispr Inc., OpenAI,
 > Meta, or the Qwen team. All code, art, and copy here are original.
 
+## The Signal Standard
+
+Every surface — website, desktop app, overlay — speaks one design language, authored for
+this project (see [`MOTION.md`](MOTION.md) and [`INSPIRATION.md`](INSPIRATION.md) for the
+full system):
+
+- **The instrument.** Near-black ink, paper panels, and one scarce accent: phosphor green,
+  the color of a live signal. It marks exactly one thing at a time — the active channel, the
+  recording state, the selected row.
+- **Type as readout.** Space Grotesk carries display, JetBrains Mono carries data — labels,
+  states, hotkeys, versions. Numbers are always tabular.
+- **Print, not glow.** The website's backgrounds are real-time WebGL halftone prints
+  (`packages/signal-engine`, ~700 lines of dependency-free TypeScript): an ordered-dither
+  bloom that re-rasters as you scroll, contour fields, ASCII signal traces. The desktop app
+  answers with LED dots, `///` section marks, and `[ok]` / `[!]` state readouts.
+- **Motion with a meter.** One grammar everywhere: 380 ms capsule morphs on a scope curve,
+  a 3.2 s standby breath, staggered lays-on. Everything respects `prefers-reduced-motion`.
+
 ## Screenshots
 
-| Home (Nocturne — dark) | Nocturne Dawn (light) |
+| Website — Lab (dark) | Website — paper (light) |
 | --- | --- |
 | ![Home](docs/assets/hero.png) | ![Dawn](docs/assets/dawn.png) |
 
@@ -46,7 +65,7 @@ you turn the local-only lock off. Your API key is stored on your machine and now
 
 ## What it does
 
-- **Voice dictation anywhere** — one global hotkey. A floating pill shows a live waveform and
+- **Voice dictation anywhere** — one global hotkey. A floating capsule shows a live waveform and
   your words as you speak; the finished text is typed into whatever field has focus.
 - **Local-first speech-to-text** — whisper.cpp runs on your hardware. Models download once from
   HuggingFace and work offline forever. Or flip the engine to **cloud STT** with your own key
@@ -64,8 +83,8 @@ you turn the local-only lock off. Your API key is stored on your machine and now
 - **History, insights, scratchpad** — everything stored locally, on your machine, and history
   can be switched off entirely. Backups (config + history) export to one JSON file.
 - **A resting dock, if you want one** — a small dash parked on a screen edge that morphs into
-  the dictation pill when you hover it; click to dictate. Off by default.
-- **Three themes** — Nocturne (dark), Dawn (light), Classic — switchable live.
+  the dictation capsule when you hover it; click to dictate. Off by default.
+- **Two skins** — Lab (dark instrument) and Daylight (light), switchable live in the top bar.
 
 ## Installing
 
@@ -104,6 +123,7 @@ Models page ranks a set for your PC and downloads it in one click.
 | Cancel a dictation (text is **not** pasted) | `Esc` |
 | Paste your last dictation again | `Shift+Alt+Z` |
 | Copy your last dictation to the clipboard | `Shift+Alt+X` |
+| Command palette (in Settings) | `Ctrl+K` |
 
 A few things worth knowing:
 
@@ -123,7 +143,10 @@ A few things worth knowing:
 
 ## A quick tour of Settings
 
-The Settings window has a rail of sections. The ones people touch first:
+Settings is **the console**: a channel rail on the left (Dictation / Models / Personalize /
+Activity / System), each page with its own sub-nav, and a **command palette** — press
+`Ctrl+K` anywhere in the app and type to jump to any screen or run an action (switch theme,
+replay onboarding). The screens people touch first:
 
 - **Models** — your PC's hardware (CPU / RAM / GPU, with a tier), a recommended model set for
   it, and one-click downloads. This is also where you switch the **transcription engine**:
@@ -131,19 +154,18 @@ The Settings window has a rail of sections. The ones people touch first:
   provider, pick one of its models, paste your key, hit **Test connection**. (Groq, Mistral,
   OpenAI, or any custom OpenAI-compatible endpoint.) If you want a safety net, you can set an
   explicit fallback engine — it's off by default, so audio never goes anywhere in surprise.
-- **Advanced** — the polish engine: local llama.cpp, a remote OpenAI-compatible endpoint, or
-  none. The remote picker works the same as cloud STT — pick a provider, pick a model, paste
-  your key, hit **Test connection** (Groq, OpenRouter, OpenAI, Mistral, Ollama, or any custom
-  endpoint; Ollama is self-hosted, so nothing leaves your machine even when it's "remote").
-  Also here: cleanup strength, transcription format, email signature, and per-context tone
-  ("make it sound like you").
+- **Advanced** (Models → Writing style) — the polish engine: local llama.cpp, a remote
+  OpenAI-compatible endpoint, or none. The remote picker works the same as cloud STT — pick a
+  provider, pick a model, paste your key, hit **Test connection** (Groq, OpenRouter, OpenAI,
+  Mistral, Ollama, or any custom endpoint; Ollama is self-hosted, so nothing leaves your
+  machine even when it's "remote"). Also here: cleanup strength, transcription format, email
+  signature, and per-context tone ("make it sound like you").
 - **Audio** — microphone choice, voice-activity detection (kind, sensitivity, trailing
   silence), the 20-minute cap, and **your languages**: a 16-language chip picker plus an
   auto-detect toggle. One language selected + auto-detect off = that language is used
   explicitly, no guessing.
-- **Overlay** — the pill's shape (pill / rect / blob) and position (near cursor, floating,
-  pinned corners, top/bottom center), a custom backdrop, meeting mode, and audio saving, with
-  a live preview.
+- **Overlay** — the capsule's position (near cursor, floating, pinned corners, top/bottom
+  center), a custom backdrop tint, meeting mode, and audio saving, with a live preview.
 - **Shortcuts** — everything in the table above.
 - **Privacy** — the **local-only lock**: when it's on (the default), remote providers are
   impossible — the app cannot send transcript text anywhere, even if an endpoint is
@@ -151,8 +173,8 @@ The Settings window has a rail of sections. The ones people touch first:
   channel.
 
 The rest: **Dictionary** (with word-list import and fuzzy matching), **Snippets** (with JSON
-import), **Commands**, **History** (with optional audio playback), **Insights**, **Scratchpad**,
-**Style** (themes), **Help** (logs and diagnostics).
+import), **History** (with optional audio playback), **Insights**, **Scratchpad**, **Health**
+(diagnostics), **Hooks**, **Experiments**, **About**.
 
 ## Troubleshooting
 
@@ -187,8 +209,9 @@ instead of being lost — just paste it yourself.
 
 | Path | What |
 | --- | --- |
-| `apps/desktop` | Electron app: main process, preload, and the React surfaces — Settings (13 sections), the dictation overlay, and the resting status bar |
-| `apps/website` | Astro marketing + docs site (GitHub Pages) |
+| `apps/desktop` | Electron app: main process, preload, and the React surfaces — Settings (the console: 5 pages × 18 screens + command palette), the dictation overlay, and the resting status bar |
+| `apps/website` | Astro marketing + docs site (GitHub Pages), animated by GSAP + Lenis over the signal engine |
+| `packages/signal-engine` | The WebGL print engine — ordered-dither halftone scenes, ASCII traces, halftone reveals. Zero dependencies, Canvas2D fallback, reduced-motion aware |
 | `packages/shared` | Typed IPC contract, zod config schema — **the single source of every default** (hotkeys, cleanup levels, formats, dock edges, model presets) |
 | `packages/engine` | The dictation engine — host-agnostic, pure TS, zero Electron imports |
 | `docs/` | Architecture, ADRs, parity matrix, reference-app research |
@@ -213,7 +236,9 @@ npm run package -w apps/desktop    # electron-vite build + electron-builder --wi
 
 Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the binding contract — and
 [`docs/analysis/app-ui/PARITY-MATRIX.md`](docs/analysis/app-ui/PARITY-MATRIX.md) for the
-verified feature scoreboard.
+verified feature scoreboard. Design contributors: [`MOTION.md`](MOTION.md) is the motion
+grammar (every timing in the product, documented); [`AGENTS.md`](AGENTS.md) carries the
+brand contract for anyone (human or agent) touching the surfaces.
 
 ## Documentation
 

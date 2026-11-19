@@ -205,3 +205,136 @@ body.light .card {
     transform: scaleY(1);
   }
 }
+
+/* ============================================================
+   v0.1.42 — the console, refined. Authored additions; same
+   motion grammar (MOTION.md): out-expo entrances at 240ms,
+   scope morphs at 380ms, nothing loops faster than a breath.
+   ============================================================ */
+
+/* ---- the command palette ("the patch bay") ---- */
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.wf-palette-panel {
+  width: min(560px, calc(100vw - 32px));
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  animation: palette-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.light .wf-palette-panel {
+  box-shadow:
+    0 24px 64px rgba(22, 24, 29, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.wf-palette-row {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: background-color 0.12s ease;
+}
+.wf-palette-row.is-sel {
+  background: var(--color-paper-2);
+}
+/* the phosphor edge on the selected row */
+.wf-palette-row.is-sel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-phosphor);
+  box-shadow: 0 0 8px rgba(92, 225, 169, 0.7);
+}
+body.light .wf-palette-row.is-sel::before {
+  box-shadow: 0 0 8px rgba(14, 138, 98, 0.5);
+}
+
+/* ---- screen staging: content lays on when the route changes ---- */
+@keyframes wf-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.wf-stage {
+  animation: wf-stage-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* rows inside a staged screen cascade — 26ms apart, capped at 8 rows */
+.wf-stage [data-stage-row] {
+  animation: wf-stage-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.wf-stage [data-stage-row]:nth-child(1) { animation-delay: 0.03s; }
+.wf-stage [data-stage-row]:nth-child(2) { animation-delay: 0.06s; }
+.wf-stage [data-stage-row]:nth-child(3) { animation-delay: 0.09s; }
+.wf-stage [data-stage-row]:nth-child(4) { animation-delay: 0.12s; }
+.wf-stage [data-stage-row]:nth-child(5) { animation-delay: 0.15s; }
+.wf-stage [data-stage-row]:nth-child(6) { animation-delay: 0.18s; }
+.wf-stage [data-stage-row]:nth-child(7) { animation-delay: 0.21s; }
+.wf-stage [data-stage-row]:nth-child(8) { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wf-palette-panel,
+  .wf-stage,
+  .wf-stage [data-stage-row] {
+    animation: none;
+  }
+}
+
+/* ---- the rail: channel numbers, instrument scan on hover ---- */
+.rail-channel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--color-rail-text-dim);
+  opacity: 0.55;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.rail-item:hover .rail-channel {
+  color: var(--color-phosphor);
+  opacity: 1;
+}
+.rail-item.is-active .rail-channel {
+  color: var(--color-phosphor);
+  opacity: 0.9;
+}
+
+/* ---- screen header: the /// marker + channel readout ---- */
+.wf-header-channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.wf-header-channel::before {
+  content: "///";
+  letter-spacing: 0.05em;
+  color: var(--color-phosphor);
+}

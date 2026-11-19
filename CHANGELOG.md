@@ -2,6 +2,42 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.42] — 2026-11-19
+
+### Added — the console, refined (desktop settings overhaul)
+- **Command palette (Ctrl/⌘+K)** — "the patch bay": jump to any of the 18
+  settings screens by fuzzy match, plus live actions (switch skin, replay
+  onboarding). Keyboard-first (↑↓ + Enter, Esc), LED state per row, phosphor
+  selection rail, mono route hints. Replaces the plain search dropdown.
+- **Channel-numbered rail** — the five pages now carry instrument channel
+  numbers (01-05) that light phosphor on hover and on the active channel.
+- **Screen staging** — every route change lays the screen on with a 260ms
+  out-expo rise; cards inside cascade 30ms apart. Full `prefers-reduced-motion`
+  path (no animation).
+- **`///` channel readout** above each screen body (page - route), matching
+  the website's section eyebrows.
+- **Onboarding rebuilt to the Signal Standard** — `///` step marks (signal
+  check / input / engine / downloads / live), LED `[ok]` states, square
+  step markers, mono metadata, phosphor hotkey readout on the finish card.
+
+### Fixed
+- **Theme picker desync** — Settings - Dictation - General still offered the
+  retired "Nocturne / Dawn / Classic" skins; choosing one wrote a value the
+  new skin reader ignores, silently reverting to Lab on relaunch. Now offers
+  Lab / Daylight and migrates legacy values (`nocturne`/`dawn`).
+
+### Changed — website
+- **Mobile navigation** — a real full-bleed menu sheet (the old header showed
+  no nav links at all below 768px): serif index rows with mono channel
+  numbers, staggered lay-on, theme toggle and download inside the sheet.
+- **Scramble-decode nav hover** on desktop — links cycle the glyph ramp
+  ` .·:;=+x%#@` and settle left-to-right, the signature motion documented in
+  MOTION.md. Instant under reduced motion.
+- **README fully rewritten** — new "The Signal Standard" section, the console
+  tour (palette hotkey in the table), signal-engine in the workspace map,
+  MOTION.md / AGENTS.md as the design-contribution contracts, honest
+  screenshots section.
+
 ## [0.1.41] — 2026-11-19
 
 ### Added — the Signal Standard (brand + visual identity)

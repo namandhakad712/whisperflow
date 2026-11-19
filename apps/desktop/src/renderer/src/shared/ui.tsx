@@ -8,7 +8,12 @@ import { ChevronRight } from "lucide-react";
  */
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`card p-5 ${className}`}>{children}</div>;
+  // data-stage-row: screens cascade their cards in on route change (styles.css)
+  return (
+    <div data-stage-row className={`card p-5 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -305,7 +310,9 @@ export function Kbd({ children }: { children: ReactNode }) {
   );
 }
 
-/** Settings page header: display H1 + actions, optional segmented filter + tagline. */
+/** Settings page header: /// channel marker, display H1 + actions, optional
+ *  segmented filter + tagline. The marker is the brand signature — every
+ *  screen opens on it, same as the website's section eyebrows. */
 export function PageHeader({
   title,
   actions,
@@ -324,10 +331,13 @@ export function PageHeader({
   onSegChange?: (v: string) => void;
 }) {
   return (
-    <div className="mb-6">
+    <div className="mb-6" data-stage-row>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-display text-2xl leading-tight">{title}</h1>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        <div className="min-w-0">
+          <h1 className="font-display truncate text-2xl leading-tight">{title}</h1>
+          {tagline && <p className="font-display mt-1.5 text-xl">{tagline}</p>}
+        </div>
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
       {segmented && (
         <div className="mt-4 inline-flex rounded-lg border border-line bg-paper-2 p-0.5">
@@ -345,7 +355,6 @@ export function PageHeader({
           ))}
         </div>
       )}
-      {tagline && <p className="font-display mt-4 text-xl">{tagline}</p>}
       {explainer && <p className="mt-1.5 max-w-lg text-[13px] leading-6 text-ink-dim">{explainer}</p>}
     </div>
   );

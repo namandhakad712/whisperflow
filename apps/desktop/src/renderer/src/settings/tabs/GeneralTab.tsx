@@ -158,41 +158,35 @@ export function GeneralTab() {
         />
         <div className="flex items-center justify-between gap-6 px-5 py-4">
           <div>
-            <p className="text-sm font-medium">App theme</p>
-            <p className="mt-0.5 text-xs leading-5 text-ink-dim">Nocturne (dark) · Dawn (light) · Classic</p>
+            <p className="text-sm font-medium">App skin</p>
+            <p className="mt-0.5 text-xs leading-5 text-ink-dim">Lab (dark instrument) · Daylight (light)</p>
           </div>
           <select
             value={(() => {
               try {
-                return localStorage.getItem("wf-skin") || "nocturne";
+                const saved = localStorage.getItem("wf-skin");
+                if (saved === "lab" || saved === "daylight") return saved;
+                // values written by the pre-redesign picker
+                if (saved === "dawn" || saved === "nocturne") return saved === "dawn" ? "daylight" : "lab";
+                return "lab";
               } catch {
-                return "nocturne";
+                return "lab";
               }
             })()}
             onChange={(e) => {
-              const skin = e.target.value as "nocturne" | "classic" | "dawn";
-              const root = document.documentElement;
-              if (skin === "classic") {
-                root.dataset.theme = "classic";
-                document.body.classList.remove("light");
-              } else if (skin === "dawn") {
-                delete root.dataset.theme;
-                document.body.classList.add("light");
-              } else {
-                delete root.dataset.theme;
-                document.body.classList.remove("light");
-              }
+              const skin = e.target.value as "lab" | "daylight";
+              if (skin === "daylight") document.body.classList.add("light");
+              else document.body.classList.remove("light");
               try {
                 localStorage.setItem("wf-skin", skin);
               } catch {
                 /* private mode */
               }
             }}
-            className="rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent/60"
+            className="rounded-lg border border-line bg-paper-2 px-3 py-2.5 font-mono text-[13px] outline-none transition-colors focus:border-phosphor/60"
           >
-            <option value="nocturne">Nocturne — dark</option>
-            <option value="dawn">Dawn — light</option>
-            <option value="classic">Classic</option>
+            <option value="lab">Lab — dark</option>
+            <option value="daylight">Daylight — light</option>
           </select>
         </div>
         <ChangeRow

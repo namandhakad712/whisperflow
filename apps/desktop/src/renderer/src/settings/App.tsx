@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
-import { PanelLeftClose, PanelLeftOpen, Moon, Sun, Search } from "lucide-react";
+import { Moon, Sun, Command } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
+import { CommandPalette, type PaletteAction } from "../shared/CommandPalette";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
 import { ShortcutsTab } from "./tabs/ShortcutsTab";
@@ -22,14 +23,14 @@ import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { DiagnoseTab } from "./tabs/DiagnoseTab";
 import { Onboarding } from "./Onboarding";
-import { DEFAULT_ROUTE, PAGES, allScreens, pageHome, resolveRoute, type SettingsPage } from "./nav";
+import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
 /**
  * Settings shell — "the console".
  *
- * Five pages, each with its own sub-nav. The Signal Standard skin: Lab (dark)
- * and Daylight (light). The copied "Classic" theme was removed with the
- * redesign — every remaining value is authored (see MOTION.md).
+ * Five pages, each with its own sub-nav, plus the command palette (⌘K):
+ * the patch bay that jumps to any screen or runs a live action. The Signal
+ * Standard skin: Lab (dark) and Daylight (light).
  */
 
 function currentRoute(): string {
@@ -86,18 +87,17 @@ export function App() {
   // never re-triggered, whatever the hash says); everyone else resumes on
   // whatever screen the URL points at.
   const [rawRoute, setRawRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
-  const [collapsed, setCollapsed] = useState(false);
   const [skin, setSkin] = useState<Skin>(() => readSkin());
-  const [search, setSearch] = useState("");
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const version = useAppVersion();
   const loadConfig = useSettings((s) => s.loadConfig);
 
-  // Ctrl/⌘+K focuses the search box — the fastest way to reach any screen.
+  // Ctrl/⌘+K opens the command palette — the patch bay.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        document.getElementById("wf-settings-search")?.focus();
+        setPaletteOpen((o) => !o);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -121,19 +121,8 @@ export function App() {
     };
   }, [loadConfig]);
 
-  if (rawRoute === "onboarding" && !hasOnboarded()) return <Onboarding />;
-
   // An empty hash lands on the first screen, not on a blank page.
   const { page, sub, route } = resolveRoute(rawRoute || DEFAULT_ROUTE);
-
-  // Search filters the flat screen list; Enter jumps straight there.
-  const screens = allScreens();
-  const q = search.trim().toLowerCase();
-  const matches = q
-    ? screens.filter(
-        (s) => s.label.toLowerCase().includes(q) || s.page.toLowerCase().includes(q) || s.route.includes(q),
-      )
-    : [];
 
   const toggleSkin = () => {
     const next: Skin = skin === "lab" ? "daylight" : "lab";
@@ -141,57 +130,65 @@ export function App() {
     applySkin(next);
   };
 
+  // Live actions for the palette. (All hooks must run before the onboarding
+  // early-return below — React forbids conditional hook counts.)
+  const paletteActions = useMemo<PaletteAction[]>(
+    () => [
+      {
+        id: "act:skin",
+        label: skin === "lab" ? "switch to Daylight (light)" : "switch to Lab (dark)",
+        group: "actions",
+        hint: "theme",
+        run: toggleSkin,
+      },
+      {
+        id: "act:onboarding",
+        label: "replay onboarding",
+        group: "actions",
+        hint: "setup",
+        run: () => {
+          try {
+            localStorage.removeItem("wf-onboarded");
+          } catch {
+            /* private mode — onboarding guard already treats it as done */
+          }
+          window.location.hash = "/onboarding";
+          setRawRoute("onboarding");
+        },
+      },
+    ],
+    [skin], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // First-run gate — AFTER every hook, so the hook count never varies.
+  if (rawRoute === "onboarding" && !hasOnboarded()) return <Onboarding />;
+
   return (
     <div className="flex h-screen flex-col">
-      {/* top bar with the pill row */}
+      {/* top bar — the console nameplate */}
       <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-rail px-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="font-mono text-[12px] font-medium uppercase tracking-[0.16em] text-rail-text">
+            whisperflow
+          </span>
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint sm:inline">
+            · the console
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label="Toggle sidebar"
-            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Open command palette"
+            aria-keyshortcuts="Control+K"
+            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] text-ink-dim transition-colors duration-150 hover:border-phosphor/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
           >
-            {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-            {!collapsed && <span>panel</span>}
+            <Command size={13} />
+            <span className="hidden sm:inline">jump to…</span>
+            <kbd className="rounded border border-line-soft bg-paper-2 px-1 py-0.5 text-[10px] text-ink-faint">
+              ^K
+            </kbd>
           </button>
-        </div>
-        <div className="relative mx-auto w-full max-w-sm">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
-          <input
-            id="wf-settings-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setSearch("");
-                (e.target as HTMLInputElement).blur();
-              } else if (e.key === "Enter" && matches.length > 0) {
-                window.location.hash = `/${matches[0]!.route}`;
-                setSearch("");
-                (e.target as HTMLInputElement).blur();
-              }
-            }}
-            placeholder="find a setting… ^K"
-            className="h-8 w-full rounded-md border border-line bg-paper-2/60 pl-9 pr-3 font-mono text-[12.5px] text-ink outline-none transition-colors placeholder:text-ink-dim/60 focus:border-phosphor/50 focus:ring-2 focus:ring-phosphor/25"
-          />
-          {q && matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-9 z-20 max-h-64 overflow-y-auto rounded-lg border border-line bg-paper p-1 shadow-xl">
-              {matches.slice(0, 8).map((s) => (
-                <a
-                  key={s.route}
-                  href={`#/${s.route}`}
-                  onClick={() => setSearch("")}
-                  className="flex items-center justify-between gap-2 rounded-md px-3 py-2 font-mono text-[12.5px] text-ink hover:bg-paper-2"
-                >
-                  <span>{s.label}</span>
-                  <span className="text-[11px] text-ink-faint">{s.page}</span>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={toggleSkin}
@@ -209,22 +206,16 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         {/* rail — the channel strip */}
         <aside
-          className={`flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3 transition-[width] ${
-            collapsed ? "w-[68px]" : "w-[216px]"
-          }`}
+          className="flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3"
           aria-label="Sections"
+          style={{ width: 216 }}
         >
-          {!collapsed && (
-            <p className="px-3 pb-2 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-rail-text-dim">
-              whisperflow
-            </p>
-          )}
           {PAGES.map((item, i) => (
             <RailItem
               key={item.id}
               active={page.id === item.id}
-              collapsed={collapsed}
               label={item.label}
+              channel={String(i + 1).padStart(2, "0")}
               href={`#/${pageHome(item)}`}
               first={i === 0}
             >
@@ -232,34 +223,41 @@ export function App() {
             </RailItem>
           ))}
           <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-rail-text-dim">
-            {collapsed ? `v${version}` : <>local-first · apache-2.0<br />v{version} · no telemetry</>}
+            local-first · apache-2.0
+            <br />
+            v{version} · no telemetry
           </div>
         </aside>
 
         <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-bg px-8 py-7">
           <div className="mx-auto min-w-0 max-w-2xl">
-            <SubNav page={page} active={sub.id} />
-            {sub.id === "general" && <GeneralTab />}
-            {sub.id === "audio" && <AudioTab />}
-            {sub.id === "shortcuts" && <ShortcutsTab />}
-            {sub.id === "overlay" && <OverlayTab />}
-            {sub.id === "models" && <ModelsTab />}
-            {sub.id === "advanced" && <AdvancedTab />}
-            {sub.id === "modes" && <ModesTab />}
-            {sub.id === "profiles" && <ProfilesTab />}
-            {sub.id === "dictionary" && <DictionaryTab />}
-            {sub.id === "commands" && <CommandsTab />}
-            {sub.id === "history" && <HistoryTab />}
-            {sub.id === "insights" && <InsightsTab />}
-            {sub.id === "scratchpad" && <ScratchpadTab />}
-            {sub.id === "diagnose" && <DiagnoseTab />}
-            {sub.id === "hooks" && <HooksTab />}
-            {sub.id === "experiments" && <ExperimentsTab />}
-            {sub.id === "privacy" && <PrivacyTab />}
-            {sub.id === "about" && <AboutTab />}
+            {/* the screen stages on every route change (see styles.css) */}
+            <div key={route} className="wf-stage">
+              <SubNav page={page} active={sub.id} route={route} />
+              {sub.id === "general" && <GeneralTab />}
+              {sub.id === "audio" && <AudioTab />}
+              {sub.id === "shortcuts" && <ShortcutsTab />}
+              {sub.id === "overlay" && <OverlayTab />}
+              {sub.id === "models" && <ModelsTab />}
+              {sub.id === "advanced" && <AdvancedTab />}
+              {sub.id === "modes" && <ModesTab />}
+              {sub.id === "profiles" && <ProfilesTab />}
+              {sub.id === "dictionary" && <DictionaryTab />}
+              {sub.id === "commands" && <CommandsTab />}
+              {sub.id === "history" && <HistoryTab />}
+              {sub.id === "insights" && <InsightsTab />}
+              {sub.id === "scratchpad" && <ScratchpadTab />}
+              {sub.id === "diagnose" && <DiagnoseTab />}
+              {sub.id === "hooks" && <HooksTab />}
+              {sub.id === "experiments" && <ExperimentsTab />}
+              {sub.id === "privacy" && <PrivacyTab />}
+              {sub.id === "about" && <AboutTab />}
+            </div>
           </div>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} extraActions={paletteActions} />
     </div>
   );
 }
@@ -268,10 +266,13 @@ export function App() {
  * Sub-navigation for one page. Rendered above the tab body, which keeps
  * owning its own `PageHeader` — one screen per view, unchanged.
  */
-function SubNav({ page, active }: { page: SettingsPage; active: string }) {
+function SubNav({ page, active, route }: { page: SettingsPage; active: string; route: string }) {
   return (
     <div className="mb-5 border-b border-line pb-4">
-      <p className="text-[12px] leading-5 text-ink-dim">{page.hint}</p>
+      <p className="wf-header-channel">
+        {page.label.toLowerCase()} · {route.replace("/", " / ")}
+      </p>
+      <p className="mt-1.5 text-[12px] leading-5 text-ink-dim">{page.hint}</p>
       <nav
         className="mt-3 flex flex-wrap items-center gap-1"
         aria-label={`${page.label} sections`}
@@ -369,15 +370,15 @@ function summarizeReleaseNotes(raw: string): string {
 
 function RailItem({
   active,
-  collapsed,
   label,
+  channel,
   href,
   children,
   first,
 }: {
   active: boolean;
-  collapsed: boolean;
   label: string;
+  channel: string;
   href: string;
   children: React.ReactNode;
   first?: boolean;
@@ -385,15 +386,10 @@ function RailItem({
   return (
     <a
       href={href}
-      title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
-      className={`relative flex h-9 items-center rounded-md font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
-        collapsed ? "justify-center px-0" : "gap-3 px-3"
-      } ${first ? "" : "mt-1"} ${
-        active
-          ? "bg-rail-active text-phosphor"
-          : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"
-      }`}
+      className={`rail-item relative flex h-9 items-center gap-3 rounded-md px-3 font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
+        first ? "" : "mt-1"
+      } ${active ? "is-active bg-rail-active text-phosphor" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
     >
       {/* the phosphor edge: a 2px signal on the live channel */}
       {active && (
@@ -403,7 +399,10 @@ function RailItem({
         />
       )}
       {children}
-      {!collapsed && <span>{label}</span>}
+      <span className="flex-1">{label}</span>
+      <span className="rail-channel" aria-hidden="true">
+        {channel}
+      </span>
     </a>
   );
 }
