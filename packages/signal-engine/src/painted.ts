@@ -118,7 +118,10 @@ export class PaintedScene {
     let imgH = 0;
     if (this.opts.image) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      // CORS mode only for true cross-origin URLs (same-origin + anonymous
+      // gets blocked when the host sends no ACAO header)
+      const isCross = /^https?:/i.test(this.opts.image) && new URL(this.opts.image, location.href).origin !== location.origin;
+      if (isCross) img.crossOrigin = "anonymous";
       img.decoding = "async";
       img.onload = () => {
         imgTex = gl.createTexture();
