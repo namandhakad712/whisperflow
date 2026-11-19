@@ -1,380 +1,270 @@
 ---
 import Base from "../layouts/Base.astro";
-import SignalPanel from "../components/SignalPanel.astro";
 ---
 
 <Base
-  title="WhisperFlow — your voice, rendered."
-  description="Open-source, local-first AI voice dictation. Hold a key, speak naturally, get polished text in any app — powered by whisper.cpp and llama.cpp on your machine. Free forever, unlimited, no cloud."
+  title="WhisperFlow — speak. it writes."
+  description="Open-source, local-first voice dictation. Hold a key, speak naturally, get polished text in any app — whisper.cpp + llama.cpp on your machine. Free forever, no cloud, no caps."
 >
-  <!-- ================= HERO — the signal field ================= -->
-  <section class="relative min-h-[92vh] overflow-hidden">
-    <!-- Engine A: breathing dither field -->
-    <canvas id="hero-dither" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
-    <!-- v2: the field dissolves toward the fold on BOTH axes, no hard seam -->
-    <div
-      class="pointer-events-none absolute inset-0"
-      style="background:
-        linear-gradient(to bottom, transparent 55%, var(--color-bg) 96%),
-        radial-gradient(ellipse 120% 90% at 50% 42%, transparent 55%, var(--color-bg) 92%)"
-      aria-hidden="true"
-    ></div>
+  <!-- ============ HERO — the printed bloom ============ -->
+  <section class="relative min-h-[94vh] overflow-hidden">
+    <!-- Engine D: the orchid bloom, printed in dots -->
+    <canvas id="hero-scene" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
 
-    <div class="relative mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center px-4 pb-16 pt-24 sm:px-6">
-      <p class="sec-mark !text-ink-dim">open-source · local-first · no caps</p>
+    <!-- the print's paper band: type always sits on clean paper -->
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]" style="background:linear-gradient(to top, var(--color-paper) 34%, color-mix(in srgb, var(--color-paper) 72%, transparent) 62%, transparent)" aria-hidden="true"></div>
 
-      <h1 class="font-display mx-auto mt-9 max-w-4xl text-center text-[12vw] font-bold leading-[1.02] tracking-[-0.045em] sm:text-7xl md:text-8xl">
-        your voice,<br />
-        <span class="text-phosphor" data-scramble="rendered.">rendered.</span>
+    <!-- headline set OVER the art, left-anchored (editorial) -->
+    <div class="relative mx-auto flex min-h-[94vh] max-w-6xl flex-col justify-end px-5 pb-20 pt-32 sm:px-8">
+      <p class="eyebrow">local-first · free forever · works in every app</p>
+
+      <h1 class="font-serif mt-6 max-w-3xl text-[13.5vw] font-normal leading-[0.98] tracking-[-0.015em] text-ink sm:text-7xl md:text-8xl">
+        speak. it writes<span class="text-accent">.</span>
       </h1>
 
-      <p class="mx-auto mt-8 max-w-xl text-center font-mono text-[14px] leading-7 text-ink-dim sm:text-[15px]">
-        WhisperFlow turns speech into clean, polished text in any app — transcribed and
-        refined entirely on your machine by open models.
+      <p class="mt-7 max-w-md text-[17px] leading-7 text-ink-2">
+        hold one key, talk like you think — WhisperFlow turns speech into clean,
+        polished text in any app. your words, rendered on your machine.
       </p>
 
-      <div class="mt-10 flex flex-wrap items-stretch justify-center gap-3">
-        <a href="/whisperflow/download/" class="btn btn-primary">get started on windows</a>
-        <a href="https://github.com/namandhakad712/whisperflow" class="btn btn-ghost">read the schematics ↗</a>
+      <div class="mt-10 flex flex-wrap items-center gap-4">
+        <a href="/whisperflow/download/" class="btn-ink">download for windows</a>
+        <a href="https://github.com/namandhakad712/whisperflow" class="btn-quiet">read the source ↗</a>
+        <span class="micro-note hidden sm:inline">macos + linux on the <a class="underline decoration-dotted underline-offset-4" href="https://github.com/namandhakad712/whisperflow">roadmap</a></span>
       </div>
+    </div>
 
-      <!-- ============ THE SHOW: hold-to-speak demo + ASCII signal ============ -->
-      <div class="relative mt-20 w-full max-w-3xl">
-        <p class="mb-3 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-ink-dim">
-          <span class="text-phosphor">live</span> — try it: hold, speak, release
-        </p>
-        <!-- Engine B: the signal made of text — a framed, labeled instrument screen -->
-        <div class="relative h-56 overflow-hidden rounded-sm border border-line bg-[#06080A] shadow-[inset_0_0_60px_rgba(0,0,0,0.55)] sm:h-64" id="ascii-stage">
-          <canvas id="hero-ascii" class="ascii-canvas absolute inset-0" aria-hidden="true"></canvas>
-          <div class="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim" aria-hidden="true">
-            <span>ch 01 · live input</span>
-            <span class="flex items-center gap-1.5"><span class="led led-breathe" data-on="live"></span> 44.1 khz</span>
-          </div>
-          <div class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-dim" aria-hidden="true">
-            <span class="flex items-center gap-2"><span class="stage-cursor"></span> awaiting input</span>
-            <span>0.00 dB · silence</span>
-          </div>
-        </div>
-
-        <!-- the instrument: hold SPACE (or press the keycap) to transmit.
-             sits ON the stage's bottom rule by design — the demo IS the screen's readout -->
-        <div class="panel mx-auto -mt-10 w-[min(94%,42rem)] bg-paper shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
-          <div class="panel-head">
-            <span class="flex items-center gap-2.5">
-              <span class="led" id="demo-led" aria-hidden="true"></span>
-              <span class="mono-label text-ink-dim" id="demo-state">standby</span>
-            </span>
-            <span class="font-mono text-[11px] text-ink-dim">
-              <span id="demo-clock">00:00</span> · <span id="demo-db">−∞ dB</span>
-            </span>
-          </div>
-          <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              id="hold-key"
-              class="group relative flex h-24 w-24 shrink-0 select-none items-center justify-center rounded-md sm:h-20 sm:w-32"
-              aria-label="Press and hold to try dictation"
-            >
-              <span class="absolute inset-0 rounded-md bg-[#040507] shadow-[inset_0_2px_5px_rgba(0,0,0,0.95),0_10px_24px_rgba(0,0,0,0.7)]"></span>
-              <span class="keycap-cap absolute inset-[3px] rounded-sm bg-gradient-to-b from-[#1B1E24] via-[#121419] to-[#0B0D11] shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-3px_6px_rgba(0,0,0,0.85)] transition-transform duration-100 group-active:translate-y-[3px]"></span>
-              <span class="keycap-dish absolute inset-[7px] flex items-center justify-center rounded-sm bg-gradient-to-b from-[#16181E] to-[#12141A] font-mono text-[11px] font-medium tracking-[0.14em] text-ink shadow-[inset_0_1px_1px_rgba(255,255,255,0.16),inset_0_-1px_2px_rgba(0,0,0,0.6)]">
-                hold
-              </span>
-            </button>
-            <div class="min-w-0 flex-1">
-              <p class="font-mono text-[13px] leading-6">
-                <span class="text-ink-dim" id="demo-raw">…press and hold. say something.</span>
-              </p>
-              <p class="mt-2 text-sm leading-6 text-ink-dim">
-                <span class="text-phosphor" id="demo-out"></span><span class="demo-caret" aria-hidden="true"></span>
-              </p>
-            </div>
-          </div>
-          <div class="flex items-center justify-between border-t border-line-soft px-5 py-2.5 font-mono text-[11px] text-ink-dim">
-            <span>whisper.cpp · qwen 2.5 · <span class="text-phosphor">local</span></span>
-            <span id="demo-latency">— ms</span>
-          </div>
-        </div>
-        <p class="mt-4 text-center font-mono text-[11px] tracking-[0.08em] text-ink-dim">
-          hold <span class="kbd-chip">space</span> anywhere on this page — the demo transmits silence as if it were speech
-        </p>
-      </div>
+    <!-- corner print marks -->
+    <div class="pointer-events-none absolute bottom-6 right-6 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint md:block" aria-hidden="true">
+      fig. 01 — the bloom · printed in dots · v0.1.41
     </div>
   </section>
 
-  <!-- ================= 01 — HOW IT WORKS: three instrument panels ================= -->
-  <section class="relative border-t border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-      <p class="sec-mark">section 01 — the loop</p>
-      <h2 class="font-display mt-5 max-w-2xl text-4xl font-bold leading-[1.05] tracking-[-0.04em] sm:text-6xl">
-        everything runs <span class="text-phosphor">here.</span>
-      </h2>
-      <p class="mt-5 max-w-md text-ink-dim">
-        not on a server somewhere. on the machine you already own — three stages, one signal path.
-      </p>
-
-      <div class="mt-14 grid gap-5 md:grid-cols-3">
-        <SignalPanel label="ear · whisper.cpp" led="live" breathe meta="stt">
-          <div class="p-6">
-            <p class="font-mono text-[13px] text-phosphor">streaming transcription</p>
-            <p class="mt-3 text-sm leading-6 text-ink-dim">
-              silence endpointing, 100+ languages, partial results as you speak — zero audio
-              leaves the device. the mic is an instrument, not a microphone array in virginia.
-            </p>
-            <p class="mt-4 font-mono text-2xl text-ink">0<span class="text-sm text-ink-dim"> bytes uploaded</span></p>
-          </div>
-        </SignalPanel>
-        <SignalPanel label="mind · llama.cpp" led="busy" meta="polish">
-          <div class="p-6">
-            <p class="font-mono text-[13px] text-violet">local llm refinement</p>
-            <p class="mt-3 text-sm leading-6 text-ink-dim">
-              a small local model removes filler, fixes punctuation, follows your tone presets —
-              or bring any OpenAI-compatible endpoint, with your key, stored only on your machine.
-            </p>
-            <p class="mt-4 font-mono text-2xl text-ink">~3<span class="text-sm text-ink-dim"> s hotkey → text</span></p>
-          </div>
-        </SignalPanel>
-        <SignalPanel label="memory · sqlite" led="live" breathe meta="yours">
-          <div class="p-6">
-            <p class="font-mono text-[13px] text-phosphor">dictionary · history · commands</p>
-            <p class="mt-3 text-sm leading-6 text-ink-dim">
-              your names, terms and past dictations live in local storage. one switch makes the
-              app physically unable to phone home. delete anything, any time.
-            </p>
-            <p class="mt-4 font-mono text-2xl text-ink">∞<span class="text-sm text-ink-dim"> words per week</span></p>
-          </div>
-        </SignalPanel>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 02 — SIGNAL vs NOISE (the product demo in type) ================= -->
-  <section class="relative border-t border-line-soft bg-paper/30">
-    <div class="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-      <p class="sec-mark">section 02 — signal vs noise</p>
-      <h2 class="font-display mt-5 max-w-2xl text-4xl font-bold leading-[1.05] tracking-[-0.04em] sm:text-6xl">
-        noise in. <span class="text-phosphor">signal out.</span>
-      </h2>
-      <p class="mt-5 max-w-md text-ink-dim">
-        the polish pass is the whole trick — and you control it. flip the tone and watch the same
-        sentence come out different.
-      </p>
-
-      <div class="panel mt-14 p-6 sm:p-10">
-        <div class="grid items-stretch gap-6 md:grid-cols-[1fr_auto_1fr]">
-          <div>
-            <p class="mono-label text-ink-dim">/// raw transcript</p>
-            <p class="mt-4 font-mono text-sm leading-7 text-ink-dim">
-              so basically um i think we should <span class="text-coral">uh</span> ship the demo
-              like tomorrow-ish because <span class="text-coral">you know</span> the launch is
-              monday and the overlay basically works
-            </p>
-          </div>
-          <div class="flex items-center justify-center" aria-hidden="true">
-            <div class="flex flex-col items-center gap-2">
-              <span class="led" data-on="busy"></span>
-              <svg viewBox="0 0 64 16" class="h-4 w-16 text-phosphor" fill="none">
-                <path d="M0 8 H20 M24 8 h2 m2 0 h2 m2 0 h2 M36 8 H64" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 4" />
-              </svg>
-              <span class="mono-label text-violet">polish</span>
-            </div>
-          </div>
-          <div>
-            <p class="mono-label text-phosphor">/// rendered · <span id="tone-label">neutral</span></p>
-            <p class="mt-4 text-sm leading-7 text-ink" id="tone-out">
-              We should ship the demo tomorrow — the launch is Monday, and the overlay works.
-            </p>
-          </div>
-        </div>
-        <div class="mt-8 flex flex-wrap gap-2 border-t border-line-soft pt-6">
-          {["neutral", "casual", "professional"].map((tone) => (
-            <button
-              type="button"
-              data-tone={tone}
-              class="tone-btn rounded-none border border-line px-3.5 py-1.5 font-mono text-[12px] text-ink-dim transition-colors hover:border-phosphor hover:text-phosphor"
-            >
-              {tone}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 03 — THE PRIVACY METER ================= -->
-  <section class="relative border-t border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-      <div class="grid items-center gap-12 lg:grid-cols-2">
+  <!-- ============ 01 — THE PROOF: real product, real words ============ -->
+  <section class="border-t border-rule">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+      <div class="grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:items-center">
         <div>
-          <p class="sec-mark">section 03 — the only meter is yours</p>
-          <h2 class="font-display mt-5 text-4xl font-bold leading-[1.05] tracking-[-0.04em] sm:text-5xl">
+          <p class="eyebrow">01 — the proof</p>
+          <h2 class="font-serif mt-5 text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">
+            you don't type.<br />you already said it.
+          </h2>
+          <p class="mt-6 max-w-md text-[16px] leading-7 text-ink-2">
+            the pill is the whole product: hold your hotkey anywhere, speak, and watch
+            your sentence land — fillers removed, punctuation placed, tone matched.
+            this is the actual overlay, running on windows.
+          </p>
+          <ul class="mt-8 space-y-3 font-mono text-[12px] text-ink-2">
+            <li class="flex gap-3"><span class="text-accent">·</span> runs offline — your audio never leaves the machine</li>
+            <li class="flex gap-3"><span class="text-accent">·</span> whisper.cpp transcribes, a local llm polishes</li>
+            <li class="flex gap-3"><span class="text-accent">·</span> no account, no card, no word caps</li>
+          </ul>
+        </div>
+
+        <!-- the specimen: the overlay, framed like a print -->
+        <figure class="specimen">
+          <div class="specimen-frame">
+            <div class="overlay-demo" id="overlay-demo">
+              <div class="overlay-wave">
+                <canvas id="proof-wave" width="512" height="56" aria-hidden="true"></canvas>
+              </div>
+              <div class="overlay-text">
+                <span id="proof-raw" class="proof-raw">…</span>
+                <span id="proof-out" class="proof-out"></span><span class="caret" aria-hidden="true"></span>
+              </div>
+            </div>
+            <p class="specimen-caption">
+              fig. 02 — the overlay capsule · hold-to-talk · simulated transcript, the desktop app is the real thing
+            </p>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 — RAMBLE → RENDERED (the live transform) ============ -->
+  <section class="border-t border-rule bg-tint">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+      <p class="eyebrow">02 — the whole trick</p>
+      <h2 class="font-serif mt-5 max-w-2xl text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">
+        ramble in. <span class="text-accent">rendered out.</span>
+      </h2>
+      <p class="mt-6 max-w-md text-[16px] leading-7 text-ink-2">
+        this is the moment users love: your speech, cleaned. press play — or use your
+        microphone and watch <em class="not-italic font-medium">your own words</em> come back polished.
+      </p>
+
+      <div class="mt-12 max-w-3xl">
+        <div class="proof-card">
+          <div class="flex items-center justify-between gap-4 border-b border-rule px-6 py-3.5">
+            <span class="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">
+              <span class="pulse-dot" id="transform-dot"></span>
+              <span id="transform-state">ready</span>
+            </span>
+            <button type="button" id="transform-play" class="btn-quiet !py-1.5 !text-[12px]">▶ play the transform</button>
+          </div>
+          <div class="grid gap-8 p-6 sm:p-8 md:grid-cols-[1fr_auto_1fr] md:items-center">
+            <div>
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">what you said</p>
+              <p class="mt-3 font-mono text-[13px] leading-6 text-ink-2" id="t-raw">
+                so basically um i think we should uh ship the demo like tomorrow-ish because
+                you know the launch is monday and the overlay basically works
+              </p>
+            </div>
+            <div class="flex items-center justify-center" aria-hidden="true">
+              <svg viewBox="0 0 48 16" class="h-4 w-12 text-accent" fill="none">
+                <path d="M0 8 H14 M18 8 h1.5 m2 0 h1.5 m2 0 h1.5 M30 8 H48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3.5"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">what appears</p>
+              <p class="mt-3 text-[15px] leading-7 text-ink" id="t-out">We should ship the demo tomorrow — the launch is Monday, and the overlay works.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 border-t border-rule px-6 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+            <span id="t-mode">simulated example — the app does this with your real voice</span>
+            <button type="button" id="t-mic" class="underline decoration-dotted underline-offset-4 hover:text-accent">use my microphone</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 — WHY LOCAL ============ -->
+  <section class="border-t border-rule">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+      <div class="grid gap-14 lg:grid-cols-2 lg:items-center">
+        <div class="order-2 lg:order-1">
+          <p class="eyebrow">03 — why local</p>
+          <h2 class="font-serif mt-5 text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">
             cloud tools meter your words.<br />we can't.
           </h2>
-          <p class="mt-5 max-w-md text-ink-dim">
-            there is no counter to check and no server to phone. the local-only mode is a hard
-            network block at the provider layer — when it's on, WhisperFlow <strong class="text-ink">cannot</strong> call
-            out. verify it yourself: the whole schematic is public.
+          <p class="mt-6 max-w-md text-[16px] leading-7 text-ink-2">
+            there is no counter to check and no server to phone. local-only mode is a
+            hard network block at the provider layer — when it's on, WhisperFlow
+            <em class="not-italic font-medium text-ink">cannot</em> call out. the whole
+            schematic is public, apache-2.0.
           </p>
-          <div class="mt-7 flex flex-wrap gap-3">
-            <a href="https://github.com/namandhakad712/whisperflow" class="btn btn-ghost">audit the code ↗</a>
-            <a href="/whisperflow/docs/privacy/" class="btn btn-ghost">privacy docs</a>
+          <div class="mt-8 flex flex-wrap gap-4">
+            <a href="https://github.com/namandhakad712/whisperflow" class="btn-quiet">audit the code ↗</a>
+            <a href="/whisperflow/docs/privacy/" class="btn-quiet">privacy docs</a>
           </div>
         </div>
-        <SignalPanel label="transmission log" led="live" breathe meta="live">
-          <div class="p-5">
-            <!-- v2: flex rows with dotted leaders — every value column aligns -->
-            <div class="select-none space-y-1.5" aria-hidden="true">
-              <div class="log-row"><span class="log-key"><span class="text-phosphor">[ok]</span> mic captured</span><span class="log-dots"></span><span class="log-val text-ink">local</span></div>
-              <div class="log-row"><span class="log-key"><span class="text-phosphor">[ok]</span> whisper.cpp transcribe</span><span class="log-dots"></span><span class="log-val text-ink">local</span></div>
-              <div class="log-row"><span class="log-key"><span class="text-phosphor">[ok]</span> qwen polish</span><span class="log-dots"></span><span class="log-val text-ink">local</span></div>
-              <div class="log-row"><span class="log-key"><span class="text-phosphor">[ok]</span> paste at cursor</span><span class="log-dots"></span><span class="log-val text-ink">local</span></div>
-              <div class="mt-2 border-t border-line-soft"></div>
-              <div class="log-row pt-2"><span class="log-key"><span class="text-phosphor">[ok]</span> bytes sent to any cloud</span><span class="log-dots"></span><span class="log-val text-ink">0 ∞</span></div>
-            </div>
-            <p class="sr-only">Transmission log: every stage — capture, transcription, polish, paste — runs locally. Bytes sent to any cloud: zero, always.</p>
+
+        <figure class="order-1 lg:order-2">
+          <div class="specimen-frame">
+            <canvas id="dune-scene" class="block h-64 w-full sm:h-80" aria-hidden="true"></canvas>
+            <p class="specimen-caption">fig. 03 — every stage local: capture · transcribe · polish · paste</p>
           </div>
-        </SignalPanel>
+        </figure>
       </div>
     </div>
   </section>
 
-  <!-- ================= 04 — FEATURES STRIP (marquee) ================= -->
-  <section class="relative overflow-hidden border-t border-line-soft bg-paper/30 py-24 sm:py-28">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6">
-      <p class="sec-mark">section 04 — the full rack</p>
-      <h2 class="font-display mt-5 text-4xl font-bold leading-[1.05] tracking-[-0.04em] sm:text-5xl">
-        one instrument, <span class="text-phosphor">every register.</span>
-      </h2>
-    </div>
-    <div class="group relative mt-14">
-      <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-bg to-transparent" aria-hidden="true"></div>
-      <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-bg to-transparent" aria-hidden="true"></div>
-      <div class="marquee-track px-6 py-2">
-        {[
-          ["/// 01", "push-to-talk", "global hotkey, rebindable. toggle mode for hands-free."],
-          ["/// 02", "live overlay", "phosphor capsule: trace, transcript, polish status. esc kills it."],
-          ["/// 03", "smart polish", "filler removal, punctuation, structure — tone presets included."],
-          ["/// 04", "dictionary", "names and terms, fuzzy-corrected after transcription."],
-          ["/// 05", "voice commands", "“scratch that” undoes. your phrases trigger anything."],
-          ["/// 06", "history", "local sqlite. searchable. deletable. yours."],
-          ["/// 07", "model manager", "curated catalog, hardware-tiered picks, resumable downloads."],
-          ["/// 08", "local-only lock", "a hard network block. provably off-grid."],
-        ].map(([num, title, body], i) => (
-          <>
-            <div class="panel w-72 shrink-0">
-              <div class="panel-head">
-                <span class="mono-label text-ink-dim">{num}</span>
-                <span class="led" data-on={i < 3 ? "live" : "off"} class:list={i === 0 ? ["led-breathe"] : []} aria-hidden="true"></span>
-              </div>
-              <div class="p-5">
-                <p class="font-mono text-sm font-medium text-ink">{title}</p>
-                <p class="mt-2 text-[13px] leading-5 text-ink-dim">{body}</p>
-              </div>
-            </div>
-            <div class="panel w-72 shrink-0" aria-hidden="true">
-              <div class="panel-head">
-                <span class="mono-label text-ink-dim">{num}</span>
-                <span class="led" data-on={i < 3 ? "live" : "off"}></span>
-              </div>
-              <div class="p-5">
-                <p class="font-mono text-sm font-medium text-ink">{title}</p>
-                <p class="mt-2 text-[13px] leading-5 text-ink-dim">{body}</p>
-              </div>
-            </div>
-          </>
-        ))}
+  <!-- ============ 04 — THE FEATURES INDEX ============ -->
+  <section class="border-t border-rule bg-tint">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+      <div class="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p class="eyebrow">04 — contents</p>
+          <h2 class="font-serif mt-5 text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">the full instrument.</h2>
+        </div>
+        <a href="/whisperflow/features/" class="btn-quiet">full spec sheet →</a>
       </div>
-    </div>
-    <div class="mx-auto mt-12 max-w-6xl px-4 text-center sm:px-6">
-      <a href="/whisperflow/features/" class="btn btn-ghost">full spec sheet →</a>
+
+      <div class="relative mt-12">
+        <canvas id="contours-scene" class="absolute inset-0 h-full w-full opacity-60" aria-hidden="true"></canvas>
+        <ol class="relative">
+          {[
+            ["01", "push-to-talk", "one global hotkey, rebindable — or toggle mode for hands-free"],
+            ["02", "the live overlay", "the capsule: signal trace, streaming transcript, esc kills it"],
+            ["03", "smart polish", "fillers out, punctuation in, tone presets — a local llm, your rules"],
+            ["04", "dictionary + commands", "names and terms learned; “scratch that” undoes"],
+            ["05", "history, local", "sqlite on your disk — searchable, deletable, yours"],
+            ["06", "model manager", "curated gguf catalog, hardware-tiered, resumable downloads"],
+            ["07", "the local-only lock", "a hard network block — provably off-grid"],
+            ["08", "open providers", "whisper.cpp + llama.cpp by default; bring any endpoint"],
+          ].map(([num, title, body]) => (
+            <li class="group grid grid-cols-[3rem_1fr] items-baseline gap-4 border-b border-rule py-5 sm:grid-cols-[4rem_16rem_1fr]">
+              <span class="font-mono text-[11px] text-ink-faint">{num}</span>
+              <span class="font-mono text-[13px] font-medium text-ink group-hover:text-accent">{title}</span>
+              <span class="col-span-2 mt-1.5 text-[14px] leading-6 text-ink-2 sm:col-span-1 sm:mt-0">{body}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   </section>
 
-  <!-- ================= 05 — FAQ ================= -->
-  <section class="mx-auto max-w-3xl px-4 py-24 sm:px-6 sm:py-32">
-    <p class="sec-mark">section 05 — good questions</p>
-    <h2 class="font-display mt-5 text-4xl font-bold leading-[1.05] tracking-[-0.04em] sm:text-5xl">asked <span class="text-phosphor">often.</span></h2>
-    <div class="mt-12 space-y-3">
+  <!-- ============ 05 — HONEST FAQ ============ -->
+  <section class="mx-auto max-w-3xl px-5 py-24 sm:px-8 sm:py-32">
+    <p class="eyebrow">05 — good questions</p>
+    <h2 class="font-serif mt-5 text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">asked often.</h2>
+    <div class="mt-12 space-y-3.5">
       {[
-        ["is it really free?", "yes — the core app is free forever, with no word caps or accounts. sponsor tiers fund development; they don't unlock dictation, because dictation isn't locked."],
-        ["does it need the internet?", "only once, to download models from huggingface. after that it works fully offline — planes, airports, hotel wi-fi."],
-        ["how is this different from cloud dictation?", "cloud tools stream your voice to servers and meter your words. whisperflow transcribes locally with whisper.cpp and polishes locally with a small llm — private, unlimited, free."],
-        ["what hardware does it need?", "any modern pc. 8 gb ram runs the balanced setup; 16 gb unlocks the best models. onboarding checks and recommends for you."],
+        ["is it really free?", "yes — the core app is free forever with no word caps and no account. sponsor tiers fund development; they don't unlock dictation, because dictation isn't locked."],
+        ["does it need the internet?", "once, to download models from huggingface. after that it runs fully offline — planes, airports, dead zones."],
+        ["how is this different from cloud dictation?", "cloud tools stream your voice to servers and meter your words. whisperflow transcribes and polishes locally — private, unlimited, free. the trade: you need a real computer, not a browser tab."],
+        ["what hardware does it need?", "any modern pc. 8 gb ram runs the balanced setup; 16 gb unlocks the best models. onboarding checks your machine and recommends."],
         ["windows only?", "windows ships first; the engine is cross-platform and macos/linux packaging is on the roadmap."],
+        ["what's the catch?", "models are big (the wizard downloads them once), and polish quality depends on your gpu. that's it. it's apache-2.0 — read every line."],
       ].map(([q, a]) => (
-        <details class="faq panel group">
-          <summary class="flex cursor-pointer items-center justify-between gap-4 px-6 py-5 text-[15px] font-medium text-ink">
+        <details class="faq group">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-rule pb-4 pt-1 font-mono text-[14px] text-ink">
             {q}
-            <span class="faq-glyph font-mono text-lg leading-none text-ink-dim">+</span>
+            <span class="faq-glyph text-ink-faint">+</span>
           </summary>
-          <p class="border-t border-line-soft px-6 py-5 text-sm leading-6 text-ink-dim">{a}</p>
+          <p class="max-w-xl pb-5 pt-3 text-[14.5px] leading-7 text-ink-2">{a}</p>
         </details>
       ))}
     </div>
   </section>
 
-  <!-- ================= 06 — CTA: hand it the talking ================= -->
-  <section class="relative overflow-hidden border-t border-line-soft">
-    <!-- Engine A again: an aurora rising -->
-    <canvas id="cta-dither" class="absolute inset-0 h-full w-full opacity-70" aria-hidden="true"></canvas>
-    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-transparent to-bg" aria-hidden="true"></div>
-    <div class="relative mx-auto max-w-6xl px-4 py-32 text-center sm:px-6 sm:py-40">
-      <p class="sec-mark">section 06 — transmit</p>
-      <h2 class="font-display mx-auto mt-6 max-w-3xl text-5xl font-bold leading-[1.02] tracking-[-0.045em] sm:text-7xl">
-        hand whisperflow<br /><span class="text-phosphor">the talking.</span>
+  <!-- ============ CTA ============ -->
+  <section class="relative overflow-hidden border-t border-rule">
+    <canvas id="cta-scene" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
+    <div class="relative mx-auto max-w-6xl px-5 py-28 text-center sm:px-8 sm:py-36">
+      <h2 class="font-serif mx-auto max-w-2xl text-5xl font-normal leading-[1.02] text-ink sm:text-7xl">
+        hand it<br />the talking<span class="text-accent">.</span>
       </h2>
-      <p class="mx-auto mt-6 max-w-md text-ink-dim">
-        download, pick a model, dictate your first sentence in under five minutes.
+      <p class="mx-auto mt-6 max-w-md text-[16px] leading-7 text-ink-2">
+        download, pick a model, dictate your first sentence in five minutes.
       </p>
-      <div class="mt-10 flex flex-wrap justify-center gap-3">
-        <a href="/whisperflow/download/" class="btn btn-primary">get started on windows</a>
-        <a href="/whisperflow/features/" class="btn btn-ghost">explore features</a>
+      <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <a href="/whisperflow/download/" class="btn-ink">download for windows</a>
+        <a href="/whisperflow/features/" class="btn-quiet">explore features</a>
       </div>
     </div>
   </section>
 </Base>
 
 <script>
-  import { DitherField, DITHER_PALETTES, AsciiRender, bindScrambles, holdDemo } from "@whisperflow/signal-engine";
+  import { PaintedScene, SCENE_BLOOM, SCENE_CONTOURS, SCENE_DUNE } from "@whisperflow/signal-engine";
 
-  const light = document.documentElement.dataset.mode === "light";
-  const palette = light ? DITHER_PALETTES.light : DITHER_PALETTES.dark;
+  // v3: light (cream) is the default; "dark" dataset mode switches the print
+  const dark = document.documentElement.dataset.mode === "dark";
+  const paper = dark ? "ink" : "cream";
 
-  // Engine A — hero + CTA dither fields (scroll velocity drives the hero field)
-  let scrollV = 0;
-  let lastY = window.scrollY;
-  window.addEventListener(
-    "scroll",
-    () => {
-      scrollV = Math.min(1, Math.abs(window.scrollY - lastY) / 60);
-      lastY = window.scrollY;
-    },
-    { passive: true },
-  );
-
-  const heroDither = new DitherField(document.getElementById("hero-dither") as HTMLCanvasElement, {
-    palette,
-    cell: 3,
-    drive: () => scrollV * 0.6,
+  const hero = new PaintedScene(document.getElementById("hero-scene") as HTMLCanvasElement, {
+    scene: SCENE_BLOOM,
+    cell: 5,
+    paper,
+    drift: 1,
+    image: "/whisperflow/prints/orchid.jpg",
+    imageCrop: [0.55, 0.42, 1.6], // one dominant bloom, cropped hard
   });
-  heroDither.mount();
-  const ctaCanvas = document.getElementById("cta-dither") as HTMLCanvasElement | null;
-  const ctaDither = ctaCanvas ? new DitherField(ctaCanvas, { palette, cell: 6 }) : null;
-  ctaDither?.mount();
+  hero.mount();
 
-  // Engine B — the ASCII signal; the hold demo drives its amplitude
-  let demoLevel = 0;
-  const ascii = new AsciiRender(document.getElementById("hero-ascii") as HTMLCanvasElement, {
-    columns: 110,
-    drive: () => demoLevel,
-    density: () => demoLevel,
-  });
-  ascii.mount();
+  const dune = document.getElementById("dune-scene") as HTMLCanvasElement | null;
+  if (dune) new PaintedScene(dune, { scene: SCENE_DUNE, cell: 8, paper, drift: 0.7 }).mount();
 
-  // scramble links
-  const unscramble = bindScrambles();
+  const contours = document.getElementById("contours-scene") as HTMLCanvasElement | null;
+  if (contours) new PaintedScene(contours, { scene: SCENE_CONTOURS, cell: 9, paper, drift: 0.5 }).mount();
 
-  // ---- the hold-to-speak demo ----
+  const cta = document.getElementById("cta-scene") as HTMLCanvasElement | null;
+  if (cta) new PaintedScene(cta, { scene: SCENE_BLOOM, cell: 10, paper, drift: 0.6 }).mount();
+
+  // ---- the overlay specimen: the capsule, live ----
   const RAW = [
     "so basically um ship the demo",
     "uh i think the launch is monday",
@@ -387,115 +277,152 @@ import SignalPanel from "../components/SignalPanel.astro";
     "The overlay works.",
     "Tell the team we're live tomorrow.",
   ];
-  let demoIdx = 0;
+  let di = 0;
   const el = (id: string) => document.getElementById(id)!;
-  const led = el("demo-led") as HTMLElement;
-  const state = el("demo-state");
-  const clock = el("demo-clock");
-  const db = el("demo-db");
-  const raw = el("demo-raw");
-  const out = el("demo-out");
-  const latency = el("demo-latency");
-  const keycap = el("hold-key") as HTMLElement;
-  let clockTimer = 0;
+  const wave = document.getElementById("proof-wave") as HTMLCanvasElement;
+  const wctx = wave.getContext("2d")!;
+  let speaking = false;
+  let phase = 0;
 
-  const unbind = holdDemo(keycap, {
-    onDrive: (level) => {
-      demoLevel = level;
-      if (level > 0) {
-        led.dataset.on = "live";
-        led.classList.add("led-breathe");
-        state.textContent = "listening";
-        const dbv = Math.round(-46 + level * 40);
-        db.textContent = `${dbv} dB`;
-      }
-    },
-    onRelease: (elapsed) => {
-      led.dataset.on = "busy";
-      led.classList.remove("led-breathe");
-      state.textContent = "polishing";
-      demoLevel = 0;
-      db.textContent = "−∞ dB";
-      window.clearInterval(clockTimer);
-      clock.textContent = "00:00";
-      const i = demoIdx % RAW.length;
-      raw.textContent = RAW[i];
-      out.textContent = "";
-      // the dither-sweep polish: characters cycle the ramp, then settle
-      const target = OUT[i];
-      let frame = 0;
-      const CH = "·:;=+x%#@";
-      const sweep = window.setInterval(() => {
-        frame++;
-        const settled = Math.floor((frame / 16) * target.length);
-        out.textContent =
-          target.slice(0, settled) +
-          Array.from({ length: target.length - settled }, () => CH[Math.floor(Math.random() * CH.length)]).join("");
-        if (settled >= target.length) {
-          window.clearInterval(sweep);
-          led.dataset.on = "live";
-          state.textContent = "[ok] pasted";
-          latency.textContent = `${Math.round(240 + Math.random() * 180 + elapsed * 90)} ms`;
-          demoIdx++;
-        }
-      }, 36);
-    },
-  });
-  keycap.addEventListener("pointerdown", () => {
-    const t0 = Date.now();
-    clockTimer = window.setInterval(() => {
-      const s = Math.floor((Date.now() - t0) / 1000);
-      clock.textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-    }, 250);
-  });
-
-  // ---- tone toggle ----
-  const TONES: Record<string, string> = {
-    neutral: "We should ship the demo tomorrow — the launch is Monday, and the overlay works.",
-    casual: "Let's ship the demo tomorrow. Launch is Monday and the overlay basically works!",
-    professional:
-      "I recommend we ship the demo tomorrow. The launch is scheduled for Monday, and the overlay is functioning as expected.",
-  };
-  document.querySelectorAll<HTMLButtonElement>(".tone-btn").forEach((btn) => {
-    if (btn.dataset.tone === "neutral") {
-      btn.classList.add("!border-phosphor", "!text-phosphor");
+  const drawWave = () => {
+    const w = wave.width, h = wave.height;
+    wctx.clearRect(0, 0, w, h);
+    wctx.strokeStyle = "#0E7A55";
+    wctx.lineWidth = 2;
+    wctx.beginPath();
+    for (let x = 0; x <= w; x += 3) {
+      const amp = speaking
+        ? 4 + 14 * Math.abs(Math.sin(x * 0.05 + phase) * Math.sin(x * 0.013 + phase * 0.7))
+        : 1.2 + Math.sin(x * 0.03 + phase * 0.4) * 1.2;
+      const y = h / 2 + Math.sin(x * 0.05 + phase) * amp;
+      if (x === 0) wctx.moveTo(x, y); else wctx.lineTo(x, y);
     }
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tone-btn").forEach((b) => b.classList.remove("!border-phosphor", "!text-phosphor"));
-      btn.classList.add("!border-phosphor", "!text-phosphor");
-      (document.getElementById("tone-label") as HTMLElement).textContent = btn.dataset.tone ?? "";
-      (document.getElementById("tone-out") as HTMLElement).textContent = TONES[btn.dataset.tone ?? "neutral"] ?? "";
-    });
+    wctx.stroke();
+    phase += speaking ? 0.35 : 0.02;
+    requestAnimationFrame(drawWave);
+  };
+  drawWave();
+
+  const overlayDemo = () => {
+    setTimeout(() => {
+      speaking = true;
+      el("proof-raw").textContent = RAW[di];
+      el("proof-out").textContent = "";
+      setTimeout(() => {
+        speaking = false;
+        const target = OUT[di];
+        let f = 0;
+        const sweep = window.setInterval(() => {
+          f++;
+          const settled = Math.floor((f / 14) * target.length);
+          el("proof-out").textContent = target.slice(0, settled);
+          if (settled >= target.length) {
+            window.clearInterval(sweep);
+            di = (di + 1) % RAW.length;
+            window.setTimeout(overlayDemo, 2600);
+          }
+        }, 34);
+      }, 1700);
+    }, 900);
+  };
+  overlayDemo();
+
+  // ---- the transform section: simulated → real (mic optional) ----
+  const SIM_RAW = "so basically um i think we should uh ship the demo like tomorrow-ish because you know the launch is monday and the overlay basically works";
+  const SIM_OUT = "We should ship the demo tomorrow — the launch is Monday, and the overlay works.";
+  el("transform-play").addEventListener("click", () => {
+    const rawEl = el("t-raw"), outEl = el("t-out");
+    el("transform-state").textContent = "listening…";
+    el("transform-dot").classList.add("busy");
+    rawEl.textContent = "";
+    outEl.textContent = "";
+    let i = 0;
+    const typer = window.setInterval(() => {
+      i += Math.floor(Math.random() * 4) + 2;
+      rawEl.textContent = SIM_RAW.slice(0, i);
+      if (i >= SIM_RAW.length) {
+        window.clearInterval(typer);
+        el("transform-state").textContent = "polishing…";
+        window.setTimeout(() => {
+          let j = 0;
+          const out = window.setInterval(() => {
+            j += 2;
+            outEl.textContent = SIM_OUT.slice(0, j);
+            if (j >= SIM_OUT.length) {
+              window.clearInterval(out);
+              el("transform-state").textContent = "rendered ✓";
+              el("transform-dot").classList.remove("busy");
+              el("transform-dot").classList.add("ok");
+            }
+          }, 18);
+        }, 700);
+      }
+    }, 30);
   });
 
-  // cleanup is unnecessary for a static page; engines stop with the tab
-  void unbind;
-  void unscramble;
+  interface RecEvent { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }
+  const SR = window as unknown as { SpeechRecognition?: new () => SpeechRec; webkitSpeechRecognition?: new () => SpeechRec };
+  interface SpeechRec {
+    continuous: boolean; interimResults: boolean; lang: string;
+    start(): void;
+    onresult: ((e: RecEvent) => void) | null;
+    onerror: (() => void) | null;
+    onend: (() => void) | null;
+  }
+  el("t-mic").addEventListener("click", () => {
+    const Rec = SR.SpeechRecognition ?? SR.webkitSpeechRecognition;
+    if (!Rec) {
+      el("t-mode").textContent = "this browser has no speech api — the desktop app is the real thing";
+      return;
+    }
+    const rec = new Rec();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+    let final = "";
+    el("t-mode").textContent = "listening — speak now, then stay quiet a moment";
+    el("transform-state").textContent = "listening…";
+    el("transform-dot").classList.add("busy");
+    el("t-raw").textContent = "…";
+    el("t-out").textContent = "";
+    el("transform-dot").classList.remove("ok");
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let k = 0; k < e.results.length; k++) {
+        const r = e.results[k] as ArrayLike<{ transcript: string }> & { isFinal: boolean };
+        if (r.isFinal) final += (r[0] as { transcript: string }).transcript + " ";
+        else interim += (r[0] as { transcript: string }).transcript;
+      }
+      el("t-raw").textContent = (final + interim).trim() || "…";
+    };
+    rec.onerror = () => {
+      el("t-mode").textContent = "mic unavailable — showing the simulated example";
+      el("transform-state").textContent = "ready";
+      el("transform-dot").classList.remove("busy");
+    };
+    rec.onend = () => {
+      el("transform-dot").classList.remove("busy");
+      const spoken = (final || el("t-raw").textContent || "").trim();
+      if (spoken && spoken !== "…") {
+        const cleaned = spoken
+          .replace(/\b(um+|uh+|erm|like,|you know,|basically|actually)\s*/gi, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        const out = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).replace(/([.!?])?\s*$/, ".");
+        let j = 0;
+        el("transform-state").textContent = "polishing…";
+        const t = window.setInterval(() => {
+          j += 2;
+          el("t-out").textContent = out.slice(0, j);
+          if (j >= out.length) {
+            window.clearInterval(t);
+            el("transform-state").textContent = "rendered ✓ — yours, from your mic";
+            el("t-mode").textContent = "real speech api output — the desktop app does this with whisper.cpp + a local llm";
+            el("transform-dot").classList.add("ok");
+          }
+        }, 16);
+      }
+    };
+    rec.start();
+  });
 </script>
-
-<style>
-  .demo-caret {
-    display: inline-block;
-    width: 8px;
-    height: 15px;
-    margin-left: 3px;
-    transform: translateY(2px);
-    background: var(--color-phosphor);
-    animation: caret-blink 1.1s steps(1) infinite;
-  }
-  @keyframes caret-blink {
-    50% { opacity: 0; }
-  }
-  .stage-cursor {
-    display: inline-block;
-    width: 7px;
-    height: 12px;
-    background: var(--color-phosphor);
-    animation: caret-blink 1.1s steps(1) infinite;
-  }
-  #hold-key:focus-visible {
-    outline: 2px solid var(--color-phosphor);
-    outline-offset: 3px;
-    border-radius: 10px;
-  }
-</style>

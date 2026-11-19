@@ -226,3 +226,150 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }
 `;
+
+/* ============================================================
+   ENGINE D — PaintedScene ("printed signal").
+   Printmaking pass: scene → color+tone → bayer4 dither →
+   halftone-dot glyph, tinted by the scene ink. A slow camera
+   drift re-rasters the lattice every frame.
+   ============================================================ */
+
+/** Helpers available to every painted scene. */
+export const PAINTED_COMMON = /* glsl */ `
+precision mediump float;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec3 u_paper;
+uniform float u_cell;
+uniform float u_drift;
+uniform vec2 u_mouse;
+uniform float u_drive;
+uniform sampler2D u_img;
+uniform vec3 u_imgAspect;  // (w, h, hasImage 0/1)
+uniform vec3 u_imgCrop;    // (cx, cy, zoom)
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(234.34, 435.345));
+  p += dot(p, p + 34.23);
+  return fract(p.x * p.y);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  vec2 u3 = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i);
+  float b = hash21(i + vec2(1.0, 0.0));
+  float c = hash21(i + vec2(0.0, 1.0));
+  float d = hash21(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, u3.x), mix(c, d, u3.x), u3.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += a * vnoise(p);
+    p *= 2.03;
+    a *= 0.5;
+  }
+  return v;
+}
+// value (perceptual weight) of an ink color on paper
+float valueOf(vec3 ink) {
+  return dot(ink, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// sample the photo at a scene uv, cover-fit + crop (zoom>1 = tighter).
+// returns rgb in 0..1; call from your scene() to print a real image.
+vec3 imgRGB(vec2 uv) {
+  if (u_imgAspect.z < 0.5) return vec3(0.0);
+  float srcAsp = u_imgAspect.x / u_imgAspect.y;
+  float dstAsp = u_res.x / u_res.y;
+  // cover-fit scale, then user zoom
+  float sc = (srcAsp > dstAsp) ? dstAsp / srcAsp : 1.0;
+  sc /= max(u_imgCrop.z, 0.001);
+  vec2 rel = (uv - 0.5) * vec2(1.0 / max(sc * srcAsp / dstAsp, 0.001), 1.0 / max(sc, 0.001));
+  // simpler: uniform-cover then zoom
+  vec2 size = (srcAsp > dstAsp)
+    ? vec2(dstAsp / srcAsp, 1.0)
+    : vec2(1.0, srcAsp / dstAsp);
+  size /= max(u_imgCrop.z, 0.001);
+  vec2 iuv = u_imgCrop.xy + (uv - 0.5) * size;
+  iuv.y = 1.0 - iuv.y; // flip: image y is down
+  if (iuv.x < 0.0 || iuv.x > 1.0 || iuv.y < 0.0 || iuv.y > 1.0) return vec3(0.0);
+  return texture2D(u_img, iuv).rgb;
+}
+// tone from a photo: luma remapped for print (quiet highlights, full range)
+float imgTone(vec2 uv) {
+  vec3 c = imgRGB(uv);
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  // gamma lift so mid-tones print with form; paper stays clean
+  return pow(clamp(l, 0.0, 1.0), 1.35);
+}
+`;
+
+/** The printed renderer — wraps a user scene body. */
+export const PAINTED_FRAG = (sceneGLSL: string) => /* glsl */ `
+${PAINTED_COMMON}
+${sceneGLSL}
+
+// 4x4 Bayer matrix (public-domain ordered dither)
+float bayer4(vec2 q) {
+  int x = int(mod(q.x, 4.0));
+  int y = int(mod(q.y, 4.0));
+  int idx = 0;
+  // unrolled 4x4 Bayer lookup
+  if (x == 0 && y == 0) idx = 0;  else if (x == 1 && y == 0) idx = 8;
+  else if (x == 2 && y == 0) idx = 2;  else if (x == 3 && y == 0) idx = 10;
+  else if (x == 0 && y == 1) idx = 12; else if (x == 1 && y == 1) idx = 4;
+  else if (x == 2 && y == 1) idx = 14; else if (x == 3 && y == 1) idx = 6;
+  else if (x == 0 && y == 2) idx = 3;  else if (x == 1 && y == 2) idx = 11;
+  else if (x == 2 && y == 2) idx = 1;  else if (x == 3 && y == 2) idx = 9;
+  else if (x == 0 && y == 3) idx = 15; else if (x == 1 && y == 3) idx = 7;
+  else if (x == 2 && y == 3) idx = 13; else idx = 5;
+  return float(idx) / 16.0 + 0.5 / 16.0;
+}
+
+void main() {
+  // camera drift — the scene slowly pans/zooms so every frame re-rasters
+  float t = u_time * 0.03 * u_drift;
+  vec2 uv = gl_FragCoord.xy / u_res;
+  vec2 suv = (uv - 0.5) / (1.0 + 0.04 * sin(t * 0.7)) + 0.5;
+  suv += vec2(t * 0.35, sin(t * 0.5) * 0.02);
+
+  // the scene paints ink + tone
+  vec4 s = scene(suv);
+
+  // pointer: a soft local tone lift (the print "hears" you)
+  float m = exp(-18.0 * distance(uv, u_mouse)) * 0.22;
+
+  float tone = clamp(s.a * (1.0 + u_drive * 0.35) + m, 0.0, 1.0);
+  vec3 ink = s.rgb;
+  // print S-curve: preserves deep ink + clean paper, boosts midtone steps
+  tone = tone * tone * (3.0 - 2.0 * tone) * 0.82 + tone * 0.18;
+
+  // the halftone cell: square grid, one dot per cell
+  vec2 cellpx = floor(gl_FragCoord.xy / u_cell);
+  vec2 cellf = fract(gl_FragCoord.xy / u_cell) - 0.5;
+
+  // dithered tone: bayer4 jitter inside the cell's radius decision
+  float thr = bayer4(cellpx) * 0.22;
+  // 5-radius dot ramp (· ∙ • ⦁ ●): tone selects the radius
+  float r = 0.0;
+  if      (tone > 0.84) r = 0.50; // ●
+  else if (tone > 0.62) r = 0.36; // ⦁
+  else if (tone > 0.42) r = 0.26; // •
+  else if (tone > 0.24) r = 0.16; // ∙
+  else if (tone > 0.10) r = 0.07; // ·
+  float dithered = tone + (thr - 0.11);
+  if (dithered > 0.84) r = 0.50;
+  else if (dithered > 0.62) r = 0.36;
+  else if (dithered > 0.42) r = 0.26;
+  else if (dithered > 0.24) r = 0.16;
+  else if (dithered > 0.10) r = 0.07;
+  else r = 0.0;
+
+  float dot_ = 1.0 - smoothstep(r - 0.06, r + 0.06, length(cellf));
+
+  // quiet the darks: ink fades toward paper at low tone (print, not screen)
+  vec3 painted = mix(u_paper, ink, dot_);
+  gl_FragColor = vec4(painted, 1.0);
+}
+`;

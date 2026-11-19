@@ -30,12 +30,12 @@ const project = [
   ["security", "https://github.com/namandhakad712/whisperflow/blob/main/SECURITY.md"],
 ];
 ---
-<footer class="relative border-t border-line bg-paper/40">
+<footer class="relative border-t border-rule bg-tint">
   <!-- status strip — the instrument's back panel -->
-  <div class="border-b border-line-soft">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-7 gap-y-2 px-4 py-4 font-mono text-[11px] tracking-[0.06em] text-ink-dim sm:px-6">
+  <div class="border-b border-rule-soft">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-7 gap-y-2 px-5 py-4 font-mono text-[11px] tracking-[0.06em] text-ink-2 sm:px-8">
       <span class="flex items-center gap-2">
-        <span class="led led-breathe" data-on="live" aria-hidden="true"></span>
+        <span class="pulse-dot" aria-hidden="true"></span>
         all systems local — nothing to be down
       </span>
       <span>v{desktopPkg.version}</span>
@@ -44,15 +44,15 @@ const project = [
     </div>
   </div>
 
-  <div class="mx-auto max-w-6xl px-4 pt-16 sm:px-6">
+  <div class="mx-auto max-w-6xl px-5 pt-16 sm:px-8">
     <div class="grid gap-10 md:grid-cols-[1.5fr_repeat(3,1fr)]">
       <div>
         <a href="/whisperflow/" aria-label="WhisperFlow home"><Logo class="h-6" /></a>
-        <p class="mt-5 max-w-xs text-sm leading-6 text-ink-dim">
+        <p class="mt-5 max-w-xs text-[14px] leading-6 text-ink-2">
           Open-source, local-first voice dictation. Your voice, your models, your machine.
         </p>
         <!-- the wiring diagram: the app's actual signal path, annotated -->
-        <pre class="mt-6 select-none font-mono text-[10px] leading-[1.45] text-phosphor/80" aria-hidden="true">mic ──▶ vad ──▶ whisper.cpp ──▶ llama.cpp ──▶ paste
+        <pre class="mt-6 select-none font-mono text-[10px] leading-[1.45] text-ink-2" aria-hidden="true">mic ──▶ vad ──▶ whisper.cpp ──▶ llama.cpp ──▶ paste
       │       │        │  stt         │  polish    │
      ▼       ▼        ▼              ▼            ▼
    local   local    local          local        local
@@ -60,11 +60,11 @@ const project = [
       </div>
       {([["product", product], ["resources", resources], ["project", project]] as Array<[string, string[][]]>).map(([title, links]) => (
         <div>
-          <p class="mono-label text-ink-faint">{title}</p>
-          <ul class="mt-4 space-y-2.5 font-mono text-[13px]">
+          <p class="eyebrow !text-ink-faint">{title}</p>
+          <ul class="mt-4 space-y-2.5 font-sans text-[14px]">
             {links.map(([label, href]) => (
               <li>
-                <a class="text-ink-dim transition-colors hover:text-phosphor" href={href}>{label}</a>
+                <a class="text-ink-2 transition-colors hover:text-accent" href={href}>{label}</a>
               </li>
             ))}
           </ul>
@@ -72,24 +72,21 @@ const project = [
       ))}
     </div>
 
-    <!-- wordmark finale — mono, the terminal voice signs off -->
+    <!-- wordmark finale — the serif signs the sheet -->
     <div class="mt-16 flex items-end justify-center gap-4 select-none" aria-hidden="true">
-      <svg viewBox="0 0 28 24" class="mb-4 h-12 w-auto text-phosphor sm:h-16" fill="none">
+      <svg viewBox="0 0 28 24" class="mb-4 h-12 w-auto text-ink sm:h-16" fill="none">
         <path
           d="M2 6 L7 18 L11 9 L14 20 L17 9 L21 18 L26 6"
-          stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-        <path
-          d="M2 6 L7 18 L11 9 L14 20 L17 9 L21 18 L26 6"
-          stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.14" />
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
-      <p class="font-mono text-[10.5vw] font-bold leading-[0.85] tracking-[-0.05em] text-ink/90 sm:text-[6rem]">
+      <p class="font-serif text-[12vw] leading-[0.85] text-ink sm:text-[5.5rem]">
         WhisperFlow
       </p>
     </div>
   </div>
 
-  <div class="mt-10 border-t border-line-soft">
-    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 font-mono text-[11px] text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
+  <div class="mt-10 border-t border-rule-soft">
+    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 font-mono text-[11px] text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-8">
       <p>© {year} WhisperFlow contributors · Apache-2.0</p>
       <p>not affiliated with Wispr Inc. · built with whisper.cpp &amp; llama.cpp</p>
     </div>
