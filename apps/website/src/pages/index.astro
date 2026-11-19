@@ -11,14 +11,11 @@ import Base from "../layouts/Base.astro";
     <!-- Engine D: the orchid bloom, printed in dots -->
     <canvas id="hero-scene" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
 
-    <!-- the print's paper band: type always sits on clean paper -->
-    <!-- the print's paper band: type always sits on clean paper (taller on phones) -->
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] sm:hidden" style="background:linear-gradient(to top, var(--color-paper) 38%, color-mix(in srgb, var(--color-paper) 78%, transparent) 66%, transparent)" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[46%] sm:block" style="background:linear-gradient(to top, var(--color-paper) 34%, color-mix(in srgb, var(--color-paper) 72%, transparent) 62%, transparent)" aria-hidden="true"></div>
-
-    <!-- headline set OVER the art, left-anchored (editorial) -->
+    <!-- the whisper plate lives in the shader: tone thins where type
+         lands — no CSS band, the dots serve the layout -->
+    <!-- headline set at the plate boundary, left-anchored (editorial) -->
     <div class="relative mx-auto flex min-h-[94vh] max-w-6xl flex-col justify-end px-5 pb-20 pt-32 sm:px-8">
-      <p data-lay class="eyebrow relative z-10 w-fit rounded-sm bg-paper/85 px-2 py-1 backdrop-blur-[2px]">local-first · free forever · works in every app</p>
+      <p data-lay class="eyebrow relative z-10 w-fit rounded-sm eyebrow-halo">local-first · free forever · works in every app</p>
 
       <h1 data-lines class="font-serif mt-6 max-w-3xl text-[13.5vw] font-normal leading-[0.98] tracking-[-0.015em] text-ink sm:text-7xl md:text-8xl">
         <span class="mr-[0.24em] inline-block overflow-hidden align-bottom"><span data-word class="inline-block">speak.</span></span>
@@ -67,9 +64,9 @@ import Base from "../layouts/Base.astro";
             this is the actual overlay, running on windows.
           </p>
           <ul class="mt-8 space-y-3 font-mono text-[12px] text-ink-2">
-            <li class="flex gap-3"><span class="text-accent">·</span> runs offline — your audio never leaves the machine</li>
-            <li class="flex gap-3"><span class="text-accent">·</span> whisper.cpp transcribes, a local llm polishes</li>
-            <li class="flex gap-3"><span class="text-accent">·</span> no account, no card, no word caps</li>
+            <li class="flex gap-3"><span class="text-ink-faint">·</span> runs offline — your audio never leaves the machine</li>
+            <li class="flex gap-3"><span class="text-ink-faint">·</span> whisper.cpp transcribes, a local llm polishes</li>
+            <li class="flex gap-3"><span class="text-ink-faint">·</span> no account, no card, no word caps</li>
           </ul>
         </div>
 
@@ -124,12 +121,12 @@ import Base from "../layouts/Base.astro";
               </p>
             </div>
             <div class="flex items-center justify-center" aria-hidden="true">
-              <svg viewBox="0 0 48 16" class="h-4 w-12 text-accent" fill="none">
+              <svg viewBox="0 0 48 16" class="h-4 w-12 text-ink-faint" fill="none">
                 <path d="M0 8 H14 M18 8 h1.5 m2 0 h1.5 m2 0 h1.5 M30 8 H48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3.5"/>
               </svg>
             </div>
             <div>
-              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">what appears</p>
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">what appears</p>
               <p class="mt-3 text-[15px] leading-7 text-ink" id="t-out">We should ship the demo tomorrow — the launch is Monday, and the overlay works.</p>
             </div>
           </div>

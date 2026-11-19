@@ -136,10 +136,15 @@ export class PaintedScene {
 
     let mx = 0;
     let my = 0;
+    // critically-damped pointer parallax: the image chases the cursor
+    // (lerp 0.05-0.06/frame — the references' registration feel)
+    let px = 0, py = 0, tx = 0, ty = 0;
     const onMove = (e: PointerEvent) => {
       const r = this.canvas.getBoundingClientRect();
       mx = (e.clientX - r.left) / Math.max(1, r.width);
       my = 1 - (e.clientY - r.top) / Math.max(1, r.height);
+      tx = mx * 2.0 - 1.0;
+      ty = my * 2.0 - 1.0;
     };
     window.addEventListener("pointermove", onMove, { passive: true });
 
@@ -155,11 +160,18 @@ export class PaintedScene {
         u.f1("u_cell", (this.opts.cell ?? 7) * cappedDpr());
         u.f1("u_drift", this.opts.drift ?? 1);
         u.f2("u_mouse", mx, my);
+        px += (tx - px) * 0.055;
+        py += (ty - py) * 0.055;
+        u.f2("u_par", px, py);
+        px += (tx - px) * 0.055;
+        py += (ty - py) * 0.055;
+        u.f2("u_par", px, py);
         const target = this.driveOverride ?? this.opts.drive?.() ?? 0;
         this.smoothDrive += (target - this.smoothDrive) * 0.1;
         u.f1("u_drive", this.smoothDrive);
         const crop = this.crop ?? this.opts.imageCrop ?? [0.5, 0.5, 1];
         u.f3("u_imgCrop", crop[0], crop[1], crop[2]);
+
         if (imgTex) {
           u.tex("u_img", imgTex, 0);
           u.f3("u_imgAspect", imgW, imgH, 1);

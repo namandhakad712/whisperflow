@@ -14,48 +14,58 @@
  */
 export const SCENE_BLOOM = /* glsl */ `
 vec4 scene(vec2 uv) {
-  // ambient life — the print breathes
+  // the image drifts WITH the orbit (bounded; the press never runs away)
   vec2 suv = uv + vec2(sin(u_time * 0.18) * 0.004, cos(u_time * 0.13) * 0.003);
 
-  // the photo's ink coverage: petal shading prints, paper stays clean
+  // print polarity: white bg clean, petals a dense tonal mass
+  // (imgTone window 0.42-0.88, gamma 0.65 — the midrange lift)
   float t = imgTone(suv);
 
-  // hue detection: the orchid lip/throat (magenta-ish) gets accent ink
+  // the whisper plate: tone clamps to ~0.13 over the copy block so type
+  // sits on a whisper of dots (the references' fade boundary), while the
+  // flower prints at full voice everywhere else. On narrow sheets the copy
+  // spans nearly the full width — widen the plate (uv-space) accordingly.
+  float narrow = 1.0 - smoothstep(500.0, 900.0, u_res.x);
+  float px0 = mix(0.62, 0.97, narrow);
+  float px1 = mix(0.72, 1.05, narrow);
+  float bandX = 1.0 - smoothstep(px0, px1, uv.x);
+  float bandY = 1.0 - smoothstep(0.42, 0.52, uv.y);
+  float quiet = bandX * bandY;
+  float tone = min(t, mix(0.13, 1.0, 1.0 - quiet));
+
+  // darks merge solid OUTSIDE the quiet zone — deep petals = solid ink,
+  // never under the copy
+  tone = max(tone, smoothstep(0.82, 0.92, t) * (1.0 - quiet));
+
+  // load wipe: the print develops from the top-left corner, ~0.9s expo-out.
+  // Inside the reveal radius the dots are ON (1 - smoothstep on distance).
+  float reveal = 1.0 - pow(1.0 - clamp(u_time / 0.9, 0.0, 1.0), 4.0);
+  float dw = distance(uv, vec2(0.0, 1.0));
+  tone *= 1.0 - smoothstep(reveal * 1.5, reveal * 1.5 + 0.12, dw);
+
+  // hue: the orchid lip/throat (magenta-ish) carries the accent ink
   vec3 c = imgRGB(suv);
   float lipness = clamp((c.r - c.g) * 3.0, 0.0, 1.0) * step(0.10, t);
 
-  // the type plate: clean paper ONLY behind the copy block (bottom-left).
-  // The flower owns the rest of the sheet — full bleed, dense mass.
-  float bandX = 1.0 - smoothstep(0.28, 0.50, uv.x);   // 1 on the left
-  float bandY = 1.0 - smoothstep(0.26, 0.44, uv.y);   // 1 at the bottom
-  float typeZone = bandX * bandY;
-  // tiny lift off the very bottom edge so the print sits on the band
-  float horizon = smoothstep(0.01, 0.12, uv.y);
-  float mat = max(typeZone, horizon);
-
-  // bloom reveal: bottom-up develop on load (1.8s)
-  float reveal = clamp(u_time / 1.8, 0.0, 1.0);
-  float edge = reveal * 1.30 - 0.08;
-  float curtain = 1.0 - smoothstep(edge - 0.02, edge + 0.16, uv.y);
-
-  float tone = t * mat * curtain;
-
-  // inks: a committed duotone, adapted per sheet.
   if (u_dark > 0.5) {
-    // the dark run: luminous lavender body, near-white where ink is densest
-    vec3 body  = vec3(0.635, 0.698, 0.898);  // #A2B2E5
-    vec3 dense = vec3(0.843, 0.878, 0.973);  // #D7E0F8
-    vec3 acc   = vec3(0.208, 0.702, 0.494);  // #35B37E mint lip
+    // the dark run: luminous lavender → silver where dense, mint lip,
+    // and a sparse dust floor so the sheet is never a void
+    vec3 body  = vec3(0.635, 0.698, 0.898);
+    vec3 dense = vec3(0.843, 0.878, 0.973);
+    vec3 acc   = vec3(0.208, 0.702, 0.494);
     vec3 ink = mix(body, dense, smoothstep(0.45, 0.95, t));
     ink = mix(ink, acc, lipness * 0.9);
-    return vec4(ink, tone);
+    float dust = 0.06 * smoothstep(0.35, 0.05, t);
+    return vec4(ink, max(tone, dust));
   }
-  vec3 cobalt  = vec3(0.176, 0.294, 0.557);  // #2D4B8E
-  vec3 deep    = vec3(0.10, 0.19, 0.42);
-  vec3 accent  = vec3(0.055, 0.478, 0.333);  // #0E7A55
-  vec3 ink = mix(cobalt, deep, smoothstep(0.45, 0.9, t));
-  ink = mix(ink, accent, lipness * 0.9);
 
+  // the light run: tritone ramp — saturated cobalt at mid density,
+  // desaturating toward ink-black as coverage approaches solid
+  vec3 cobalt = vec3(0.176, 0.294, 0.557);
+  vec3 deep   = vec3(0.118, 0.145, 0.290);
+  vec3 accent = vec3(0.055, 0.478, 0.333);
+  vec3 ink = mix(cobalt, deep, smoothstep(0.55, 0.97, t));
+  ink = mix(ink, accent, lipness * 0.9);
   return vec4(ink, tone);
 }
 `;
