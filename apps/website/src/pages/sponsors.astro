@@ -1,24 +1,20 @@
 ---
 import Base from "../layouts/Base.astro";
-import SignalPanel from "../components/SignalPanel.astro";
 
 const tiers = [
   {
     label: "individual",
     price: "$5",
-    led: "live" as const,
     items: ["name in the sponsors list", "early access to release candidates", "our genuine gratitude"],
   },
   {
     label: "professional",
     price: "$25",
-    led: "live" as const,
     items: ["everything in individual", "logo on this page", "priority feature requests"],
   },
   {
     label: "enterprise",
     price: "custom",
-    led: "busy" as const,
     items: ["private builds & packaging", "integration support", "on-site deployment guidance"],
   },
 ];
@@ -27,45 +23,64 @@ const tiers = [
   title="Sponsors — WhisperFlow"
   description="Fund free, private voice dictation for everyone. Sponsor WhisperFlow development."
 >
-  <section class="relative border-b border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <p class="sec-mark">fund the signal</p>
-      <h1 class="font-display mt-5 text-5xl font-bold leading-[1.02] tracking-[-0.045em] sm:text-6xl">
-        sponsors keep it <span class="text-phosphor">free.</span>
+  <section class="relative overflow-hidden border-b border-rule">
+    <!-- Engine D: the dune, quiet -->
+    <canvas id="spo-scene" class="absolute inset-0 h-full w-full opacity-65" aria-hidden="true"></canvas>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[58%]" style="background:linear-gradient(to top, var(--color-paper) 48%, color-mix(in srgb, var(--color-paper) 82%, transparent) 70%, transparent)" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl px-5 pb-24 pt-28 sm:px-8 sm:pt-36">
+      <p class="eyebrow">fund the press</p>
+      <h1 class="font-serif mt-6 max-w-2xl text-6xl font-normal leading-[0.98] text-ink sm:text-8xl">
+        sponsors keep it<br />free<span class="text-accent">.</span>
       </h1>
-      <p class="mt-5 max-w-2xl text-ink-dim">
-        your sponsorship keeps whisperflow free, private, and actively developed. it funds the
-        runway — never a paywall.
+      <p class="mt-7 max-w-md text-[16px] leading-7 text-ink-2">
+        your sponsorship keeps whisperflow free, private, and actively developed.
+        it funds the runway — never a paywall.
       </p>
     </div>
   </section>
 
-  <section class="border-b border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div class="grid gap-5 md:grid-cols-3">
-        {tiers.map((t) => (
-          <SignalPanel label={t.label} led={t.led} breathe={t.label === "individual"}>
-            <div class="p-7">
-              <p class="font-mono text-4xl text-ink">
-                {t.price}{t.price !== "custom" && <span class="text-base font-normal text-ink-dim">/mo</span>}
-              </p>
-              <ul class="mt-6 space-y-2.5 font-mono text-[13px] text-ink-dim">
-                {t.items.map((i) => (
-                  <li class="flex gap-2.5"><span class="text-phosphor">·</span> {i}</li>
-                ))}
-              </ul>
+  <section class="border-b border-rule">
+    <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+      <div class="grid gap-8 md:grid-cols-3">
+        {tiers.map((t, i) => (
+          <div class="proof-card flex flex-col p-7">
+            <div class="flex items-center justify-between">
+              <p class="eyebrow">{t.label}</p>
+              <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">tier {String(i + 1).padStart(2, "0")}</span>
             </div>
-          </SignalPanel>
+            <p class="font-serif mt-5 text-5xl font-normal text-ink">
+              {t.price}{t.price !== "custom" && <span class="text-lg font-normal text-ink-2">/mo</span>}
+            </p>
+            <ul class="mt-7 space-y-2.5 font-mono text-[12.5px] text-ink-2">
+              {t.items.map((item) => (
+                <li class="flex gap-2.5"><span class="text-accent">·</span> {item}</li>
+              ))}
+            </ul>
+          </div>
         ))}
       </div>
-      <div class="mt-10 text-center">
-        <p class="font-mono text-[13px] text-ink-dim">
+      <div class="mt-12 text-center">
+        <p class="font-mono text-[12.5px] text-ink-2">
           sponsorship activates with the first public release — star the repo to be notified.
         </p>
         <div class="mt-6 flex justify-center gap-3">
-          <a href="https://github.com/namandhakad712/whisperflow" class="btn btn-ghost">star on github</a>
+          <a href="https://github.com/namandhakad712/whisperflow" class="btn-quiet">star on github</a>
         </div>
       </div>
     </div>
   </section>
 </Base>
+
+<script>
+  import { PaintedScene, SCENE_DUNE } from "@whisperflow/signal-engine";
+  const canvas = document.getElementById("spo-scene") as HTMLCanvasElement | null;
+  if (canvas) {
+    const dark = document.documentElement.dataset.mode === "dark";
+    new PaintedScene(canvas, {
+      scene: SCENE_DUNE,
+      cell: 8,
+      paper: dark ? "ink" : "cream",
+      drift: 0.5,
+    }).mount();
+  }
+</script>

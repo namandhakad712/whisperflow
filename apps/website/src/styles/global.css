@@ -2,71 +2,46 @@
 @plugin "@tailwindcss/typography";
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/jetbrains-mono";
-@import "@fontsource-variable/inter";
+@import "@fontsource/instrument-serif";
 
 /* ============================================================
-   THE SIGNAL STANDARD v2 — WhisperFlow design system
-   "Phosphor Lab": ink, paper, and one scarce live-signal green.
-   v2 (2026-11-19): display type is now MONO (the terminal owns
-   the big statements), buttons are instrument-panel commands,
-   panels get corner brackets, contrast raised to AA. No values
-   borrowed from any other product. See MOTION.md for timings.
+   THE PRINTED SIGNAL — WhisperFlow design system v3.
+   "Press room": warm paper, one ink, one accent. The scenes are
+   printed in halftone dots with the color inside the glyphs; the
+   page is an editorial sheet over them. Serif display (Instrument
+   Serif) × grotesk UI (Space Grotesk) × mono labels (JetBrains).
+   Authored 2026-11 from the reference corpus (SPEC.md).
    ============================================================ */
 
 @theme {
-  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", "Times New Roman", serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
-  /* LAB (dark, default) — the instrument at power-on */
-  --color-bg: #0A0B0D;
-  --color-paper: #111318;
-  --color-paper-2: #16191F;
-  --color-ink: #EDEBE4;
-  --color-ink-dim: rgba(237, 235, 228, 0.68);
-  --color-ink-faint: rgba(237, 235, 228, 0.45);
-  --color-line: rgba(237, 235, 228, 0.16);
-  --color-line-soft: rgba(237, 235, 228, 0.09);
-
-  /* THE signal color — scarce on purpose */
-  --color-phosphor: #5CE1A9;
-  --color-phosphor-hot: #8CFFC7;
-  --color-phosphor-deep: #2E6B57;
-  --color-amber: #E8B84B;
-  --color-violet: #8F7BE8;
-  --color-coral: #E86A5E;
-
-  /* legacy aliases so old utility classes keep working during migration */
-  --color-surface: #111318;
-  --color-surface-2: #16191F;
-  --color-accent: #5CE1A9;
-  --color-accent-strong: #8CFFC7;
-  --color-ink-soft: rgba(237, 235, 228, 0.68);
+  /* press room (light, default) — the sheet */
+  --color-paper: #F7F4EE;
+  --color-paper-2: #EFEBE1;
+  --color-tint: #F1EEE6;
+  --color-ink: #1A1916;
+  --color-ink-2: #57534A;
+  --color-ink-faint: #8B857A;
+  --color-rule: rgba(26, 25, 22, 0.14);
+  --color-rule-soft: rgba(26, 25, 22, 0.08);
+  --color-accent: #0E7A55;
+  --color-accent-2: #0A5C40;
 }
 
-/* DAYLIGHT (light) — the instrument in the sun. Newsprint dither. */
-:root[data-mode="light"] {
-  --color-bg: #F4F2EC;
-  --color-paper: #FFFFFF;
-  --color-paper-2: #ECE9E0;
-  --color-ink: #16181D;
-  --color-ink-dim: rgba(22, 24, 29, 0.72);
-  --color-ink-faint: rgba(22, 24, 29, 0.48);
-  --color-line: rgba(22, 24, 29, 0.16);
-  --color-line-soft: rgba(22, 24, 29, 0.09);
-
-  --color-phosphor: #0E8A62;
-  --color-phosphor-hot: #066748;
-  --color-phosphor-deep: #9CC7B4;
-  --color-amber: #B07C1F;
-  --color-violet: #5B49B8;
-  --color-coral: #C23A2E;
-
-  --color-surface: #FFFFFF;
-  --color-surface-2: #ECE9E0;
-  --color-accent: #0E8A62;
-  --color-accent-strong: #066748;
-  --color-ink-soft: rgba(22, 24, 29, 0.72);
+:root[data-mode="dark"] {
+  --color-paper: #14171D;
+  --color-paper-2: #1B1F27;
+  --color-tint: #181B22;
+  --color-ink: #EFEBE0;
+  --color-ink-2: #A8A399;
+  --color-ink-faint: #726D64;
+  --color-rule: rgba(239, 235, 224, 0.14);
+  --color-rule-soft: rgba(239, 235, 224, 0.08);
+  --color-accent: #35B37E;
+  --color-accent-2: #5CC79A;
 }
 
 html {
@@ -75,7 +50,7 @@ html {
 }
 
 body {
-  background-color: var(--color-bg);
+  background-color: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -85,456 +60,358 @@ body {
 }
 
 ::selection {
-  background: rgba(92, 225, 169, 0.28);
+  background: rgba(14, 122, 85, 0.18);
   color: var(--color-ink);
 }
-:root[data-mode="light"] ::selection {
-  background: rgba(14, 138, 98, 0.22);
-}
 
-/* thin scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-line) transparent;
+  scrollbar-color: var(--color-rule) transparent;
 }
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-*::-webkit-scrollbar-thumb {
-  background: var(--color-line);
-  border-radius: 4px;
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--color-rule); border-radius: 4px; }
+
+/* ---------- the cast: three voices, three roles ---------- */
+
+.font-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  font-feature-settings: "liga" 1;
 }
 
-/* ---------- type system ----------
-   v2 rule: display = MONO. The terminal voice owns every headline.
-   Inter stays for prose only; mono carries all UI, labels, display. */
-
-.font-display {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.045em;
-}
-/* keep display sizes one notch heavier-tracked at small sizes */
-@media (max-width: 640px) {
-  .font-display {
-    letter-spacing: -0.035em;
-  }
-}
-
-/* the /// section marker — like a comment in code, our signature */
-.sec-mark {
+/* the eyebrow — mono, uppercase, quiet. Never display, never body. */
+.eyebrow {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-phosphor);
+  color: var(--color-accent);
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
 }
-.sec-mark::before {
-  content: "///";
-  letter-spacing: 0.05em;
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 1.35rem;
+  height: 1px;
+  background: currentColor;
+  margin-right: 0.65rem;
+  opacity: 0.55;
+}
+
+.micro-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-ink-faint);
+}
+.micro-note a { color: var(--color-ink-2); }
+
+/* ---------- buttons — print-shop furniture, square and calm ---------- */
+
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0.78rem 1.45rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease;
+}
+.btn-ink:hover {
+  background: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-rule);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 0.72rem 1.35rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-quiet:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+/* ---------- the specimen — how the product is shown ----------
+   A print border with generous mat, the exhibit inside, a mono
+   caption under it. Every product artifact is a figure. */
+
+.specimen-frame {
+  position: relative;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  padding: 2.25rem;
+  border-radius: 2px;
+}
+.specimen-frame::before,
+.specimen-frame::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.specimen-frame::before {
+  top: -1px; left: -1px;
+  border-top: 2px solid var(--color-ink);
+  border-left: 2px solid var(--color-ink);
+}
+.specimen-frame::after {
+  bottom: -1px; right: -1px;
+  border-bottom: 2px solid var(--color-ink);
+  border-right: 2px solid var(--color-ink);
+}
+.specimen-caption {
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-ink-faint);
 }
 
-.mono-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-/* ---------- buttons — instrument commands, not pills ----------
-   Square-cornered, bracketed, mono. Primary carries the phosphor;
-   ghost is a bordered switch. The [ ] affordance is the house style. */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  border-radius: 3px;
-  padding: 0.72rem 1.35rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  position: relative;
-  transition:
-    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-.btn:active {
-  transform: translateY(0.5px) scale(0.99);
-}
-
-.btn-primary {
-  background: var(--color-phosphor);
-  color: #07120D;
-  box-shadow: 0 0 20px rgba(92, 225, 169, 0.16);
-}
-.btn-primary:hover {
-  background: var(--color-phosphor-hot);
-  box-shadow: 0 0 34px rgba(92, 225, 169, 0.3);
-  transform: translateY(-1px);
-}
-:root[data-mode="light"] .btn-primary {
-  color: #FFFFFF;
-}
-
-.btn-ghost {
-  border: 1px solid var(--color-line);
-  background: transparent;
-  color: var(--color-ink);
-}
-.btn-ghost:hover {
-  border-color: var(--color-phosphor);
-  color: var(--color-phosphor);
-  transform: translateY(-1px);
-}
-
-.btn-ink {
-  background: var(--color-ink);
-  color: var(--color-bg);
-}
-.btn-ink:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
-/* the command button — square, mono, one glow. No ornaments. */
-
-
-/* kbd chip — inset well, mono */
-kbd.wf-kbd,
-.kbd-chip {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 0.14rem 0.42rem;
-  border-radius: 4px;
-  background: var(--color-paper-2);
-  border: 1px solid var(--color-line);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28);
-  color: var(--color-ink-dim);
-  white-space: nowrap;
-}
-:root[data-mode="light"] .kbd-chip,
-:root[data-mode="light"] kbd.wf-kbd {
-  box-shadow: inset 0 1px 2px rgba(22, 24, 29, 0.08);
-}
-
-/* ---------- instrument panel (the card) ----------
-   v2: corner brackets on every panel — the schematic-frame detail
-   that replaces uniform 1px borders as the only edge treatment. */
-
-.panel {
-  position: relative;
-  background: var(--color-paper);
-  border: 1px solid var(--color-line-soft);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  overflow: hidden;
-}
-:root[data-mode="light"] .panel {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(22, 24, 29, 0.05);
-}
-/* corner brackets — drawn with box-shadow so they never affect layout */
-.panel::before,
-.panel::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  pointer-events: none;
-  z-index: 1;
-}
-.panel::before {
-  top: -1px;
-  left: -1px;
-  border-top: 1.5px solid var(--color-ink-faint);
-  border-left: 1.5px solid var(--color-ink-faint);
-}
-.panel::after {
-  bottom: -1px;
-  right: -1px;
-  border-bottom: 1.5px solid var(--color-ink-faint);
-  border-right: 1.5px solid var(--color-ink-faint);
-}
-.panel > .panel-head {
+/* the overlay capsule specimen — the product itself, framed */
+.overlay-demo {
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-paper-2) 82%, transparent);
+  backdrop-filter: blur(6px);
+  padding: 0.55rem 1.4rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.7rem 1.1rem;
-  border-bottom: 1px solid var(--color-line-soft);
-  background: rgba(255, 255, 255, 0.015);
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 30rem;
+  margin-inline: auto;
 }
-:root[data-mode="light"] .panel > .panel-head {
-  background: rgba(22, 24, 29, 0.02);
+.overlay-wave canvas {
+  display: block;
+  width: 100%;
+  height: 40px;
 }
+.overlay-text {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  min-height: 2.6em;
+}
+.proof-raw { color: var(--color-ink-faint); margin-right: 0.6em; }
+.proof-raw.speaking { color: var(--color-ink-2); }
+.proof-out { color: var(--color-ink); }
+.caret {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  margin-left: 2px;
+  transform: translateY(2px);
+  background: var(--color-accent);
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
 
-/* status LED — the 2px dot that says what the panel is doing */
-.led {
+/* the transform proof-card */
+.proof-card {
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  border-radius: 2px;
+}
+.pulse-dot {
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: var(--color-ink-faint);
-  flex: none;
+  background: var(--color-accent);
+  display: inline-block;
 }
-.led[data-on="live"] {
-  background: var(--color-phosphor);
-  box-shadow: 0 0 8px rgba(92, 225, 169, 0.7);
+.pulse-dot.busy {
+  background: #C98A3D;
+  animation: dot-pulse 0.9s ease-in-out infinite;
 }
-.led[data-on="busy"] {
-  background: var(--color-amber);
-  box-shadow: 0 0 8px rgba(232, 184, 75, 0.6);
+.pulse-dot.ok {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(14, 122, 85, 0.15);
 }
-.led[data-on="error"] {
-  background: var(--color-coral);
-  box-shadow: 0 0 8px rgba(232, 106, 94, 0.6);
-}
-
-/* breathing LED animation for "standby" */
-@keyframes led-breathe {
-  0%, 100% { opacity: 0.72; }
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
-.led-breathe {
-  animation: led-breathe 3.2s ease-in-out infinite;
-}
 
-/* ---------- hero / layout atoms ---------- */
-
-.ascii-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+/* FAQ — editorial, no boxes */
+.faq summary::-webkit-details-marker { display: none; }
+.faq[open] .faq-glyph {
+  transform: rotate(45deg);
+  color: var(--color-accent);
 }
-.ascii-fallback {
-  margin: 0;
+.faq-glyph {
   font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.25;
-  color: var(--color-phosphor);
-  opacity: 0.8;
-  user-select: none;
-  white-space: pre;
-  overflow: hidden;
+  font-size: 16px;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-/* focus ring — phosphor, keyboard-visible only */
-:focus-visible {
-  outline: 2px solid var(--color-phosphor);
-  outline-offset: 2px;
-}
-
-/* ---------- reveal on scroll (kept minimal) ---------- */
-
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition:
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.reveal.revealed {
-  opacity: 1;
-  transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-/* ---------- scroll signal progress ---------- */
-
+/* scroll signal — a thin ink rule that grows */
 #scroll-signal {
   position: fixed;
   top: 0;
   left: 0;
   height: 2px;
   width: 0;
-  background: var(--color-phosphor);
-  box-shadow: 0 1px 10px rgba(92, 225, 169, 0.5);
-  z-index: 60; /* above content, below the sticky header's visual weight */
+  background: var(--color-accent);
+  z-index: 60;
   transition: width 0.08s linear;
 }
 
-/* ---------- FAQ details ---------- */
-
-details.faq summary::-webkit-details-marker {
-  display: none;
+/* reveal — quiet, editorial (up 12px, 0.6s) */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-details.faq[open] .faq-glyph {
-  transform: rotate(45deg);
-  color: var(--color-phosphor);
-}
-.faq-glyph {
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-/* ---------- marquee (features strip) ---------- */
-
-.marquee-track {
-  display: flex;
-  gap: 1.25rem;
-  width: max-content;
-  animation: marquee-scroll 36s linear infinite;
-}
-@keyframes marquee-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
+.reveal.revealed { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-  }
-  html {
-    scroll-behavior: auto;
-  }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
 }
 
-/* ---------- transmission log — aligned dot leaders ----------
-   v2: rows are flex; the leader is a repeating-dot border that
-   fills the middle; values right-align. No more hand-counted dots. */
-
-.log-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  white-space: nowrap;
-}
-.log-row .log-key {
-  flex: none;
-}
-.log-row .log-dots {
-  flex: 1;
-  min-width: 1.5rem;
-  border-bottom: 1px dotted var(--color-line);
-  transform: translateY(-3px);
-  overflow: hidden;
-  height: 1px;
-}
-.log-row .log-val {
-  flex: none;
-  text-align: right;
+/* focus */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-/* ---------- docs typography — bound to our tokens ---------- */
-
+/* prose (docs/changelog) bound to tokens */
 .prose {
-  --tw-prose-body: var(--color-ink-dim);
+  --tw-prose-body: var(--color-ink-2);
   --tw-prose-headings: var(--color-ink);
-  --tw-prose-lead: var(--color-ink-dim);
-  --tw-prose-links: var(--color-phosphor);
+  --tw-prose-links: var(--color-accent);
   --tw-prose-bold: var(--color-ink);
-  --tw-prose-counters: var(--color-ink-faint);
-  --tw-prose-bullets: var(--color-phosphor);
-  --tw-prose-hr: var(--color-line);
+  --tw-prose-bullets: var(--color-accent);
+  --tw-prose-hr: var(--color-rule);
   --tw-prose-quotes: var(--color-ink);
-  --tw-prose-quote-borders: var(--color-phosphor);
+  --tw-prose-quote-borders: var(--color-accent);
   --tw-prose-captions: var(--color-ink-faint);
   --tw-prose-code: var(--color-ink);
-  --tw-prose-pre-code: #CFE9DC;
-  --tw-prose-pre-bg: #0D0F12;
-  --tw-prose-th-borders: var(--color-line);
-  --tw-prose-td-borders: var(--color-line);
-  color: var(--color-ink-dim);
+  --tw-prose-pre-code: #E9E4D8;
+  --tw-prose-pre-bg: #1A1916;
+  --tw-prose-th-borders: var(--color-rule);
+  --tw-prose-td-borders: var(--color-rule);
+  color: var(--color-ink-2);
 }
-.prose :where(h1, h2, h3, h4, strong, b) {
+.prose :where(h1, h2, h3, h4) {
+  font-family: var(--font-serif);
+  font-weight: 400;
   color: var(--color-ink);
+  letter-spacing: -0.01em;
 }
 .prose :where(a) {
-  color: var(--color-phosphor);
-  text-decoration-color: color-mix(in oklab, var(--color-phosphor) 45%, transparent);
+  color: var(--color-accent);
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
   text-underline-offset: 3px;
 }
-.prose :where(a):hover {
-  color: var(--color-phosphor-hot);
-}
+.prose :where(a):hover { color: var(--color-accent-2); }
 .prose :where(code):not(pre code) {
   background: var(--color-paper-2);
-  border: 1px solid var(--color-line);
-  border-radius: 5px;
+  border: 1px solid var(--color-rule-soft);
+  border-radius: 4px;
   padding: 0.1rem 0.35rem;
   font-size: 0.86em;
   font-family: var(--font-mono);
   overflow-wrap: anywhere;
 }
 .prose :where(code):not(pre code)::before,
-.prose :where(code):not(pre code)::after {
-  content: "";
-}
+.prose :where(code):not(pre code)::after { content: ""; }
 .prose :where(pre),
 pre.astro-code {
-  background: #0D0F12;
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
+  background: #1A1916;
+  border: 1px solid var(--color-rule-soft);
+  border-radius: 8px;
   font-family: var(--font-mono);
   overflow-x: auto;
   max-width: 100%;
 }
-pre.astro-code code {
-  display: block;
-  width: max-content;
-  min-width: 100%;
-}
-:root[data-mode="light"] .prose :where(pre) {
-  background: #16181D;
-}
+pre.astro-code code { display: block; width: max-content; min-width: 100%; }
 .prose :where(table) {
   font-size: 0.9em;
   display: block;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-.prose :where(thead th) {
-  color: var(--color-ink);
-}
-.prose :where(tbody td, thead th) {
-  border-color: var(--color-line);
-}
-.prose :where(blockquote) {
-  border-left-color: var(--color-phosphor);
-  background: color-mix(in oklab, var(--color-paper-2) 55%, transparent);
-  border-radius: 0 10px 10px 0;
-  padding: 0.35rem 1rem;
-  font-style: normal;
-}
-.prose :where(blockquote p:first-of-type)::before,
-.prose :where(blockquote p:last-of-type)::after {
-  content: "";
-}
-
-/* ---------- hard containment: nothing may stretch the page sideways ---------- */
-
-.prose table {
-  display: block;
   max-width: 100%;
   overflow-x: auto;
-  white-space: nowrap;
 }
-footer .grid {
-  min-width: 0;
+.prose :where(thead th) { color: var(--color-ink); }
+.prose :where(tbody td, thead th) { border-color: var(--color-rule); }
+.prose :where(blockquote) {
+  border-left-color: var(--color-accent);
+  font-style: italic;
 }
-footer .grid > * {
-  min-width: 0;
+
+/* hard containment — nothing stretches the page sideways */
+.prose ul, .prose li, footer .grid, footer .grid > * { min-width: 0; }
+
+
+/* ---------- v2 → v3 compatibility (pages not yet rebuilt) ----------
+   The remaining pages still use v2 classnames; alias them to the new
+   tokens so nothing renders broken. Each is marked for replacement when
+   its page gets the v3 treatment. */
+
+.font-display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; }
+.sec-mark {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-accent);
 }
-.prose ul,
-.prose li {
-  min-width: 0;
-}
+.sec-mark::before { content: "///"; letter-spacing: 0.05em; color: var(--color-ink-faint); margin-right: 0.6rem; }
+.mono-label { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
+.panel { position: relative; background: var(--color-paper); border: 1px solid var(--color-rule); border-radius: 2px; overflow: hidden; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 1.1rem; border-bottom: 1px solid var(--color-rule-soft); }
+.led { width: 7px; height: 7px; border-radius: 999px; background: var(--color-ink-faint); flex: none; }
+.led[data-on="live"] { background: var(--color-accent); }
+.led[data-on="busy"] { background: #C98A3D; }
+.led[data-on="error"] { background: #C2452D; }
+.led-breathe { animation: caret-blink 3.2s ease-in-out infinite; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 2px; padding: 0.72rem 1.35rem; font-size: 0.9rem; font-weight: 500; font-family: var(--font-sans); cursor: pointer; transition: all 0.18s cubic-bezier(0.16,1,0.3,1); }
+.btn-primary { background: var(--color-ink); color: var(--color-paper); }
+.btn-primary:hover { background: var(--color-accent); transform: translateY(-1px); }
+.btn-ghost { border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); }
+.btn-ghost:hover { border-color: var(--color-accent); color: var(--color-accent); transform: translateY(-1px); }
+.ascii-canvas { display: block; width: 100%; height: 100%; }
+.marquee-track { display: flex; gap: 1.25rem; width: max-content; animation: marquee-scroll 36s linear infinite; }
+@keyframes marquee-scroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+
+/* legacy v2 color utilities → v3 tokens */
+.text-phosphor, .text-accent-strong { color: var(--color-accent); }
+.hover\:text-phosphor:hover { color: var(--color-accent); }
+.border-phosphor, .hover\:border-phosphor:hover { border-color: var(--color-accent); }
+.text-ink-dim, .text-ink-soft { color: var(--color-ink-2); }
+.hover\:text-ink:hover { color: var(--color-ink); }
+.bg-paper-2, .bg-surface-2 { background-color: var(--color-paper-2); }
+.hover\:bg-paper\/60:hover { background-color: color-mix(in srgb, var(--color-paper-2) 60%, transparent); }
+.bg-paper\/40 { background-color: color-mix(in srgb, var(--color-paper-2) 40%, transparent); }
+.border-line, .border-line-soft, .border-rule { border-color: var(--color-rule); }
+.border-line-soft { border-color: var(--color-rule-soft); }
+.bg-bg { background-color: var(--color-paper); }
+.bg-bg\/92 { background-color: color-mix(in srgb, var(--color-paper) 92%, transparent); }
+.text-ink { color: var(--color-ink); }
+.text-ink-faint { color: var(--color-ink-faint); }
+.bg-tint { background-color: var(--color-tint); }
+kbd.wf-kbd, .kbd-chip { font-family: var(--font-mono); font-size: 11px; padding: 0.14rem 0.42rem; border-radius: 4px; background: var(--color-paper-2); border: 1px solid var(--color-rule); color: var(--color-ink-2); white-space: nowrap; }
+details.faq summary::-webkit-details-marker { display: none; }
+.faq-glyph { transition: transform 0.2s ease, color 0.2s ease; }
+details.faq[open] .faq-glyph { transform: rotate(45deg); color: var(--color-accent); }
+.log-row { display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+.log-row .log-dots { flex: 1; min-width: 1.5rem; border-bottom: 1px dotted var(--color-rule); transform: translateY(-3px); height: 1px; }
+.log-row .log-val { text-align: right; }

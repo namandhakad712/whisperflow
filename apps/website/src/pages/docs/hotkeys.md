@@ -58,4 +58,4 @@ configurable timeout (default 700 ms of silence finalizes a segment).
 By default the pill appears near your text cursor (or mouse pointer as fallback). Settings →
 General has a static-position option if you prefer it docked.
 
-Next: [Models & hardware](/docs/models/)
+Next: [Models & hardware](/whisperflow/docs/models/)

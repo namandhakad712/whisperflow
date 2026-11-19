@@ -2,8 +2,11 @@
 import Base from "../layouts/Base.astro";
 ---
 <Base title="Page not found — WhisperFlow">
-  <section class="mx-auto flex max-w-6xl flex-col items-center px-4 py-32 text-center sm:px-6">
-    <pre class="select-none font-mono text-[13px] leading-[1.4] text-phosphor sm:text-[15px]" aria-hidden="true">┌───────────────────────────────┐
+  <section class="relative overflow-hidden">
+    <!-- Engine D: static resolving to nothing, one green pulse -->
+    <canvas id="err-scene" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
+    <div class="relative mx-auto flex min-h-[80vh] max-w-6xl flex-col items-center justify-center px-5 py-24 text-center sm:px-8">
+      <pre class="select-none font-mono text-[11.5px] leading-[1.5] text-ink-2 sm:text-[14px]" aria-hidden="true">┌───────────────────────────────┐
 │     ·:·  E R R  4 0 4  ·:·    │
 │        signal not found       │
 │  ───────────────────────────  │
@@ -11,10 +14,29 @@ import Base from "../layouts/Base.astro";
 │   ._ route .......... [--]    │
 │   ._ recovery ....... [you]   │
 └───────────────────────────────┘</pre>
-    <h1 class="font-display mt-8 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">this page kept its silence</h1>
-    <p class="mt-4 font-mono text-sm text-ink-dim">the url you're after doesn't exist — or was misheard.</p>
-    <div class="mt-9">
-      <a href="/whisperflow/" class="btn btn-primary">back to the instrument</a>
+      <h1 class="font-serif mt-10 max-w-xl text-5xl font-normal leading-[1.02] text-ink sm:text-6xl">
+        this page kept its silence<span class="text-accent">.</span>
+      </h1>
+      <p class="mt-5 font-mono text-[13px] text-ink-2">
+        the url you're after doesn't exist — or was misheard.
+      </p>
+      <div class="mt-9">
+        <a href="/whisperflow/" class="btn-ink">back to the sheet</a>
+      </div>
     </div>
   </section>
 </Base>
+
+<script>
+  import { PaintedScene, SCENE_CONTOURS } from "@whisperflow/signal-engine";
+  const canvas = document.getElementById("err-scene") as HTMLCanvasElement | null;
+  if (canvas) {
+    const dark = document.documentElement.dataset.mode === "dark";
+    new PaintedScene(canvas, {
+      scene: SCENE_CONTOURS,
+      cell: 9,
+      paper: dark ? "ink" : "cream",
+      drift: 0.3,
+    }).mount();
+  }
+</script>

@@ -8,5 +8,7 @@
 export { DitherField, DITHER_PALETTES, type DitherPalette, type DitherFieldOptions } from "./dither";
 export { AsciiRender, GLYPH_RAMP, type AsciiRenderOptions } from "./ascii";
 export { HalftoneReveal, type HalftoneOptions } from "./halftone";
+export { PaintedScene, type PaintedSceneOptions, type SceneGLSL } from "./painted";
+export { SCENE_BLOOM, SCENE_CONTOURS, SCENE_PRESS_PROOF, SCENE_DUNE } from "./scenes";
 export { scramble, bindScrambles, holdDemo, type ScrambleOptions, type HoldDemoOptions } from "./interactions";
 export { reducedMotion } from "./gl";

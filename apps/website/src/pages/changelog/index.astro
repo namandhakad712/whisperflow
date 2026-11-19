@@ -21,17 +21,17 @@ const html = esc(raw)
   .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 ---
 <Base title="Changelog — WhisperFlow" description="Every notable WhisperFlow change, newest first.">
-  <section class="relative border-b border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 pt-24 text-center sm:px-6 sm:pt-32">
-      <p class="sec-mark mx-auto">signal history</p>
-      <h1 class="font-display mt-7 text-5xl font-bold tracking-[-0.045em] sm:text-7xl">changelog</h1>
-      <p class="mx-auto mt-4 max-w-md text-ink-dim">
+  <section class="border-b border-rule">
+    <div class="mx-auto max-w-6xl px-5 pb-16 pt-28 sm:px-8 sm:pt-36">
+      <p class="eyebrow">print history</p>
+      <h1 class="font-serif mt-6 text-6xl font-normal leading-[0.98] text-ink sm:text-8xl">changelog<span class="text-accent">.</span></h1>
+      <p class="mt-6 max-w-md text-[15px] leading-7 text-ink-2">
         every notable change, newest first. also on
-        <a class="text-phosphor hover:underline" href="https://github.com/namandhakad712/whisperflow/blob/main/CHANGELOG.md">github</a>.
+        <a class="underline decoration-dotted underline-offset-4 hover:text-accent" href="https://github.com/namandhakad712/whisperflow/blob/main/CHANGELOG.md">github</a>.
       </p>
     </div>
   </section>
-  <section class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-    <div class="panel changelog-body prose prose-invert max-w-none p-8 sm:p-10" set:html={html} />
+  <section class="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+    <div class="changelog-body prose max-w-none" set:html={html} />
   </section>
 </Base>

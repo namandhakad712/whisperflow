@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import SignalPanel from "../components/SignalPanel.astro";
 ---
 <Base
   title="Pricing — WhisperFlow"
@@ -32,41 +31,79 @@ import SignalPanel from "../components/SignalPanel.astro";
     document.addEventListener("DOMContentLoaded", calc);
   </script>
 
-  <section class="relative border-b border-line-soft">
-    <div class="mx-auto max-w-6xl px-4 pt-24 text-center sm:px-6 sm:pt-32">
-      <p class="sec-mark mx-auto">open-core, honestly</p>
-      <h1 class="font-display mx-auto mt-7 max-w-3xl text-5xl font-bold leading-[1.03] tracking-[-0.045em] sm:text-7xl">
-        we're not selling <span class="text-phosphor">anything</span> yet.
+  <section class="border-b border-rule">
+    <div class="mx-auto max-w-6xl px-5 pb-24 pt-28 text-center sm:px-8 sm:pt-36">
+      <p class="eyebrow justify-center">open-core, honestly</p>
+      <h1 class="font-serif mx-auto mt-6 max-w-3xl text-6xl font-normal leading-[0.98] text-ink sm:text-8xl">
+        free forever<span class="text-accent">.</span><br />no card. no caps.
       </h1>
-      <p class="mx-auto mt-6 max-w-xl text-lg leading-8 text-ink-dim">
-        whisperflow runs entirely on your machine with your models — so the core app is free,
-        unlimited, forever. we might build hosted inference someday for weak hardware. we
-        honestly haven't decided. <span class="text-ink">you tell us.</span>
+      <p class="mx-auto mt-7 max-w-xl text-[16px] leading-7 text-ink-2">
+        whisperflow runs entirely on your machine with your models — there is no meter
+        to read and no bill to send. we might build hosted inference someday, for weak
+        hardware. we honestly haven't decided. <span class="font-medium text-ink">you tell us.</span>
       </p>
+      <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <a href="/whisperflow/download/" class="btn-ink">download — $0</a>
+        <a href="/whisperflow/sponsors/" class="btn-quiet">fund development ↗</a>
+      </div>
     </div>
   </section>
 
-  <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-    <div class="panel">
-      <div class="panel-head">
-        <span class="flex items-center gap-2.5">
-          <span class="led" data-on="busy" aria-hidden="true"></span>
-          <span class="mono-label text-ink-dim">plan calibrator</span>
-        </span>
-        <span class="font-mono text-[11px] text-ink-faint">zero tracking · just an email</span>
+  <!-- the ledger: what zero dollars buys, printed plainly -->
+  <section class="border-b border-rule bg-tint">
+    <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+      <div class="grid gap-10 md:grid-cols-3">
+        <div>
+          <p class="eyebrow">unlimited dictation</p>
+          <p class="font-serif mt-3 text-3xl font-normal text-ink">∞ words</p>
+          <p class="mt-3 text-[14px] leading-6 text-ink-2">
+            no weekly cap, no monthly cap, no trial timer. dictation is not a tier —
+            it's the product.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">every feature</p>
+          <p class="font-serif mt-3 text-3xl font-normal text-ink">all of it</p>
+          <p class="mt-3 text-[14px] leading-6 text-ink-2">
+            polish, dictionary, history, model manager — the same build for everyone.
+            sponsors fund the runway, never a paywall.
+          </p>
+        </div>
+        <div>
+          <p class="eyebrow">the fine print</p>
+          <p class="font-serif mt-3 text-3xl font-normal text-ink">this page</p>
+          <p class="mt-3 text-[14px] leading-6 text-ink-2">
+            the only thing that costs anything here is the ink. if anyone charges you
+            for whisperflow, you're being scammed.
+          </p>
+        </div>
       </div>
-      <div class="p-8 sm:p-10">
-        <h2 class="font-display text-3xl font-bold tracking-[-0.04em]">design the plan <span class="text-phosphor">you'd</span> pay for</h2>
-        <p class="mt-2 text-sm text-ink-dim">
-          drag, tick, and see what it's worth to you. zero obligation — this literally just opens
-          an email. no tracking, no accounts, no storage.
-        </p>
+    </div>
+  </section>
 
-        <p class="mono-label mt-8 text-ink-faint">words per month</p>
-        <input id="words" type="range" min="0" max="100" value="100" class="mt-3 w-full accent-[#5CE1A9]" aria-label="Words per month" />
-        <p class="mt-1 text-sm text-ink-dim"><span id="wordsLabel" class="font-mono font-medium text-ink">Unlimited</span></p>
+  <!-- the calibrator: quiet, below the fold -->
+  <section class="mx-auto max-w-3xl px-5 py-20 sm:px-8">
+    <p class="eyebrow">help us decide</p>
+    <h2 class="font-serif mt-4 text-4xl font-normal leading-[1.05] text-ink sm:text-5xl">
+      design the plan <span class="text-accent">you'd</span> pay for.
+    </h2>
+    <p class="mt-5 max-w-md text-[14.5px] leading-7 text-ink-2">
+      if we ever build hosted inference, what should it look like? drag, tick, and see
+      what it's worth to you. zero obligation — this just opens an email. no tracking,
+      no accounts, no storage.
+    </p>
 
-        <p class="mono-label mt-6 text-ink-faint">features</p>
+    <div class="proof-card mt-10">
+      <div class="flex items-center justify-between border-b border-rule px-6 py-3.5">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">plan calibrator</span>
+        <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">zero tracking · just an email</span>
+      </div>
+      <div class="p-7 sm:p-9">
+        <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">words per month</p>
+        <input id="words" type="range" min="0" max="100" value="100" class="mt-3 w-full accent-[#0E7A55]" aria-label="Words per month" />
+        <p class="mt-1 text-[14px] text-ink-2"><span id="wordsLabel" class="font-mono font-medium text-ink">Unlimited</span></p>
+
+        <p class="mt-7 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">features</p>
         <div class="mt-3 grid gap-2 sm:grid-cols-2">
           {[
             ["cloud-relay", "hosted models relay (no local setup)"],
@@ -74,45 +111,43 @@ import SignalPanel from "../components/SignalPanel.astro";
             ["team", "team dictionary & snippets sharing"],
             ["priority", "priority support"],
           ].map(([id, label]) => (
-            <label class="flex cursor-pointer items-center gap-3 rounded-none border border-line bg-paper/60 px-4 py-3 text-sm transition-colors hover:border-phosphor/60">
-              <input type="checkbox" name="feat" value={id} class="h-4 w-4 accent-[#5CE1A9]" />
+            <label class="flex cursor-pointer items-center gap-3 border border-rule bg-paper px-4 py-3 text-[14px] text-ink-2 transition-colors hover:border-accent/60">
+              <input type="checkbox" name="feat" value={id} class="h-4 w-4 accent-[#0E7A55]" />
               {label}
             </label>
           ))}
         </div>
 
-        <div class="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-line-soft pt-6">
-          <p class="font-display text-4xl"><span id="price" class="font-mono">$0</span><span class="text-base text-ink-dim">/mo</span></p>
-          <button type="button" onclick="mailtoPlan()" class="btn btn-primary">send us this plan</button>
+        <div class="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-rule pt-6">
+          <p class="font-serif text-4xl"><span id="price" class="font-mono">$0</span><span class="text-base text-ink-2">/mo</span></p>
+          <button type="button" onclick="mailtoPlan()" class="btn-ink">send us this plan</button>
         </div>
-        <p id="thanks" class="mt-3 hidden font-mono text-sm text-phosphor">[ok] your email app just opened — hit send and we'll read it.</p>
+        <p id="thanks" class="mt-3 hidden font-mono text-[13px] text-accent">[ok] your email app just opened — hit send and we'll read it.</p>
       </div>
     </div>
 
-    <div class="mt-10 grid gap-5 sm:grid-cols-2">
-      <SignalPanel label="why free works" led="live">
-        <div class="p-6">
-          <p class="text-sm leading-6 text-ink-dim">
-            models run on your machine; free api tiers (groq, gemini, openrouter…) cover byo
-            polish for almost everyone. there's no server bill to pass on — so there's no price.
-          </p>
-        </div>
-      </SignalPanel>
-      <SignalPanel label="bring your own key" led="live">
-        <div class="p-6">
-          <p class="text-sm leading-6 text-ink-dim">
-            any openai-compatible endpoint plugs into settings → style. your key stays in your
-            local config. the local-only lock overrides everything when you want pure offline.
-          </p>
-        </div>
-      </SignalPanel>
+    <div class="mt-10 grid gap-8 sm:grid-cols-2">
+      <div>
+        <p class="eyebrow">why free works</p>
+        <p class="mt-3 text-[14px] leading-6 text-ink-2">
+          models run on your machine; free api tiers (groq, gemini, openrouter…) cover byo
+          polish for almost everyone. there's no server bill to pass on — so there's no price.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow">bring your own key</p>
+        <p class="mt-3 text-[14px] leading-6 text-ink-2">
+          any openai-compatible endpoint plugs into settings → style. your key stays in your
+          local config. the local-only lock overrides everything when you want pure offline.
+        </p>
+      </div>
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 pb-24 text-center sm:px-6">
-    <h2 class="font-display text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
-      meanwhile, it's <span class="text-phosphor">yours</span>.
+  <section class="mx-auto max-w-6xl px-5 pb-24 text-center sm:px-8">
+    <h2 class="font-serif text-4xl font-normal leading-[1.02] text-ink sm:text-5xl">
+      meanwhile, it's <span class="text-accent">yours</span>.
     </h2>
-    <div class="mt-8"><a href="/whisperflow/download/" class="btn btn-primary">download whisperflow</a></div>
+    <div class="mt-8"><a href="/whisperflow/download/" class="btn-ink">download whisperflow</a></div>
   </section>
 </Base>
