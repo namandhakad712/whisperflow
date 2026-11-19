@@ -2,6 +2,28 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.41] — 2026-11-19
+
+### Added — the Signal Standard (brand + visual identity)
+- **The entire product now speaks one visual language.** A zero-dependency
+  WebGL engine (`packages/signal-engine`) renders the brand: an ordered-dither
+  field that breathes, ASCII oscilloscopes drawn from your voice, halftone
+  reveals and scramble-decode typography — on the website, and in the app's
+  overlay, toggles and status rail.
+- **The overlay capsule** now draws a live phosphor trace of your voice while
+  you speak, with afterglow decay when you stop. Standby is a single breathing
+  dot; speaking expands to the 384x56 capsule. Every behavior (hold-to-talk,
+  toggle modes, escape) is unchanged.
+- **LED state system** in Settings: every toggle is an instrument switch with
+  a lit state line, not a generic checkbox.
+- Website rebuilt on the same tokens (13 pages), with `MOTION.md` (authored
+  timings) and `INSPIRATION.md` (technique lineage) as governance docs, and an
+  `origin-check.yml` CI gate that fails the build if retired borrowed values
+  reappear.
+
+### Changed
+- `apps/desktop/package.json`: bumped to 0.1.41.
+
 ## [0.1.40] — 2026-11-18
 
 ### Added — sequential dictation (experiment)
