@@ -7,27 +7,31 @@ import Base from "../layouts/Base.astro";
   description="Open-source, local-first voice dictation. Hold a key, speak naturally, get polished text in any app — whisper.cpp + llama.cpp on your machine. Free forever, no cloud, no caps."
 >
   <!-- ============ HERO — the printed bloom ============ -->
-  <section class="relative min-h-[94vh] overflow-hidden">
+  <section id="hero" class="relative min-h-[94vh] overflow-hidden">
     <!-- Engine D: the orchid bloom, printed in dots -->
     <canvas id="hero-scene" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
 
     <!-- the print's paper band: type always sits on clean paper -->
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]" style="background:linear-gradient(to top, var(--color-paper) 34%, color-mix(in srgb, var(--color-paper) 72%, transparent) 62%, transparent)" aria-hidden="true"></div>
+    <!-- the print's paper band: type always sits on clean paper (taller on phones) -->
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] sm:hidden" style="background:linear-gradient(to top, var(--color-paper) 38%, color-mix(in srgb, var(--color-paper) 78%, transparent) 66%, transparent)" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[46%] sm:block" style="background:linear-gradient(to top, var(--color-paper) 34%, color-mix(in srgb, var(--color-paper) 72%, transparent) 62%, transparent)" aria-hidden="true"></div>
 
     <!-- headline set OVER the art, left-anchored (editorial) -->
     <div class="relative mx-auto flex min-h-[94vh] max-w-6xl flex-col justify-end px-5 pb-20 pt-32 sm:px-8">
-      <p class="eyebrow relative z-10 w-fit rounded-sm bg-paper/85 px-2 py-1 backdrop-blur-[2px]">local-first · free forever · works in every app</p>
+      <p data-lay class="eyebrow relative z-10 w-fit rounded-sm bg-paper/85 px-2 py-1 backdrop-blur-[2px]">local-first · free forever · works in every app</p>
 
-      <h1 class="font-serif mt-6 max-w-3xl text-[13.5vw] font-normal leading-[0.98] tracking-[-0.015em] text-ink sm:text-7xl md:text-8xl">
-        speak. it writes<span class="text-accent">.</span>
+      <h1 data-lines class="font-serif mt-6 max-w-3xl text-[13.5vw] font-normal leading-[0.98] tracking-[-0.015em] text-ink sm:text-7xl md:text-8xl">
+        <span class="mr-[0.24em] inline-block overflow-hidden align-bottom"><span data-word class="inline-block">speak.</span></span>
+        <span class="mr-[0.24em] inline-block overflow-hidden align-bottom"><span data-word class="inline-block">it</span></span>
+        <span class="inline-block overflow-hidden align-bottom"><span data-word class="inline-block">writes<span class="text-accent">.</span></span></span>
       </h1>
 
-      <p class="mt-7 max-w-md text-[17px] leading-7 text-ink-2">
+      <p data-lay class="mt-7 max-w-md text-[17px] leading-7 text-ink-2">
         hold one key, talk like you think — WhisperFlow turns speech into clean,
         polished text in any app. your words, rendered on your machine.
       </p>
 
-      <div class="mt-10 flex flex-wrap items-center gap-4">
+      <div data-lay class="mt-10 flex flex-wrap items-center gap-4">
         <a href="/whisperflow/download/" class="btn-ink">download for windows</a>
         <a href="https://github.com/namandhakad712/whisperflow" class="btn-quiet">read the source ↗</a>
         <span class="font-mono text-[11.5px] leading-5 text-ink-2">macos + linux: <a class="text-accent underline decoration-dotted underline-offset-4" href="https://github.com/namandhakad712/whisperflow">on the roadmap — star for pings</a></span>
@@ -41,8 +45,16 @@ import Base from "../layouts/Base.astro";
   </section>
 
   <!-- ============ 01 — THE PROOF: real product, real words ============ -->
-  <section class="border-t border-rule">
-    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+  <!-- the press ticker: the shop floor, in mono -->
+  <div class="marquee border-y border-rule bg-paper" aria-hidden="true">
+    <div class="marquee-track font-mono text-[11px] uppercase tracking-[0.18em] text-ink-faint">
+      <span>hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;</span>
+      <span>hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;</span>
+    </div>
+  </div>
+
+  <section class="border-t-0">
+    <div data-reveal class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
       <div class="grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:items-center">
         <div>
           <p class="eyebrow">01 — the proof</p>
@@ -131,8 +143,16 @@ import Base from "../layouts/Base.astro";
   </section>
 
   <!-- ============ 03 — WHY LOCAL ============ -->
-  <section class="border-t border-rule">
-    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+  <!-- the press ticker: the shop floor, in mono -->
+  <div class="marquee border-y border-rule bg-paper" aria-hidden="true">
+    <div class="marquee-track font-mono text-[11px] uppercase tracking-[0.18em] text-ink-faint">
+      <span>hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;</span>
+      <span>hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;hold&nbsp;·&nbsp;speak&nbsp;·&nbsp;transcribed&nbsp;·&nbsp;polished&nbsp;·&nbsp;pasted&nbsp;·&nbsp;local&nbsp;·&nbsp;yours&nbsp;·&nbsp;</span>
+    </div>
+  </div>
+
+  <section class="border-t-0">
+    <div data-reveal class="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
       <div class="grid gap-14 lg:grid-cols-2 lg:items-center">
         <div class="order-2 lg:order-1">
           <p class="eyebrow">03 — why local</p>
@@ -247,13 +267,14 @@ import Base from "../layouts/Base.astro";
 
   const hero = new PaintedScene(document.getElementById("hero-scene") as HTMLCanvasElement, {
     scene: SCENE_BLOOM,
-    cell: 4,
+    cell: 3, // fine screen — the risograph register
     paper,
     drift: 1,
     image: "/whisperflow/prints/orchid.jpg",
-    imageCrop: [0.55, 0.42, 1.6], // one dominant bloom, cropped hard
+    imageCrop: [0.5, 0.48, 1.06], // full-frame bloom, cropped soft
   });
   hero.mount();
+  (window as unknown as { __wfHeroScene?: PaintedScene }).__wfHeroScene = hero;
 
   const dune = document.getElementById("dune-scene") as HTMLCanvasElement | null;
   if (dune) new PaintedScene(dune, { scene: SCENE_DUNE, cell: 8, paper, drift: 0.7 }).mount();

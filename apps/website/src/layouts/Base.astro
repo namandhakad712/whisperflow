@@ -54,30 +54,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         paint();
       })();
     </script>
-    <!-- scroll reveals -->
-    <script is:inline>
-      (function () {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) { e.target.classList.add("revealed"); io.unobserve(e.target); }
-          });
-        }, { threshold: 0.08 });
-        document.addEventListener("DOMContentLoaded", function () {
-          document.querySelectorAll("section > div, .panel, details").forEach(function (el) {
-            el.classList.add("reveal"); io.observe(el);
-          });
-        });
-      })();
-    </script>
-    <!-- Lenis smooth scroll (marketing site only, reduced-motion aware) -->
+    <!-- the living print: GSAP entrance + scroll choreography (v4) -->
     <script>
-      import Lenis from "lenis";
-      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        const lenis = new Lenis({ duration: 0.9, wheelMultiplier: 0.9 });
-        const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
-        requestAnimationFrame(raf);
-      }
+      import { mountMotion } from "../scripts/motion";
+      mountMotion(() => (window as unknown as { __wfHeroScene?: unknown }).__wfHeroScene as never);
     </script>
     <Header />
     <main class="flex-1">

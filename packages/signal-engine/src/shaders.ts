@@ -247,6 +247,7 @@ uniform float u_drive;
 uniform sampler2D u_img;
 uniform vec3 u_imgAspect;  // (w, h, hasImage 0/1)
 uniform vec3 u_imgCrop;    // (cx, cy, zoom)
+uniform float u_dark;      // 1 = printing on the dark sheet
 
 float hash21(vec2 p) {
   p = fract(p * vec2(234.34, 435.345));
@@ -296,12 +297,16 @@ vec3 imgRGB(vec2 uv) {
   if (iuv.x < 0.0 || iuv.x > 1.0 || iuv.y < 0.0 || iuv.y > 1.0) return vec3(0.0);
   return texture2D(u_img, iuv).rgb;
 }
-// tone from a photo: luma remapped for print (quiet highlights, full range)
+// tone from a photo: print polarity. Ink lands where the photo is DARK;
+// paper-white areas print clean (like a risograph of the subject).
+// Window tuned to the source print: petals (luma 0.55-0.8) build a dense
+// tonal mass, petal edges (~0.85) thin out to lavender, the white field
+// (0.95+) stays clean paper.
 float imgTone(vec2 uv) {
   vec3 c = imgRGB(uv);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  // gamma lift so mid-tones print with form; paper stays clean
-  return pow(clamp(l, 0.0, 1.0), 1.35);
+  float tone = 1.0 - smoothstep(0.55, 0.93, l);
+  return pow(tone, 0.9);
 }
 `;
 
@@ -328,41 +333,45 @@ float bayer4(vec2 q) {
 }
 
 void main() {
-  // camera drift — the scene slowly pans/zooms so every frame re-rasters
-  float t = u_time * 0.03 * u_drift;
   vec2 uv = gl_FragCoord.xy / u_res;
-  vec2 suv = (uv - 0.5) / (1.0 + 0.04 * sin(t * 0.7)) + 0.5;
-  suv += vec2(t * 0.35, sin(t * 0.5) * 0.02);
+
+  // bounded Ken Burns — the print re-composes forever but NEVER runs away
+  // (sin/cos orbit: pan ±3%, zoom ±5%, slow periods you feel, not watch)
+  float tt = u_time * u_drift;
+  float zoom = 1.0 + 0.05 * sin(tt * 0.16);
+  vec2 suv = (uv - 0.5) / zoom + 0.5;
+  suv += vec2(sin(tt * 0.13) * 0.03, cos(tt * 0.10) * 0.022);
 
   // the scene paints ink + tone
   vec4 s = scene(suv);
 
-  // pointer: a soft local tone lift (the print "hears" you)
-  float m = exp(-18.0 * distance(uv, u_mouse)) * 0.22;
+  // pointer: the print swells toward you (the sheet "hears" your hand)
+  float m = exp(-14.0 * distance(uv, u_mouse)) * 0.35;
 
   float tone = clamp(s.a * (1.0 + u_drive * 0.35) + m, 0.0, 1.0);
   vec3 ink = s.rgb;
-  // print curve: soft S blended with linear — midtone steps without crushing
+  // print curve: gentle S — keeps deep ink dense, highlights clean
   float sCurve = tone * tone * (3.0 - 2.0 * tone);
-  tone = mix(tone, sCurve, 0.55);
+  tone = mix(tone, sCurve, 0.35);
 
-  // the halftone cell: square grid, one dot per cell
-  vec2 cellpx = floor(gl_FragCoord.xy / u_cell);
-  vec2 cellf = fract(gl_FragCoord.xy / u_cell) - 0.5;
+  // the halftone cell: the lattice slowly slides across the sheet, so the
+  // bayer screen re-rasters every frame — the grain is alive, never static
+  vec2 lattice = gl_FragCoord.xy + vec2(sin(tt * 0.21), cos(tt * 0.17)) * (u_cell * 0.5);
+  vec2 cellpx = floor(lattice / u_cell);
+  vec2 cellf = fract(lattice / u_cell) - 0.5;
 
-  // lithograph dots: CONTINUOUS radius from tone (no stepped bands),
-  // with a bayer4 micro-jitter so gradients dither instead of banding.
+  // lithograph dots: CONTINUOUS radius from tone — petals reach near-solid
+  // coverage (the risograph mass), highlights thin to single grains
   float thr = bayer4(cellpx) - 0.5;
-  float dithered = clamp(tone + thr * 0.16, 0.0, 1.0);
-  float r = dithered * 0.42;   // capped max coverage — cream breathes
+  float dithered = clamp(tone + thr * 0.14, 0.0, 1.0);
+  float r = dithered * 0.55;
 
   // edge feather: soften the coverage AA so silhouettes don't moiré
-  float aa = 1.5 / u_cell;     // ~1.5 device px of feather
+  float aa = 1.5 / u_cell;
   float dot_ = 1.0 - smoothstep(r - aa, r + aa, length(cellf));
   // floor: a faint grain everywhere so paper is never dead-flat
   dot_ = max(dot_, step(0.9985, bayer4(cellpx + 7.0)) * 0.06);
 
-  // quiet the darks: ink fades toward paper at low tone (print, not screen)
   vec3 painted = mix(u_paper, ink, dot_);
   gl_FragColor = vec4(painted, 1.0);
 }
