@@ -194,11 +194,11 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             onClick={() => void patch({ stt: { provider: value } })}
             className={`rounded-lg border px-4 py-3 text-left text-sm transition-colors duration-150 ${
               config.stt.provider === value
-                ? "border-phosphor/70 bg-phosphor/10"
-                : "border-line bg-paper-2/50 hover:border-phosphor/40"
+                ? "border-violet/60 bg-violet/10"
+                : "border-line bg-paper-2/50 hover:border-violet/40"
             }`}
           >
-            <span className={`font-mono text-[12px] ${config.stt.provider === value ? "text-phosphor" : "text-ink"}`}>
+            <span className={`font-mono text-[12px] ${config.stt.provider === value ? "text-ink" : "text-ink-dim"}`}>
               {value === "whispercpp-local" ? "local" : "cloud (byok)"}
             </span>
             <span className="mt-1 block text-xs leading-4 text-ink-dim">{label}</span>
@@ -217,7 +217,7 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             value={config.stt.cloud.apiKey}
             onChange={(e) => void patch({ stt: { cloud: { apiKey: e.target.value } } })}
             placeholder="gsk_…"
-            className="w-full rounded-lg border border-line bg-paper-2 px-3 py-2 font-mono text-[13px] outline-none transition-colors focus:border-phosphor/60 focus:ring-2 focus:ring-phosphor/20"
+            className="w-full rounded-lg border border-line bg-paper-2 px-3 py-2 font-mono text-[13px] outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-line"
           />
         </div>
       )}
@@ -233,8 +233,8 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             onClick={() => void patch({ stt: { language: value, languages: [value], autoDetect: false } })}
             className={`rounded-md border px-3 py-2 font-mono text-[12px] transition-colors duration-150 ${
               (config.stt.languages ?? []).includes(value)
-                ? "border-phosphor/70 bg-phosphor/10 text-ink"
-                : "border-line bg-paper-2/60 text-ink-dim hover:border-phosphor/40"
+                ? "border-violet/60 bg-violet/10 text-ink"
+                : "border-line bg-paper-2/60 text-ink-dim hover:border-violet/40"
             }`}
           >
             {label.split(" (")[0]}
@@ -246,7 +246,7 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
         onChange={(e) =>
           void patch({ stt: { language: e.target.value, languages: [e.target.value], autoDetect: false } })
         }
-        className="mt-2 w-full rounded-md border border-line bg-paper-2 px-3 py-2 font-mono text-[13px] outline-none transition-colors focus:border-phosphor/60"
+        className="mt-2 w-full rounded-md border border-line bg-paper-2 px-3 py-2 font-mono text-[13px] outline-none transition-colors focus:border-line-strong"
       >
         {LANGUAGES.map(([value, label]) => (
           <option key={value} value={value}>
@@ -264,8 +264,8 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             onClick={() => void patch({ stt: { modelId: model.id } })}
             className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors duration-150 ${
               config.stt.modelId === model.id
-                ? "border-phosphor/70 bg-phosphor/10"
-                : "border-line bg-paper-2/50 hover:border-phosphor/40"
+                ? "border-violet/60 bg-violet/10"
+                : "border-line bg-paper-2/50 hover:border-violet/40"
             }`}
           >
             <span>
@@ -274,7 +274,7 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             </span>
             <span className="flex items-center gap-2 font-mono text-xs text-ink-dim">
               {model.id === suggested && (
-                <span className="rounded-sm bg-phosphor/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-phosphor">
+                <span className="rounded-sm bg-sky/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-sky">
                   suggested
                 </span>
               )}
@@ -293,8 +293,8 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             onClick={() => void patch({ audio: { vad: { sensitivity: preset.value } } })}
             className={`rounded-md border px-3 py-2 text-center transition-colors duration-150 ${
               config.audio.vad.sensitivity === preset.value
-                ? "border-phosphor/70 bg-phosphor/10"
-                : "border-line bg-paper-2/60 hover:border-phosphor/40"
+                ? "border-violet/60 bg-violet/10"
+                : "border-line bg-paper-2/60 hover:border-violet/40"
             }`}
           >
             <span className="block font-mono text-[12px] text-ink">{preset.label}</span>
@@ -317,11 +317,11 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
             onClick={() => void patch({ polish: { provider: value } })}
             className={`rounded-lg border px-4 py-3 text-left text-sm transition-colors duration-150 ${
               config.polish.provider === value
-                ? "border-phosphor/70 bg-phosphor/10"
-                : "border-line bg-paper-2/50 hover:border-phosphor/40"
+                ? "border-violet/60 bg-violet/10"
+                : "border-line bg-paper-2/50 hover:border-violet/40"
             }`}
           >
-            <span className={`font-mono text-[12px] ${config.polish.provider === value ? "text-phosphor" : "text-ink"}`}>
+            <span className={`font-mono text-[12px] ${config.polish.provider === value ? "text-ink" : "text-ink-dim"}`}>
               {value === "llama-local" ? "polish on" : "polish off"}
             </span>
             <span className="mt-1 block text-xs leading-4 text-ink-dim">{label}</span>

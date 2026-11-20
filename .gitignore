@@ -51,3 +51,4 @@ uh.out
 uh.err
 .dsh-vision-router/
 scratchpad/
+.secrets/

@@ -2,6 +2,28 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.44] — 2026-11-20
+
+### Changed — the instrument, tuned (color discipline overhaul)
+- **Luminance-stepped neutrals** replace the flat dark theme (bg #07080A →
+  paper #0C0D0F → raised #111214 → hover #1B1C1E): hierarchy now comes from
+  2-4% luminance steps, not hue — the Raycast/Linear discipline.
+- **Accent scarcity (60-30-10)**: phosphor green is now reserved for LIVE
+  signal only (recording, active LED, the hotkey readout, primary CTA).
+  Measured coverage dropped from ~30% to under 1% of pixels.
+- **Semantic color system**: amber = busy/processing, violet = AI/polish
+  surfaces, coral = errors/destructive, sky = info/links/downloaded.
+  Every hue means exactly one thing (color psychology).
+- Navigation, selection, hover and segmented controls are NEUTRAL now —
+  the rail active state is paper-3 + ink text + one 2px phosphor mark.
+- **Depth via insets + translucency**: cards get inner top-light, the
+  command palette is real glass (backdrop blur 12px + gradient fill +
+  1px light border), no outer shadows below 24px elevation.
+- **WCAG AA+**: primary text 17.3:1, secondary 7.1:1 on both skins.
+- Print-grain body texture (1-bit SVG dither, 5% whisper), corner-bracket
+  card frames (neutral, phosphor on hover), Daylight skin retuned to the
+  same stepped ramp.
+
 ## [0.1.43] — 2026-11-19
 
 ### Added — the ASCII revolution

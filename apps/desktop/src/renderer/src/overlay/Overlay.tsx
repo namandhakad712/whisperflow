@@ -177,7 +177,7 @@ body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
 .error-text { color: #E86A5E; }
 
 /* sequential counter tick */
-.seq-tick { font-family: "JetBrains Mono", ui-monospace, monospace; color: #5CE1A9; }
+.seq-tick { font-family: "JetBrains Mono", ui-monospace, monospace; color: #B9BABD; }
 
 /* ---- notification card (clipboard rescue) ---- */
 .notification {
@@ -195,7 +195,7 @@ body[data-align="top"] .notification { bottom: auto; top: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 .notification h2 { font-size: 14px; font-weight: 600; color: #EDEBE4; }
-.notification h2 .ok { color: #E8B84B; }
+.notification h2 .ok { color: #5CE1A9; }
 .notification p { font-size: 13px; line-height: 18px; color: rgba(237, 235, 228, 0.55); }
 .notification kbd {
   font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px;

@@ -166,7 +166,7 @@ export function ModelsTab() {
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <p className="text-[15px] font-semibold">
                   Recommended for this PC
-                  <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                  <span className="ml-2 rounded-full bg-sky/15 px-2 py-0.5 text-[11px] font-semibold text-sky">
                     {tierLabel(hardware.tier)} tier
                   </span>
                 </p>
@@ -236,13 +236,13 @@ export function ModelsTab() {
             className="mb-8 flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-[13px] text-ink-dim transition-colors hover:bg-surface-2"
           >
             <span>Using a cloud model for polish? Configure it under Writing style.</span>
-            <span className="font-medium text-accent">Writing style →</span>
+            <span className="font-medium text-violet">Writing style →</span>
           </a>
           <div className="mb-8 flex items-center justify-between">
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="text-xs font-semibold text-accent hover:underline"
+              className="text-xs font-semibold text-sky hover:underline"
             >
               {showAll ? "Show fewer" : `Show all models (${catalog.length})`}
             </button>
@@ -308,7 +308,7 @@ function CleanupCard() {
           Remove unused
         </Button>
       </div>
-      {result && <p className="mt-2 text-xs text-accent">{result}</p>}
+      {result && <p className="mt-2 text-xs text-ink-dim">{result}</p>}
     </Card>
   );
 }
@@ -476,7 +476,7 @@ function CloudSttCard() {
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] uppercase tracking-wider text-ink-dim/70">Free tier</span>
           {preset.freeLimits.audioSecPerDay ? (
-            <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+            <span className="rounded-full border border-violet/30 bg-violet/10 px-2 py-0.5 text-[11px] font-medium text-violet">
               {Math.round(preset.freeLimits.audioSecPerDay / 3600)} h dictation / day
             </span>
           ) : null}
@@ -502,7 +502,7 @@ function CloudSttCard() {
         {preset.docs && (
           <>
             {" "}
-            <a href={preset.docs} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+            <a href={preset.docs} target="_blank" rel="noreferrer" className="text-sky hover:underline">
               Provider docs ↗
             </a>
           </>
@@ -586,7 +586,7 @@ function ModelCard({
               </span>
             )}
             {recommended && !active && (
-              <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent ring-1 ring-inset ring-accent/25">
+              <span className="shrink-0 rounded-full bg-sky/10 px-2 py-0.5 text-[11px] font-medium text-sky ring-1 ring-inset ring-sky/25">
                 Recommended
               </span>
             )}
@@ -621,7 +621,7 @@ function ModelCard({
               {entry.badges.map((badge) => (
                 <span
                   key={badge}
-                  className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent ring-1 ring-inset ring-accent/20"
+                  className="rounded-full bg-violet/10 px-2 py-0.5 text-[11px] font-medium text-violet ring-1 ring-inset ring-violet/20"
                 >
                   {badge}
                 </span>
@@ -633,7 +633,7 @@ function ModelCard({
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {busy ? (
-            <span className="text-xs font-medium text-accent">{Math.round(pct)}%</span>
+            <span className="text-xs font-medium text-ink">{Math.round(pct)}%</span>
           ) : downloaded(entry.id) ? (
             <>
               {canActivate(entry) && !active && (

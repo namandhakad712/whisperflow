@@ -285,7 +285,7 @@ function SubNav({ page, active, route }: { page: SettingsPage; active: string; r
               href={`#/${page.id}/${s.id}`}
               aria-current={on ? "page" : undefined}
               className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 font-mono text-[12.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
-                on ? "bg-paper-2 text-phosphor" : "text-ink-dim hover:text-ink"
+                on ? "bg-paper-2 text-ink" : "text-ink-dim hover:text-ink"
               }`}
             >
               <span className={`led ${on ? "" : "opacity-40"}`} data-on={on ? "live" : "off"} aria-hidden="true" />
@@ -389,7 +389,7 @@ function RailItem({
       aria-current={active ? "page" : undefined}
       className={`rail-item relative flex h-9 items-center gap-3 rounded-md px-3 font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
         first ? "" : "mt-1"
-      } ${active ? "is-active bg-rail-active text-phosphor" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
+      } ${active ? "is-active bg-rail-active text-ink" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
     >
       {/* the phosphor edge: a 2px signal on the live channel */}
       {active && (
