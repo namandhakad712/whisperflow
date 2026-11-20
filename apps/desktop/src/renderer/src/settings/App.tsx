@@ -23,6 +23,8 @@ import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { DiagnoseTab } from "./tabs/DiagnoseTab";
 import { Onboarding } from "./Onboarding";
+import { THEMES, getTheme, readThemeId, applyTheme } from "./themes";
+import { Scramble } from "./useScramble";
 import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
 /**
@@ -49,45 +51,16 @@ function hasOnboarded(): boolean {
   }
 }
 
-/** Lab = dark instrument, Daylight = light. Two skins, both ours. */
-type Skin = "lab" | "daylight";
-
-function applySkin(skin: Skin): void {
-  const root = document.documentElement;
-  delete root.dataset.theme;
-  if (skin === "daylight") document.body.classList.add("light");
-  else document.body.classList.remove("light");
-  try {
-    localStorage.setItem("wf-skin", skin);
-  } catch {
-    /* private mode */
-  }
-}
-
-function readSkin(): Skin {
-  try {
-    const saved = localStorage.getItem("wf-skin");
-    if (saved === "lab" || saved === "daylight") return saved;
-    // migrate older flags from before the redesign
-    if (localStorage.getItem("wf-skin") === "classic") return "lab";
-    if (localStorage.getItem("wf-mode") === "light") return "daylight";
-  } catch {
-    /* first run */
-  }
-  return "lab";
-}
-
-const SKIN_LABEL: Record<Skin, string> = {
-  lab: "Lab",
-  daylight: "Daylight",
-};
+/* The Theme Press (v0.1.45): six themes, each a print process with its
+ * own type cast — see themes.ts. The old two-skin toggle is retired;
+ * saved wf-skin values migrate (lab/daylight are theme ids too). */
 
 export function App() {
   // First run starts on onboarding (lazily checked so a completed user is
   // never re-triggered, whatever the hash says); everyone else resumes on
   // whatever screen the URL points at.
   const [rawRoute, setRawRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
-  const [skin, setSkin] = useState<Skin>(() => readSkin());
+  const [themeId, setThemeId] = useState<string>(() => readThemeId());
   const [paletteOpen, setPaletteOpen] = useState(false);
   const version = useAppVersion();
   const loadConfig = useSettings((s) => s.loadConfig);
@@ -106,7 +79,9 @@ export function App() {
 
   useEffect(() => {
     void loadConfig();
-    applySkin(readSkin());
+    applyTheme(readThemeId());
+    const onTheme = () => setThemeId(readThemeId());
+    window.addEventListener("wf-theme-changed", onTheme);
     const onHash = () => setRawRoute(currentRoute());
     window.addEventListener("hashchange", onHash);
     const unsubNavigate = window.whisperflowExtras.app.onNavigate((r) => {
@@ -117,6 +92,7 @@ export function App() {
     if (!hasOnboarded()) window.location.hash = "/onboarding";
     return () => {
       window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("wf-theme-changed", onTheme);
       unsubNavigate();
     };
   }, [loadConfig]);
@@ -124,23 +100,31 @@ export function App() {
   // An empty hash lands on the first screen, not on a blank page.
   const { page, sub, route } = resolveRoute(rawRoute || DEFAULT_ROUTE);
 
-  const toggleSkin = () => {
-    const next: Skin = skin === "lab" ? "daylight" : "lab";
-    setSkin(next);
-    applySkin(next);
+  // The topbar button cycles the press; the picker (General) and the
+  // palette pick directly. All three roll the console on `scope`.
+  const cycleTheme = () => {
+    const i = THEMES.findIndex((t) => t.id === themeId);
+    const next = THEMES[(i + 1) % THEMES.length]!;
+    applyTheme(next.id);
+    setThemeId(next.id);
+    window.dispatchEvent(new Event("wf-theme-changed"));
   };
 
   // Live actions for the palette. (All hooks must run before the onboarding
   // early-return below — React forbids conditional hook counts.)
   const paletteActions = useMemo<PaletteAction[]>(
     () => [
-      {
-        id: "act:skin",
-        label: skin === "lab" ? "switch to Daylight (light)" : "switch to Lab (dark)",
+      ...THEMES.map((t) => ({
+        id: `act:theme:${t.id}`,
+        label: `theme: ${t.label} — ${t.blurb}`,
         group: "actions",
         hint: "theme",
-        run: toggleSkin,
-      },
+        run: () => {
+          applyTheme(t.id);
+          setThemeId(t.id);
+          window.dispatchEvent(new Event("wf-theme-changed"));
+        },
+      })),
       {
         id: "act:onboarding",
         label: "replay onboarding",
@@ -157,7 +141,7 @@ export function App() {
         },
       },
     ],
-    [skin], // eslint-disable-line react-hooks/exhaustive-deps
+    [themeId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // First-run gate — AFTER every hook, so the hook count never varies.
@@ -191,12 +175,13 @@ export function App() {
           </button>
           <button
             type="button"
-            onClick={toggleSkin}
-            aria-label={`Theme: ${SKIN_LABEL[skin]}. Click to change.`}
+            onClick={cycleTheme}
+            aria-label={`Theme: ${getTheme(themeId).label}. Click for the next print.`}
+            title={`${getTheme(themeId).blurb} — click to cycle the press`}
             className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
           >
-            {skin === "lab" ? <Moon size={14} /> : <Sun size={14} />}
-            <span>{SKIN_LABEL[skin]}</span>
+            {getTheme(themeId).dark ? <Moon size={14} /> : <Sun size={14} />}
+            <span>{getTheme(themeId).label}</span>
           </button>
         </div>
       </div>
@@ -400,8 +385,8 @@ function RailItem({
       )}
       {children}
       <span className="flex-1">{label}</span>
-      <span className="rail-channel" aria-hidden="true">
-        {channel}
+      <span className="rail-channel" aria-hidden="true" data-channel={channel}>
+        <Scramble text={channel} />
       </span>
     </a>
   );

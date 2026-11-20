@@ -2,6 +2,39 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.45] — 2026-11-20
+
+### Added — the Theme Press: six themes, each a print process
+- **Six full themes** in settings → Dictation → "the theme press":
+  Lab (dark instrument, phosphor), Press Room (warm cream, print green,
+  serif display), Night Ink (deep ink-blue sheet, cobalt signal, serif),
+  Letterpress (cold press, vermilion ink), Lino (ochre sun on proofing
+  white, serif), Daylight (studio white, LED green). Each is a complete
+  token set — neutrals ramp, accent, semantic hues — on the v0.1.44
+  luminance discipline (hierarchy from luminance steps, accent scarce).
+- **Type casts, not just colors**: the serif-cast themes hand the display
+  role to Instrument Serif (the website's editorial register); grotesk
+  themes keep Space Grotesk. JetBrains Mono stays labels/eyebrows
+  everywhere. The theme decides the casting (`themes.ts`).
+- **ASCII specimens in the picker**: every theme card carries its mark
+  rendered in the halftone ramp ` ·∙•⦁●` with the accent in the peaks —
+  the print-shop DNA of the website, now in the app.
+- **Scramble-decode** (MOTION.md signature) on rail channel numbers:
+  hover cycles the glyph ramp ` .·:;=+x%#@`, settles left→right at
+  42ms/frame. Reduced motion settles instantly.
+- **Spring toggles**: toggle knobs travel on the `spring` curve (200ms)
+  with the accent fill reserved for ON.
+- **Card lift**: cards rise 1px on out-expo (150ms) with a stronger
+  hairline — a print sheet leaving the bed.
+- **Theme swap motion**: the console rolls over on `scope` (380ms) —
+  a soft blur-settle, not an instant flip.
+- **Theme everywhere**: topbar button cycles the press; Ctrl/Cmd+K
+  palette lists all six ("theme: Press Room — …"); choice persists and
+  migrates the old lab/daylight skins.
+- QA: 6-theme screenshot harness (`scripts/theme-qa.cjs`), computed-font
+  verification per cast, contrast 15.6-17.9:1 (AAA) on every theme,
+  colored-pixel coverage ≤0.7%.
+
 ## [0.1.44] — 2026-11-20
 
 ### Changed — the instrument, tuned (color discipline overhaul)

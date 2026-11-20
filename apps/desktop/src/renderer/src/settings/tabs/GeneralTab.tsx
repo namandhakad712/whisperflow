@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ModelStatus } from "@whisperflow/shared";
 import { useSettings } from "../store";
 import { Card, PageHeader, Toggle } from "../../shared/ui";
+import { ThemePicker } from "../ThemePicker";
 import { useAppVersion } from "../../shared/useAppVersion";
 
 /** Setup card: progress bar + checklist, wired to REAL app state. */
@@ -119,6 +120,15 @@ export function GeneralTab() {
     <section>
       <PageHeader title="Dictation" tagline="The essentials, in one place." />
       <SetupChecklist />
+      <section aria-label="Theme">
+        <h2 className="sec-mark mb-3">the theme press</h2>
+        <p className="mb-3 max-w-[60ch] text-[12.5px] leading-relaxed text-ink-dim">
+          Six prints of the same instrument — each theme is a full palette and a
+          type cast (which font plays display). The rail, cards and palette all
+          roll over when you pick; nothing else changes.
+        </p>
+        <ThemePicker />
+      </section>
       <Card className="divide-y divide-line/70 p-0">
         <ChangeRow
           label="Shortcuts"
