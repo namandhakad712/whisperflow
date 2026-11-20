@@ -1,0 +1,428 @@
+@import "tailwindcss";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/inter";
+
+/* ============================================================
+   THE INSTRUMENT, TUNED — WhisperFlow desktop tokens v0.1.44
+   Discipline: hierarchy comes from LUMINANCE STEPS (2-4% per
+   level), depth from INSETS + translucency, and color is
+   SEMANTIC + SCARCE (≤10% of area, 60-30-10). The phosphor
+   green marks LIVE SIGNAL only — recording, the active LED,
+   the primary CTA. Navigation, selection and hover are neutral.
+   See docs/DESIGN-v0.1.44.md.
+   ============================================================ */
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  /* LAB — dark. Luminance-stepped neutrals (Raycast-style ramp). */
+  --color-bg: #07080A;
+  --color-paper: #0C0D0F;
+  --color-paper-2: #111214;
+  --color-paper-3: #1B1C1E;
+  --color-ink: #F2F1EE;
+  --color-ink-dim: #9C9C9D;
+  --color-ink-faint: #6A6B6C;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-soft: rgba(255, 255, 255, 0.04);
+  --color-line-strong: rgba(255, 255, 255, 0.12);
+
+  /* SEMANTIC color — each hue means one thing (color psychology) */
+  --color-phosphor: #5CE1A9;      /* LIVE: recording, active LED, primary CTA */
+  --color-phosphor-hot: #8CFFC7;
+  --color-phosphor-deep: #2E6B57;
+  --color-amber: #E8B84B;         /* BUSY: processing, warnings */
+  --color-violet: #8F7BE8;        /* AI: polish/LLM surfaces */
+  --color-coral: #E86A5E;         /* ERROR: destructive, failures */
+  --color-sky: #56C2FF;           /* INFO: links, hints */
+
+  /* rail + pill — NEUTRAL by default; the channel mark is the only green */
+  --color-rail: #07080A;
+  --color-rail-item: rgba(255, 255, 255, 0.04);
+  --color-rail-active: #1B1C1E;
+  --color-rail-text: #F2F1EE;
+  --color-rail-text-dim: #9C9C9D;
+  --color-pill: #111214;
+
+  /* legacy aliases keep old classes working */
+  --color-surface: #0C0D0F;
+  --color-surface-2: #111214;
+  --color-accent: #5CE1A9;
+  --color-accent-strong: #8CFFC7;
+}
+
+/* DAYLIGHT — same discipline at sunrise: warm paper, darker accents */
+body.light {
+  --color-bg: #F2F0EA;
+  --color-paper: #FFFFFF;
+  --color-paper-2: #F6F4EF;
+  --color-paper-3: #ECE9E0;
+  --color-ink: #16181D;
+  --color-ink-dim: #565759;
+  --color-ink-faint: #8A8B8D;
+  --color-line: rgba(22, 24, 29, 0.09);
+  --color-line-soft: rgba(22, 24, 29, 0.05);
+  --color-line-strong: rgba(22, 24, 29, 0.16);
+
+  --color-phosphor: #0E7A55;
+  --color-phosphor-hot: #066748;
+  --color-phosphor-deep: #9CC7B4;
+  --color-amber: #9A6B14;
+  --color-violet: #5B49B8;
+  --color-coral: #C23A2E;
+  --color-sky: #0B6B9E;
+
+  --color-rail: #ECE9E0;
+  --color-rail-item: rgba(22, 24, 29, 0.05);
+  --color-rail-active: #FFFFFF;
+  --color-rail-text: #16181D;
+  --color-rail-text-dim: #565759;
+  --color-pill: #FFFFFF;
+
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F6F4EF;
+  --color-accent: #0E7A55;
+  --color-accent-strong: #066748;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* the print grain: 1-bit bayer texture, bg only, whisper-quiet */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cfilter id='d'%3E%3CfeImage href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%23000%22 fill-opacity=%220%22/%3E%3Crect x=%220%22 y=%220%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3Crect x=%222%22 y=%221%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3C/svg%3E'/%3E%3C/filter%3E%3Crect width='24' height='24' filter='url(%23d)'/%3E%3C/svg%3E");
+}
+body.light::before {
+  opacity: 0.65;
+}
+
+body.overlay-body {
+  background: transparent;
+}
+body.overlay-body::before {
+  display: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* the /// section marker — ink-led now; color only when live */
+.sec-mark {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.sec-mark::before {
+  content: "///";
+  letter-spacing: 0.05em;
+  color: var(--color-ink-faint);
+}
+
+/* status LED — semantic: green=live, amber=busy, coral=error. Dots carry
+   meaning, glows stay tiny (8px) — an indicator, not a lantern. */
+.led {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-ink-faint);
+  flex: none;
+}
+.led[data-on="live"] {
+  background: var(--color-phosphor);
+  box-shadow: 0 0 6px rgba(92, 225, 169, 0.55);
+}
+.led[data-on="busy"] {
+  background: var(--color-amber);
+  box-shadow: 0 0 6px rgba(232, 184, 75, 0.5);
+}
+.led[data-on="error"] {
+  background: var(--color-coral);
+  box-shadow: 0 0 6px rgba(232, 106, 94, 0.5);
+}
+.led[data-on="ai"] {
+  background: var(--color-violet);
+  box-shadow: 0 0 6px rgba(143, 123, 232, 0.5);
+}
+@keyframes led-breathe {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+.led-breathe {
+  animation: led-breathe 3.2s ease-in-out infinite;
+}
+
+/* selection: neutral tint (was green) */
+::selection {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--color-ink);
+}
+body.light ::selection {
+  background: rgba(22, 24, 29, 0.14);
+}
+
+/* One focus ring everywhere: 2px phosphor, keyboard-visible only. */
+:focus-visible {
+  outline: 2px solid var(--color-phosphor);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+
+/* card → instrument panel: inset top light, hairline, corner brackets */
+.card {
+  position: relative;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: border-color 0.15s ease;
+}
+.card:hover {
+  border-color: var(--color-line-strong);
+}
+body.light .card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(22, 24, 29, 0.05);
+}
+
+/* corner brackets — the instrument frame. Neutral at rest, phosphor on
+   interactive focus (hover = strong line). Pure CSS, no images. */
+.corner-brackets::before,
+.corner-brackets::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: border-color 0.15s ease;
+}
+.corner-brackets::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1.5px solid var(--color-line-strong);
+  border-left: 1.5px solid var(--color-line-strong);
+  border-top-left-radius: 3px;
+}
+.corner-brackets::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1.5px solid var(--color-line-strong);
+  border-right: 1.5px solid var(--color-line-strong);
+  border-bottom-right-radius: 3px;
+}
+.corner-brackets:hover::before,
+.corner-brackets:hover::after {
+  border-color: var(--color-phosphor-deep);
+}
+
+/* the dither field: for hero panels only — texture, not noise */
+.dither-tex {
+  position: relative;
+}
+.dither-tex::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image: repeating-conic-gradient(
+    var(--color-line-soft) 0% 25%,
+    transparent 0% 50%
+  );
+  background-size: 4px 4px;
+  mix-blend-mode: normal;
+}
+
+/* seg control accent (settings segmented pickers) — neutral active,
+   phosphor reserved for the ON state of live toggles */
+.seg button.on {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+}
+
+@keyframes wave-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* ============================================================
+   v0.1.44 — the console, retuned. Same motion grammar
+   (MOTION.md): out-expo entrances at 240ms, scope morphs at
+   380ms, nothing loops faster than a breath.
+   ============================================================ */
+
+/* ---- the command palette ("the patch bay"): glass depth ---- */
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.wf-palette-panel {
+  width: min(560px, calc(100vw - 32px));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(137deg, rgba(17, 18, 20, 0.92) 4.87%, rgba(12, 13, 15, 0.96) 75.88%),
+    radial-gradient(100% 100% at 50% 0%, #111214 0%, #0C0D0F 100%);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  animation: palette-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.light .wf-palette-panel {
+  border: 1px solid rgba(22, 24, 29, 0.1);
+  background: linear-gradient(137deg, rgba(255, 255, 255, 0.96) 4.87%, rgba(246, 244, 239, 0.98) 75.88%);
+  box-shadow:
+    0 24px 64px rgba(22, 24, 29, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.wf-palette-row {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: background-color 0.12s ease;
+}
+.wf-palette-row.is-sel {
+  background: var(--color-paper-3);
+}
+/* the selection edge: NEUTRAL strong line (commands are not live signals) */
+.wf-palette-row.is-sel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-line-strong);
+}
+
+/* ---- screen staging: content lays on when the route changes ---- */
+@keyframes wf-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.wf-stage {
+  animation: wf-stage-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* rows inside a staged screen cascade — 26ms apart, capped at 8 rows */
+.wf-stage [data-stage-row] {
+  animation: wf-stage-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.wf-stage [data-stage-row]:nth-child(1) { animation-delay: 0.03s; }
+.wf-stage [data-stage-row]:nth-child(2) { animation-delay: 0.06s; }
+.wf-stage [data-stage-row]:nth-child(3) { animation-delay: 0.09s; }
+.wf-stage [data-stage-row]:nth-child(4) { animation-delay: 0.12s; }
+.wf-stage [data-stage-row]:nth-child(5) { animation-delay: 0.15s; }
+.wf-stage [data-stage-row]:nth-child(6) { animation-delay: 0.18s; }
+.wf-stage [data-stage-row]:nth-child(7) { animation-delay: 0.21s; }
+.wf-stage [data-stage-row]:nth-child(8) { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wf-palette-panel,
+  .wf-stage,
+  .wf-stage [data-stage-row] {
+    animation: none;
+  }
+}
+
+/* ---- the rail: NEUTRAL channel strip. The 2px left mark is the
+     only green; channel numbers stay ink and brighten on hover. ---- */
+.rail-channel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--color-rail-text-dim);
+  opacity: 0.6;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.rail-item:hover .rail-channel {
+  color: var(--color-rail-text);
+  opacity: 1;
+}
+.rail-item.is-active .rail-channel {
+  color: var(--color-rail-text);
+  opacity: 0.95;
+}
+
+/* ---- screen header: the /// marker + channel readout ---- */
+.wf-header-channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.wf-header-channel::before {
+  content: "///";
+  letter-spacing: 0.05em;
+  color: var(--color-ink-faint);
+}

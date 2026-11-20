@@ -183,7 +183,7 @@ export function Button({
       ? "bg-phosphor font-mono text-[#07120D] shadow-[0_0_18px_rgba(92,225,169,0.15)] hover:bg-phosphor-hot hover:shadow-[0_0_28px_rgba(92,225,169,0.3)]"
       : variant === "danger"
         ? "border border-coral/40 bg-coral/5 font-mono text-coral hover:bg-coral/10 hover:border-coral/60"
-        : "border border-line bg-paper-2 font-mono text-ink hover:border-phosphor/50 hover:text-phosphor";
+        : "border border-line bg-paper-2 font-mono text-ink hover:border-line-strong hover:text-ink";
   return (
     <button
       type="button"
@@ -246,7 +246,7 @@ export function Segmented<T extends string>({
           disabled={o.disabled}
           onClick={() => onChange(o.value)}
           className={`rounded-md px-3.5 py-1.5 font-mono text-[12px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 disabled:cursor-not-allowed disabled:opacity-40 ${
-            o.value === value ? "bg-bg text-phosphor shadow-[inset_0_0_0_1px_rgba(92,225,169,0.3)]" : "text-ink-dim hover:text-ink"
+            o.value === value ? "bg-paper-3 text-ink shadow-[inset_0_0_0_1px_var(--color-line)]" : "text-ink-dim hover:text-ink"
           }`}
         >
           {o.label}
@@ -283,7 +283,7 @@ export function Select({
 export function EmptyState({ icon, title, body }: { icon: string; title: string; body?: string }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line py-14 text-center">
-      <span className="font-mono text-2xl text-phosphor/70" aria-hidden="true">
+      <span className="font-mono text-2xl text-ink" aria-hidden="true">
         {icon}
       </span>
       <p className="mt-3 text-sm font-medium">{title}</p>
@@ -347,7 +347,7 @@ export function PageHeader({
               type="button"
               onClick={() => onSegChange?.(seg)}
               className={`rounded-md px-3.5 py-1.5 font-mono text-[12px] transition-colors ${
-                seg === activeSeg ? "bg-bg text-phosphor" : "text-ink-dim hover:text-ink"
+                seg === activeSeg ? "bg-paper-3 text-ink" : "text-ink-dim hover:text-ink"
               }`}
             >
               {seg}
