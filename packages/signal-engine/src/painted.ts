@@ -88,13 +88,13 @@ export class PaintedScene {
     this.u = new Uniforms(gl, prog);
 
     let paperName = this.opts.paper ?? "cream";
-    let paper = PALETTES[paperName] ?? PALETTES.cream;
+    let paper = PALETTES[paperName] ?? PALETTES.cream!;
     // the print follows the sheet: switching data-mode re-inks every scene live
     const modeObs = new MutationObserver(() => {
       const next = document.documentElement.dataset.mode === "dark" ? "ink" : "cream";
       if (next !== paperName) {
         paperName = next;
-        paper = PALETTES[paperName] ?? PALETTES.cream;
+        paper = PALETTES[paperName] ?? PALETTES.cream!;
       }
     });
     modeObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-mode"] });

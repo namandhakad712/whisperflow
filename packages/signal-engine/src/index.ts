@@ -6,6 +6,7 @@
  * See INSPIRATION.md at the repo root for lineage.
  */
 export { DitherField, DITHER_PALETTES, type DitherPalette, type DitherFieldOptions } from "./dither";
+export { DitherCanvas, type DitherCanvasOptions, type DitherVariant } from "./ditherui";
 export { AsciiRender, GLYPH_RAMP, type AsciiRenderOptions } from "./ascii";
 export { HalftoneReveal, type HalftoneOptions } from "./halftone";
 export { PaintedScene, type PaintedSceneOptions, type SceneGLSL } from "./painted";

@@ -1,7 +1,7 @@
 {
   "name": "@whisperflow/desktop",
   "productName": "WhisperFlow",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "private": true,
   "description": "WhisperFlow \u2014 open-source, local-first AI voice dictation (desktop app)",
   "license": "Apache-2.0",
@@ -21,6 +21,7 @@
     "@fontsource/instrument-serif": "^5.3.0",
     "@whisperflow/engine": "*",
     "@whisperflow/shared": "*",
+    "@whisperflow/signal-engine": "*",
     "electron-updater": "^6.6.2",
     "framer-motion": "^14.14.0",
     "lucide-react": "^1.61.0",
