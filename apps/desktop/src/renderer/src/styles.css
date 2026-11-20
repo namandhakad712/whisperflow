@@ -2,12 +2,15 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/inter";
+@import "@fontsource/instrument-serif";
 
 /* ============================================================
-   THE SIGNAL STANDARD — WhisperFlow desktop tokens
-   "Phosphor Lab". Authored 2026-11. The copied "classic" skin
-   and every measured-from-reference value were removed on
-   purpose — see INSPIRATION.md / MOTION.md at the repo root.
+   THE THEME PRESS — WhisperFlow desktop tokens v0.1.45
+   Six themes, each a print process; the type cast (which font
+   plays display/UI/mono) is part of the theme. Themes are pure
+   data in settings/themes.ts — this sheet maps them to CSS.
+   Discipline stays v0.1.44: hierarchy from LUMINANCE steps,
+   depth from insets, accent = live signal, ≤10% of area.
    ============================================================ */
 
 @theme {
@@ -15,67 +18,207 @@
   --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
-  /* LAB — dark, default */
-  --color-bg: #0A0B0D;
-  --color-paper: #111318;
-  --color-paper-2: #16191F;
-  --color-ink: #EDEBE4;
-  --color-ink-dim: rgba(237, 235, 228, 0.58);
-  --color-ink-faint: rgba(237, 235, 228, 0.34);
-  --color-line: rgba(237, 235, 228, 0.14);
-  --color-line-soft: rgba(237, 235, 228, 0.08);
+  /* defaults = Lab; every token is re-set per [data-theme] below */
+  --color-bg: #07080A;
+  --color-paper: #0C0D0F;
+  --color-paper-2: #111214;
+  --color-paper-3: #1B1C1E;
+  --color-ink: #F2F1EE;
+  --color-ink-dim: #9C9C9D;
+  --color-ink-faint: #6A6B6C;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-soft: rgba(255, 255, 255, 0.04);
+  --color-line-strong: rgba(255, 255, 255, 0.12);
 
-  /* THE signal color — scarce on purpose */
   --color-phosphor: #5CE1A9;
   --color-phosphor-hot: #8CFFC7;
   --color-phosphor-deep: #2E6B57;
   --color-amber: #E8B84B;
   --color-violet: #8F7BE8;
   --color-coral: #E86A5E;
+  --color-sky: #56C2FF;
 
-  /* rail + pill (Lab defaults; Daylight below) */
-  --color-rail: #0D0F13;
-  --color-rail-item: rgba(237, 235, 228, 0.05);
-  --color-rail-active: rgba(92, 225, 169, 0.1);
-  --color-rail-text: #EDEBE4;
-  --color-rail-text-dim: rgba(237, 235, 228, 0.55);
-  --color-pill: #16191F;
+  --color-rail: var(--color-bg);
+  --color-rail-item: rgba(255, 255, 255, 0.04);
+  --color-rail-active: var(--color-paper-3);
+  --color-rail-text: var(--color-ink);
+  --color-rail-text-dim: var(--color-ink-dim);
+  --color-pill: var(--color-paper-2);
 
-  /* legacy aliases keep old classes working */
-  --color-surface: #111318;
-  --color-surface-2: #16191F;
-  --color-accent: #5CE1A9;
-  --color-accent-strong: #8CFFC7;
-  --color-ink-dim: rgba(237, 235, 228, 0.58);
+  --color-surface: var(--color-paper);
+  --color-surface-2: var(--color-paper-2);
+  --color-accent: var(--color-phosphor);
+  --color-accent-strong: var(--color-phosphor-hot);
 }
 
-/* DAYLIGHT — light variant, same design at sunrise */
-body.light {
-  --color-bg: #F4F2EC;
-  --color-paper: #FFFFFF;
-  --color-paper-2: #ECE9E0;
-  --color-ink: #16181D;
-  --color-ink-dim: rgba(22, 24, 29, 0.62);
-  --color-ink-faint: rgba(22, 24, 29, 0.38);
-  --color-line: rgba(22, 24, 29, 0.14);
-  --color-line-soft: rgba(22, 24, 29, 0.08);
+/* ---- theme casts: the font-role properties. applyTheme sets them
+       inline; these selectors make first paint correct per theme. ---- */
 
+/* grotesk-cast themes — lab, letterpress, daylight */
+:root,
+[data-theme="lab"],
+[data-theme="letterpress"],
+[data-theme="daylight"] {
+  --wf-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --wf-ui: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --wf-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+}
+/* serif-cast themes — pressroom, nightink, lino */
+[data-theme="pressroom"],
+[data-theme="nightink"],
+[data-theme="lino"] {
+  --wf-display: "Instrument Serif", Georgia, serif;
+  --wf-ui: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif;
+  --wf-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ---- the six prints ---- */
+
+/* PRESS ROOM — warm cream, print green, serif display */
+[data-theme="pressroom"] {
+  --color-bg: #F7F4EE;
+  --color-paper: #FFFEFA;
+  --color-paper-2: #F1EDE3;
+  --color-paper-3: #E7E2D4;
+  --color-ink: #1A1916;
+  --color-ink-dim: #5C584E;
+  --color-ink-faint: #8D887B;
+  --color-line: rgba(26, 25, 22, 0.10);
+  --color-line-soft: rgba(26, 25, 22, 0.05);
+  --color-line-strong: rgba(26, 25, 22, 0.18);
+  --color-phosphor: #0E7A55;
+  --color-phosphor-hot: #0A5C41;
+  --color-phosphor-deep: #9CC7B4;
+  --color-amber: #9A6B14;
+  --color-violet: #5B49B8;
+  --color-coral: #C2452D;
+  --color-sky: #2D4B8E;
+  --color-rail: #F1EDE3;
+  --color-rail-item: rgba(26, 25, 22, 0.05);
+  --color-rail-active: #FFFEFA;
+  --color-accent: #0E7A55;
+  --color-accent-strong: #0A5C41;
+}
+
+/* NIGHT INK — deep ink-blue sheet, cream ink, cobalt signal */
+[data-theme="nightink"] {
+  --color-bg: #0E1118;
+  --color-paper: #14171D;
+  --color-paper-2: #191D25;
+  --color-paper-3: #232833;
+  --color-ink: #EFEBE0;
+  --color-ink-dim: #9BA0AC;
+  --color-ink-faint: #69707E;
+  --color-line: rgba(239, 235, 224, 0.08);
+  --color-line-soft: rgba(239, 235, 224, 0.04);
+  --color-line-strong: rgba(239, 235, 224, 0.14);
+  --color-phosphor: #6FA8FF;
+  --color-phosphor-hot: #A7C9FF;
+  --color-phosphor-deep: #33507E;
+  --color-amber: #E8B84B;
+  --color-violet: #B39DFF;
+  --color-coral: #E86A5E;
+  --color-sky: #56C2FF;
+  --color-rail: #10131A;
+  --color-rail-item: rgba(239, 235, 224, 0.04);
+  --color-rail-active: #232833;
+  --color-accent: #6FA8FF;
+  --color-accent-strong: #A7C9FF;
+}
+
+/* LETTERPRESS — cold press, vermilion ink */
+[data-theme="letterpress"] {
+  --color-bg: #101113;
+  --color-paper: #16181B;
+  --color-paper-2: #1C1F23;
+  --color-paper-3: #272B30;
+  --color-ink: #EFEAE2;
+  --color-ink-dim: #9A968E;
+  --color-ink-faint: #6B6862;
+  --color-line: rgba(239, 234, 226, 0.08);
+  --color-line-soft: rgba(239, 234, 226, 0.04);
+  --color-line-strong: rgba(239, 234, 226, 0.14);
+  --color-phosphor: #E8563F;
+  --color-phosphor-hot: #F27B63;
+  --color-phosphor-deep: #8A3A2B;
+  --color-amber: #E8B84B;
+  --color-violet: #8F7BE8;
+  --color-coral: #E8563F;
+  --color-sky: #56C2FF;
+  --color-rail: #121417;
+  --color-rail-item: rgba(239, 234, 226, 0.04);
+  --color-rail-active: #272B30;
+  --color-accent: #E8563F;
+  --color-accent-strong: #F27B63;
+}
+
+/* LINO — ochre sun on proofing white, serif display */
+[data-theme="lino"] {
+  --color-bg: #FAF6ED;
+  --color-paper: #FFFFFF;
+  --color-paper-2: #F3EDDD;
+  --color-paper-3: #EAE2CC;
+  --color-ink: #201C14;
+  --color-ink-dim: #5E564A;
+  --color-ink-faint: #8F8678;
+  --color-line: rgba(32, 28, 20, 0.10);
+  --color-line-soft: rgba(32, 28, 20, 0.05);
+  --color-line-strong: rgba(32, 28, 20, 0.18);
+  --color-phosphor: #B56A0F;
+  --color-phosphor-hot: #8F5408;
+  --color-phosphor-deep: #D8B98A;
+  --color-amber: #9A6B14;
+  --color-violet: #5B49B8;
+  --color-coral: #C2452D;
+  --color-sky: #2D4B8E;
+  --color-rail: #F3EDDD;
+  --color-rail-item: rgba(32, 28, 20, 0.05);
+  --color-rail-active: #FFFFFF;
+  --color-accent: #B56A0F;
+  --color-accent-strong: #8F5408;
+}
+
+/* DAYLIGHT — clean studio white, LED green */
+[data-theme="daylight"] {
+  --color-bg: #F2F0EA;
+  --color-paper: #FFFFFF;
+  --color-paper-2: #F6F4EF;
+  --color-paper-3: #ECE9E0;
+  --color-ink: #16181D;
+  --color-ink-dim: #565759;
+  --color-ink-faint: #8A8B8D;
+  --color-line: rgba(22, 24, 29, 0.09);
+  --color-line-soft: rgba(22, 24, 29, 0.05);
+  --color-line-strong: rgba(22, 24, 29, 0.16);
   --color-phosphor: #0E8A62;
   --color-phosphor-hot: #066748;
   --color-phosphor-deep: #9CC7B4;
-  --color-amber: #B07C1F;
+  --color-amber: #9A6B14;
   --color-violet: #5B49B8;
   --color-coral: #C23A2E;
-
+  --color-sky: #0B6B9E;
   --color-rail: #ECE9E0;
   --color-rail-item: rgba(22, 24, 29, 0.05);
-  --color-rail-active: rgba(14, 138, 98, 0.12);
-  --color-rail-text: #16181D;
-  --color-rail-text-dim: rgba(22, 24, 29, 0.55);
-  --color-pill: #FFFFFF;
+  --color-rail-active: #FFFFFF;
+  --color-accent: #0E8A62;
+  --color-accent-strong: #066748;
+}
 
-  --color-surface: #FFFFFF;
-  --color-surface-2: #ECE9E0;
+/* legacy light-skin class maps onto daylight tokens */
+body.light {
+  --color-bg: #F2F0EA;
+  --color-paper: #FFFFFF;
+  --color-paper-2: #F6F4EF;
+  --color-paper-3: #ECE9E0;
+  --color-ink: #16181D;
+  --color-ink-dim: #565759;
+  --color-ink-faint: #8A8B8D;
+  --color-line: rgba(22, 24, 29, 0.09);
+  --color-line-soft: rgba(22, 24, 29, 0.05);
+  --color-line-strong: rgba(22, 24, 29, 0.16);
+  --color-phosphor: #0E8A62;
+  --color-phosphor-hot: #066748;
+  --color-phosphor-deep: #9CC7B4;
   --color-accent: #0E8A62;
   --color-accent-strong: #066748;
 }
@@ -89,30 +232,66 @@ body {
   margin: 0;
   background-color: var(--color-bg);
   color: var(--color-ink);
-  font-family: var(--font-sans);
+  font-family: var(--wf-ui), "Space Grotesk Variable", ui-sans-serif, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.38s cubic-bezier(0.7, 0, 0.2, 1), color 0.38s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+/* theme swap: the press rolls over — the console settles on `scope` */
+.wf-theme-swap {
+  animation: wf-theme-roll 0.38s cubic-bezier(0.7, 0, 0.2, 1);
+}
+@keyframes wf-theme-roll {
+  0% { opacity: 0.6; filter: blur(1.5px); }
+  100% { opacity: 1; filter: blur(0); }
+}
+
+/* the print grain: 1-bit bayer texture, bg only, whisper-quiet */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cfilter id='d'%3E%3CfeImage href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%23000%22 fill-opacity=%220%22/%3E%3Crect x=%220%22 y=%220%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3Crect x=%222%22 y=%221%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3C/svg%3E'/%3E%3C/filter%3E%3Crect width='24' height='24' filter='url(%23d)'/%3E%3C/svg%3E");
 }
 
 body.overlay-body {
   background: transparent;
 }
+body.overlay-body::before {
+  display: none;
+}
 
-.font-display {
-  font-family: var(--font-display);
+/* ---- font roles (the cast) ---- */
+.font-display,
+.wf-display {
+  font-family: var(--wf-display), "Space Grotesk Variable", sans-serif;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
+/* serif casts read at display weight 400 — the didone register */
+[data-theme="pressroom"] .wf-display,
+[data-theme="nightink"] .wf-display,
+[data-theme="lino"] .wf-display {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.font-mono,
+.wf-mono {
+  font-family: var(--wf-mono), "JetBrains Mono Variable", monospace;
+}
 
-/* the /// section marker — our signature, same as the website */
+/* the /// section marker — ink-led; color only when live */
 .sec-mark {
-  font-family: var(--font-mono);
+  font-family: var(--wf-mono), monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-phosphor);
+  color: var(--color-ink-dim);
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
@@ -123,7 +302,7 @@ body.overlay-body {
   color: var(--color-ink-faint);
 }
 
-/* status LED — 2px dot, instrument language */
+/* status LED — semantic; glow tinted per theme accent */
 .led {
   width: 7px;
   height: 7px;
@@ -133,15 +312,19 @@ body.overlay-body {
 }
 .led[data-on="live"] {
   background: var(--color-phosphor);
-  box-shadow: 0 0 8px rgba(92, 225, 169, 0.6);
+  box-shadow: 0 0 6px var(--color-phosphor);
 }
 .led[data-on="busy"] {
   background: var(--color-amber);
-  box-shadow: 0 0 8px rgba(232, 184, 75, 0.55);
+  box-shadow: 0 0 6px var(--color-amber);
 }
 .led[data-on="error"] {
   background: var(--color-coral);
-  box-shadow: 0 0 8px rgba(232, 106, 94, 0.55);
+  box-shadow: 0 0 6px var(--color-coral);
+}
+.led[data-on="ai"] {
+  background: var(--color-violet);
+  box-shadow: 0 0 6px var(--color-violet);
 }
 @keyframes led-breathe {
   0%, 100% { opacity: 0.72; }
@@ -151,15 +334,19 @@ body.overlay-body {
   animation: led-breathe 3.2s ease-in-out infinite;
 }
 
+/* selection: neutral tint */
 ::selection {
-  background: rgba(92, 225, 169, 0.28);
+  background: rgba(255, 255, 255, 0.16);
   color: var(--color-ink);
 }
+[data-theme="pressroom"] ::selection,
+[data-theme="lino"] ::selection,
+[data-theme="daylight"] ::selection,
 body.light ::selection {
-  background: rgba(14, 138, 98, 0.22);
+  background: rgba(22, 24, 29, 0.14);
 }
 
-/* One focus ring everywhere: phosphor halo, keyboard-visible only. */
+/* One focus ring everywhere: 2px accent, keyboard-visible only. */
 :focus-visible {
   outline: 2px solid var(--color-phosphor);
   outline-offset: 2px;
@@ -178,22 +365,86 @@ body.light ::selection {
   border-radius: 4px;
 }
 
-/* card → instrument panel (same geometry as the website .panel) */
+/* card → instrument panel: inset top light, hairline, corner brackets,
+   hover LIFTS on out-expo (150ms) — a print sheet rising off the bed */
 .card {
   position: relative;
   background: var(--color-paper);
   border: 1px solid var(--color-line);
   border-radius: 12px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: border-color 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.card:hover {
+  border-color: var(--color-line-strong);
+  transform: translateY(-1px);
+}
+[data-theme="pressroom"] .card,
+[data-theme="lino"] .card,
+[data-theme="daylight"] .card,
 body.light .card {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(22, 24, 29, 0.05);
 }
+[data-theme="pressroom"] .card:hover,
+[data-theme="lino"] .card:hover,
+[data-theme="daylight"] .card:hover,
+body.light .card:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 18px rgba(22, 24, 29, 0.09);
+}
 
-/* seg control accent (settings segmented pickers) */
+/* corner brackets — the instrument frame; accent on hover */
+.corner-brackets::before,
+.corner-brackets::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: border-color 0.15s ease;
+}
+.corner-brackets::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1.5px solid var(--color-line-strong);
+  border-left: 1.5px solid var(--color-line-strong);
+  border-top-left-radius: 3px;
+}
+.corner-brackets::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1.5px solid var(--color-line-strong);
+  border-right: 1.5px solid var(--color-line-strong);
+  border-bottom-right-radius: 3px;
+}
+.corner-brackets:hover::before,
+.corner-brackets:hover::after {
+  border-color: var(--color-phosphor);
+}
+
+/* the dither field: hero panels only — texture, not noise */
+.dither-tex {
+  position: relative;
+}
+.dither-tex::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image: repeating-conic-gradient(
+    var(--color-line-soft) 0% 25%,
+    transparent 0% 50%
+  );
+  background-size: 4px 4px;
+}
+
+/* seg control: neutral active; the ON choice is raised, not colored */
 .seg button.on {
-  background: var(--color-paper-2);
-  color: var(--color-phosphor);
+  background: var(--color-paper-3);
+  color: var(--color-ink);
 }
 
 @keyframes wave-pulse {
@@ -206,13 +457,69 @@ body.light .card {
   }
 }
 
+/* ---- scramble-decode (MOTION.md): rail channels + subnav cycle the
+   glyph ramp on hover, settle left→right at 42ms/frame. JS in
+   useScramble.ts; reduced motion settles instantly. ---- */
+.wf-scramble {
+  display: inline-block;
+  min-width: 1ch;
+}
+
+/* ---- spring toggle: the knob travels on `spring`, 200ms ---- */
+.wf-toggle {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-paper-3);
+  border: 1px solid var(--color-line-strong);
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+  transition: background-color 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.wf-toggle[data-on="true"] {
+  background: var(--color-phosphor);
+  border-color: var(--color-phosphor);
+}
+.wf-toggle .wf-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.wf-toggle[data-on="true"] .wf-toggle-knob {
+  transform: translateX(14px);
+  background: var(--color-bg);
+}
+.wf-toggle:focus-visible {
+  outline: 2px solid var(--color-phosphor);
+  outline-offset: 2px;
+}
+
+/* ---- ASCII specimen block (theme picker + about): mono, ink-dim ---- */
+.ascii-specimen {
+  font-family: var(--wf-mono), monospace;
+  font-size: 11px;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  white-space: pre;
+  color: var(--color-ink-dim);
+  margin: 0;
+}
+.ascii-specimen .hot {
+  color: var(--color-phosphor);
+}
+
 /* ============================================================
-   v0.1.42 — the console, refined. Authored additions; same
-   motion grammar (MOTION.md): out-expo entrances at 240ms,
-   scope morphs at 380ms, nothing loops faster than a breath.
+   the console — palette, staging, rail (v0.1.44 grammar kept)
    ============================================================ */
 
-/* ---- the command palette ("the patch bay") ---- */
 @keyframes palette-in {
   from {
     opacity: 0;
@@ -226,18 +533,23 @@ body.light .card {
 .wf-palette-panel {
   width: min(560px, calc(100vw - 32px));
   border-radius: 12px;
-  border: 1px solid var(--color-line);
-  background: var(--color-paper);
+  border: 1px solid var(--color-line-strong);
+  background:
+    radial-gradient(100% 100% at 50% 0%, var(--color-paper-2) 0%, var(--color-paper) 100%);
+  backdrop-filter: blur(12px);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
   overflow: hidden;
   animation: palette-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
+[data-theme="pressroom"] .wf-palette-panel,
+[data-theme="lino"] .wf-palette-panel,
+[data-theme="daylight"] .wf-palette-panel,
 body.light .wf-palette-panel {
   box-shadow:
     0 24px 64px rgba(22, 24, 29, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .wf-palette-row {
   position: relative;
@@ -250,9 +562,8 @@ body.light .wf-palette-panel {
   transition: background-color 0.12s ease;
 }
 .wf-palette-row.is-sel {
-  background: var(--color-paper-2);
+  background: var(--color-paper-3);
 }
-/* the phosphor edge on the selected row */
 .wf-palette-row.is-sel::before {
   content: "";
   position: absolute;
@@ -261,14 +572,9 @@ body.light .wf-palette-panel {
   bottom: 8px;
   width: 2px;
   border-radius: 2px;
-  background: var(--color-phosphor);
-  box-shadow: 0 0 8px rgba(92, 225, 169, 0.7);
-}
-body.light .wf-palette-row.is-sel::before {
-  box-shadow: 0 0 8px rgba(14, 138, 98, 0.5);
+  background: var(--color-line-strong);
 }
 
-/* ---- screen staging: content lays on when the route changes ---- */
 @keyframes wf-stage-in {
   from {
     opacity: 0;
@@ -282,7 +588,6 @@ body.light .wf-palette-row.is-sel::before {
 .wf-stage {
   animation: wf-stage-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
-/* rows inside a staged screen cascade — 26ms apart, capped at 8 rows */
 .wf-stage [data-stage-row] {
   animation: wf-stage-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
@@ -295,38 +600,29 @@ body.light .wf-palette-row.is-sel::before {
 .wf-stage [data-stage-row]:nth-child(7) { animation-delay: 0.21s; }
 .wf-stage [data-stage-row]:nth-child(8) { animation-delay: 0.24s; }
 
-@media (prefers-reduced-motion: reduce) {
-  .wf-palette-panel,
-  .wf-stage,
-  .wf-stage [data-stage-row] {
-    animation: none;
-  }
-}
-
-/* ---- the rail: channel numbers, instrument scan on hover ---- */
+/* rail channels: brighten on hover (scramble runs in JS) */
 .rail-channel {
-  font-family: var(--font-mono);
+  font-family: var(--wf-mono), monospace;
   font-size: 9px;
   letter-spacing: 0.08em;
   color: var(--color-rail-text-dim);
-  opacity: 0.55;
+  opacity: 0.6;
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 .rail-item:hover .rail-channel {
-  color: var(--color-phosphor);
+  color: var(--color-rail-text);
   opacity: 1;
 }
 .rail-item.is-active .rail-channel {
-  color: var(--color-phosphor);
-  opacity: 0.9;
+  color: var(--color-rail-text);
+  opacity: 0.95;
 }
 
-/* ---- screen header: the /// marker + channel readout ---- */
 .wf-header-channel {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-mono);
+  font-family: var(--wf-mono), monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -336,5 +632,20 @@ body.light .wf-palette-row.is-sel::before {
 .wf-header-channel::before {
   content: "///";
   letter-spacing: 0.05em;
-  color: var(--color-phosphor);
+  color: var(--color-ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wf-palette-panel,
+  .wf-stage,
+  .wf-stage [data-stage-row],
+  .wf-theme-swap {
+    animation: none;
+  }
+  .card,
+  .card:hover,
+  .wf-toggle,
+  .wf-toggle .wf-toggle-knob {
+    transition-duration: 0.01ms;
+  }
 }
