@@ -48,7 +48,7 @@ export interface Theme {
   tokens: ThemeTokens;
   cast: FontCast;
   /** ASCII specimen — the theme's mark, shown in the picker (≤5 lines) */
-  specimen: string;
+  specimen: string[];
 }
 
 const GROTESK = '"Space Grotesk Variable", "Space Grotesk", ui-sans-serif, sans-serif';
