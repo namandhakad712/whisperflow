@@ -57,6 +57,30 @@ body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
   overflow: hidden;
   pointer-events: auto;
 }
+/* v0.1.46 depth pass: a gradient hairline ring — top-lit like glass over
+   ink. Pure border-image is fuzzy at 1px; a ring gradient is crisp. */
+.capsule::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--cap-glow, #5CE1A9) 45%, transparent) 0%,
+    transparent 38%,
+    transparent 62%,
+    color-mix(in srgb, var(--cap-glow, #5CE1A9) 22%, transparent) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+.capsule[data-state="rest"]::before { opacity: 0; }
 .capsule[data-state="card"] { height: 88px; }
 .capsule[data-state="l4"] { height: 336px; }
 /* rest = the standby LED: a breathing phosphor dot. */
@@ -106,6 +130,15 @@ body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
 }
 .handle:active { cursor: grabbing; }
 
+/* live text: each final word lands with a 150ms rise — the press typing */
+.live-text span.word-in {
+  display: inline-block;
+  animation: word-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .live-text {
   flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: clip;
   font-size: 14.5px; line-height: 20px; font-weight: 500;
@@ -329,6 +362,19 @@ export function Overlay() {
     root.setProperty("--cap-border", tint ? "rgba(0,0,0,0.1)" : systemLight ? "rgba(22,24,29,0.18)" : "rgba(237,235,228,0.16)");
     root.setProperty("--cap-ink", systemLight ? "#16181D" : "#EDEBE4");
     root.setProperty("--cap-meta", systemLight ? "rgba(22,24,29,0.5)" : "rgba(237,235,228,0.5)");
+    // v0.1.46: the overlay follows the console theme's accent — the capsule
+    // glows in the print the user chose (wf-theme is shared via localStorage).
+    try {
+      const themeId = localStorage.getItem("wf-theme");
+      const ACCENTS: Record<string, string> = {
+        lab: "#5CE1A9", pressroom: "#0E7A55", nightink: "#6FA8FF",
+        letterpress: "#E8563F", lino: "#B56A0F", daylight: "#0E8A62",
+      };
+      if (themeId && ACCENTS[themeId]) root.setProperty("--cap-glow", ACCENTS[themeId]!);
+      else root.setProperty("--cap-glow", systemLight ? "#0E8A62" : "#5CE1A9");
+    } catch {
+      root.setProperty("--cap-glow", systemLight ? "#0E8A62" : "#5CE1A9");
+    }
     // The hotkey hint for the hovered standby dot.
     setHotkey(c.hotkey?.pushToTalk ?? "");
   }, [micId, systemDark]);
@@ -577,7 +623,13 @@ export function Overlay() {
               data-multiline={capState === "l4"}
               data-phase={event.state === "polishing" ? "llm" : event.state === "done" ? "done" : undefined}
             >
-              {liveText}
+              {/* final words land with the word-in rise; partials re-render flat
+                  so the text never jiggles while you speak */}
+              {event.partial
+                ? liveText
+                : liveText.split(/(\s+)/).map((w, i) =>
+                    /^\s+$/.test(w) ? w : <span key={i} className="word-in">{w}</span>,
+                  )}
             </p>
             {resting && hovered ? (
               <span className="meta">{hotkey ? `${hotkey} · or click` : "click to dictate"}</span>

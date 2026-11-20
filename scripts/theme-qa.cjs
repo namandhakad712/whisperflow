@@ -71,6 +71,11 @@ const THEMES = ["lab", "pressroom", "nightink", "letterpress", "lino", "daylight
       await page.screenshot({ path: path.join(SHOTS, `t-${theme}-models.png`) });
       console.log(`📸 t-${theme}-models (serif cast)`);
     }
+    // v0.1.46: insights — dithered bars, sparkline, heatmap (seeded history)
+    await page.evaluate(() => { window.location.hash = "/dictation/insights"; });
+    await page.waitForTimeout(1500); // entrance sweeps + bloom settle
+    await page.screenshot({ path: path.join(SHOTS, `t-${theme}-insights.png`), fullPage: false });
+    console.log(`📸 t-${theme}-insights (dithered)`);
   }
 
   await browser.close();

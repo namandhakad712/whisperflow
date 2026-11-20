@@ -2,6 +2,37 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.46] — 2026-11-20
+
+### Added — the dither pass: data printed as dots (Engine F)
+- **DitherCanvas** (signal-engine, zero-dep Canvas2D): ordered Bayer 8×8
+  fill surfaces for UI — bar fills, washes, heatmap ramps — with
+  gradient/dotted/hatched variants, "aura" bloom underlay, a 620ms
+  out-expo entrance sweep, IntersectionObserver gating, DPR cap 2, and a
+  ResizeObserver so a canvas laid out mid-animation still paints
+  (the collapsed-flex bug this release fixes). Dot DENSITY carries the
+  tone; every dot stays full ink — that's what makes it read as print.
+- **Insights, dithered**: the 7-day words chart is now seven dithered
+  bars in the theme accent with aura bloom, a replay button (re-sweeps
+  the entrance), a gliding scrub tooltip, and a one-line sparkline
+  ("the week, one line — fig. 02"). Stat cards carry a quiet dotted
+  wash; the 12-week heatmap renders as five dot-density steps of the
+  accent — a press ramp, not flat alpha.
+- **Overlay depth pass**: the capsule gains a gradient hairline ring
+  (top-lit, mask-composited, theme-accented), and it follows the
+  console theme's accent — press green capsule on Press Room, cobalt on
+  Night Ink. Final words land with a 150ms word-in rise; partials stay
+  flat so live text never jiggles.
+- Technique lineage: dither-kit (tripwire.sh) studied for the
+  interaction grammar (entrance/scrub/bloom/variants); everything
+  implemented in-house. Nothing installed — see INSPIRATION.md.
+
+### Fixed
+- Dither canvases mounted before their flex parents granted height
+  painted once at 2px and never re-measured. ResizeObserver repaints on
+  layout change; verified per-bar heights match word counts exactly.
+- Typecheck failures under the strict project configs (undefined-safe
+  palette lookups in glyph/painted engines).
 ## [0.1.45] — 2026-11-20
 
 ### Added — the Theme Press: six themes, each a print process

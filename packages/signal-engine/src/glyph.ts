@@ -149,12 +149,12 @@ export class GlyphScene {
     this.u = new Uniforms(gl, prog);
 
     let paperName = this.opts.paper ?? "cream";
-    let paper = PALETTES[paperName] ?? PALETTES.cream;
+    let paper = PALETTES[paperName] ?? PALETTES.cream!;
     const modeObs = new MutationObserver(() => {
       const next = document.documentElement.dataset.mode === "dark" ? "ink" : "cream";
       if (next !== paperName) {
         paperName = next;
-        paper = PALETTES[paperName] ?? PALETTES.cream;
+        paper = PALETTES[paperName] ?? PALETTES.cream!;
       }
     });
     modeObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-mode"] });

@@ -39,10 +39,23 @@ function bridgeStubFactory() {
     },
     updates: { onStatus: on("updates") },
     app: { version: async () => "0.1.42", hardware: async () => ({ cpu: "QA CPU", ramGb: 16, gpu: "QA GPU", tier: "balanced" }), quitAndInstall: () => {}, onboardingComplete: async () => {} },
-    history: { list: async () => [
-      { id: "h1", at: Date.now() - 3600e3, text: "ship the demo tomorrow, the launch is monday", mode: "push-to-talk", durationMs: 4200 },
-      { id: "h2", at: Date.now() - 86400e3, text: "tell the team we're live", mode: "toggle", durationMs: 2600 },
-    ], clear: async () => {} },
+    history: { list: async () => {
+      // richer seed for insights QA: word counts vary per day (42/180/95/12/240/130/87)
+      const mk = (id, daysAgo, text, mode, dur) => ({
+        id,
+        createdAt: Date.now() - daysAgo * 86400e3 - 3600e3,
+        rawText: text,
+        mode,
+        durationMs: dur,
+      });
+      // one item per day, text length = the intended word count (linear)
+      const day = (n, words) => {
+        const unit = "lorem ipsum dolor sit amet consectetur "; // 5 words
+        const reps = Math.max(1, Math.round(words / 5));
+        return [mk(`d${n}-0`, n, unit.repeat(reps), n % 2 ? "push-to-talk" : "toggle", 2600)];
+      };
+      return [...day(6, 42), ...day(5, 180), ...day(4, 95), ...day(3, 12), ...day(2, 240), ...day(1, 130), ...day(0, 87)];
+    }, clear: async () => {} },
     capture: { sendPcm: () => {} },
     dictionary: { add: async () => {}, delete: async () => {} },
     commands: { add: async () => {}, delete: async () => {} },
