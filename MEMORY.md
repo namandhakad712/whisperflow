@@ -90,3 +90,57 @@ repo root (no /tmp scripts).
 NEXT QUEUE: overlay capsule depth (gradient border + blur), statusbar
 theme pass, website theme-sync with app, README themes section, MOTION.md
 update with spring/lift/roll entries.
+
+## Session 12 (2026-11-20) — v0.1.46 "THE DITHER PASS" — RELEASED ✅
+
+User: "https://tripwire.sh/dither-kit USE IT, USE IN OUR APP, CREATE MOTION
+DESIGN, OVERLAY SYSTEM, WHOLE SYSTEM FOR BEST UI EXPERIENCE, BETTERMENT
+EVERYWHERE."
+
+WebFetch timed out on the page; fetched https://tripwire.sh/dither-kit.md
+(the "plain-markdown docs for agents" link) via curl — full API doc.
+dither-kit = shadcn-style dithered chart kit (ordered-dither fills,
+entrance anims + replayToken, gliding scrub tooltip, bloom "aura",
+gradient/dotted/hatched variants, sparklines, avatars). HOUSE RULE: no
+third-party component libs in our UI → ported TECHNIQUES into our
+zero-dep engine; INSPIRATION.md lineage entry added (nothing installed).
+
+**v0.1.46 SHIPPED** (PR #13, CI 5/5 first try, tag + Release verified,
+LATEST FEED = v0.1.46; main @ eb701b4):
+
+- packages/signal-engine/src/ditherui.ts — Engine F "DitherCanvas":
+  Canvas2D Bayer 8×8 fills for UI. KEY DESIGN RULE: dot DENSITY carries
+  tone, dots are always FULL INK (first version blended ink→paper per
+  dot → gray mush; fixed). Variants gradient/dotted/hatched, aura bloom
+  (blur 14px @16%), 620ms out-expo entrance sweep, IO-gated, DPR≤2,
+  reduced-motion static. Exported from signal-engine index.
+- signal-engine ships as SOURCE (main: src/index.ts) — no build needed,
+  just tsc --noEmit. Desktop needed "@whisperflow/signal-engine": "*"
+  added to deps (was importing @whisperflow/engine by mistake — that's
+  the whisper.cpp inference engine!).
+- InsightsTab: 7-day bars = DitherBar components (dithered, accent,
+  replay button, scrub tooltip), Sparkline ("fig. 02"), stat cards
+  DitherWash, heatmap = 5 dot-density steps via radial-gradient
+  backgroundSize 3px. Route: #/activity/insights.
+- Overlay.tsx: gradient hairline ring (::before, mask-composite xor,
+  --cap-glow), theme-accent bridge (localStorage wf-theme → ACCENTS
+  map), word-in entrance on final words (partials flat — no jiggle).
+- QA: scripts/insights-deep.cjs + insights-phases.cjs (canvas sizes/
+  painted fractions over time), theme-qa.cjs extended with insights
+  shots. console-qa-stub.cjs history seed FIXED: must use REAL
+  TranscriptItem shape (createdAt/rawText, NOT at/text) + word counts
+  linear (earlier seed was words²/30 by accident).
+
+WAR STORIES:
+1. Canvas mounted pre-flex-height paints at 78×2 and never re-measures →
+   ResizeObserver in DitherCanvas.mount() repaints on box change.
+2. Pixel-slice analysis of screenshots is fragile (bar x-ranges merge,
+   dots sparse) — DOM getBoundingClientRect + style.height% is the
+   RELIABLE assertion; screenshots only for dot-structure/color audits.
+3. Electron renderer: `ctx.filter = "blur(...)"` works in Canvas2D
+   (Chromium) — used for aura bloom.
+4. Route map: nav.ts SUB ids → resolveRoute; insights = activity/insights.
+
+NEXT QUEUE: History mode-split DitherBars, Models tier dots, overlay
+trace in theme accent, website charts on DitherCanvas, MOTION.md entry
+for the 620ms sweep + 150ms word-in.
