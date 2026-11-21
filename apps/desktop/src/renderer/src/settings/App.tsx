@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
 import { Moon, Sun, Command } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
@@ -66,11 +66,21 @@ export function App() {
   const loadConfig = useSettings((s) => s.loadConfig);
 
   // Ctrl/⌘+K opens the command palette — the patch bay.
+  // Alt+1..9 (v0.1.50) jumps straight to a rail channel — the numbers
+  // printed beside each icon.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((o) => !o);
+        return;
+      }
+      if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.key)) {
+        const target = PAGES[Number(e.key) - 1];
+        if (target) {
+          e.preventDefault();
+          window.location.hash = `#/${pageHome(target)}`;
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -200,17 +210,23 @@ export function App() {
           aria-label="Sections"
           style={{ width: 216 }}
         >
+          {/* v0.1.50: the rail reads in three sections — the press you
+              drive, the records it prints, the system under it. */}
+          <RailSection title="the press" />
           {PAGES.map((item, i) => (
-            <RailItem
-              key={item.id}
-              active={page.id === item.id}
-              label={item.label}
-              channel={String(i + 1).padStart(2, "0")}
-              href={`#/${pageHome(item)}`}
-              first={i === 0}
-            >
-              <item.icon size={17} strokeWidth={1.75} />
-            </RailItem>
+            <Fragment key={item.id}>
+              {item.id === "activity" && <RailSection title="the records" />}
+              {item.id === "system" && <RailSection title="the system" />}
+              <RailItem
+                active={page.id === item.id}
+                label={item.label}
+                channel={String(i).padStart(2, "0")}
+                href={`#/${pageHome(item)}`}
+                first={i === 0}
+              >
+                <item.icon size={17} strokeWidth={1.75} />
+              </RailItem>
+            </Fragment>
           ))}
           <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
             local-first · apache-2.0
@@ -276,6 +292,42 @@ function LiveRail({ route }: { route: string }) {
   // the mic meter: analyze the default input while the panel is alive.
   // Silent rooms read as a calm floor — that IS the signal (live instrument).
   const [levels, setLevels] = useState<number[]>(() => new Array(14).fill(0.18));
+  /** On-demand mic test (v0.1.50): the ambient meter never prompts, so
+   *  this button is where the user actively asks to be heard. A real
+   *  getUserMedia doubles as the permission grant for the overlay too. */
+  const [, forceMeter] = useState(0);
+  async function testMic() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(stream);
+      const an = ctx.createAnalyser();
+      an.fftSize = 512;
+      src.connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      const start = performance.now();
+      const paint = () => {
+        const raf = requestAnimationFrame(paint);
+        an.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) {
+          const v = (buf[i]! - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / buf.length);
+        setLevels((prev) => [...prev.slice(1), Math.max(0.18, Math.min(1, rms * 5))]);
+        if (performance.now() - start > 10_000) {
+          cancelAnimationFrame(raf);
+          stream.getTracks().forEach((t) => t.stop());
+          void ctx.close();
+          forceMeter((n) => n + 1);
+        }
+      };
+      paint();
+    } catch {
+      /* denied — the hint stays, the meter stays at its floor */
+    }
+  }
   useEffect(() => {
     let raf = 0;
     let ctx: AudioContext | null = null;
@@ -333,8 +385,23 @@ function LiveRail({ route }: { route: string }) {
   const activeModel = models.find((m) => m.id === activeId)?.name ?? (activeId || "—");
   const hotkey = config?.hotkey?.pushToTalk ?? "—";
 
-  // today: first line of the history day group (cheap, no extra IPC)
-  const today = useSettings((s) => s.history)[0];
+  // today (v0.1.50): the WHOLE day's print run, not just the first line —
+  // runs, chars, seconds — recomputed whenever history lands/changes.
+  const history = useSettings((s) => s.history);
+  const midnight = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }, []);
+  const todaysRuns = useMemo(() => history.filter((h) => h.createdAt >= midnight), [history, midnight]);
+  const todayChars = useMemo(
+    () => todaysRuns.reduce((n, h) => n + (h.finalText ?? h.rawText ?? "").length, 0),
+    [todaysRuns],
+  );
+  const todaySecs = useMemo(
+    () => Math.round(todaysRuns.reduce((n, h) => n + (h.durationMs ?? 0), 0) / 1000),
+    [todaysRuns],
+  );
 
   const engineLabel =
     dictState === "listening"
@@ -348,7 +415,8 @@ function LiveRail({ route }: { route: string }) {
   return (
     <aside className="live-rail hidden w-[260px] shrink-0 overflow-y-auto py-4 xl:flex" aria-label="Live status">
       <DotRadar className="pointer-events-none fixed h-0 w-0" />
-      {/* mic */}
+      {/* mic — live meter, and a test button when the meter sits at its
+          floor (permission never granted / no input yet) */}
       <div className="live-rail-cell">
         <div className="live-rail-label">
           <span>mic · live</span>
@@ -359,6 +427,11 @@ function LiveRail({ route }: { route: string }) {
             <span key={i} style={{ height: `${Math.round(v * 100)}%` }} data-live={v > 0.14} />
           ))}
         </div>
+        {levels.every((v) => v <= 0.19) && (
+          <button type="button" className="live-rail-test" onClick={() => void testMic()}>
+            test the mic →
+          </button>
+        )}
       </div>
       {/* engine */}
       <div className="live-rail-cell">
@@ -394,10 +467,13 @@ function LiveRail({ route }: { route: string }) {
         </div>
         <p className="live-rail-value">
           <CountUp
-            to={(today?.finalText ?? today?.rawText ?? "").length}
+            to={todayChars}
             duration={700}
             format={(n) => `${n.toLocaleString()} chars`}
           />
+        </p>
+        <p className="live-rail-sub">
+          {todaysRuns.length} run{todaysRuns.length === 1 ? "" : "s"} · {todaySecs}s spoken
         </p>
       </div>
       <div className="live-rail-foot mt-auto px-1 pb-1 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
@@ -510,6 +586,11 @@ function summarizeReleaseNotes(raw: string): string {
   // First sentence-ish chunk up to ~180 chars, at a line boundary if possible.
   const firstLine = text.split(/(?<=[.!?])\s/)[0] ?? text;
   return firstLine.length > 180 ? `${text.slice(0, 177)}…` : firstLine;
+}
+
+/** A mono section header in the rail — the press / records / system. */
+function RailSection({ title }: { title: string }) {
+  return <p className="rail-section">{title}</p>;
 }
 
 function RailItem({

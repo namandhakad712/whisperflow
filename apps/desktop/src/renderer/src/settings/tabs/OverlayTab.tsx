@@ -61,13 +61,14 @@ export function OverlayTab() {
         </Row>
 
         <Row label="Position" hint="Where the pill appears when you start dictating.">
-          <div className="flex gap-2">
+          <div className="flex max-w-full flex-wrap gap-1.5">
             {POSITIONS.map((p) => (
               <button
                 key={p.id}
                 type="button"
+                title={p.hint}
                 onClick={() => void patch({ general: { overlayPosition: p.id } })}
-                className={`rounded-lg border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                className={`rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors ${
                   g.overlayPosition === p.id
                     ? "border-accent/70 bg-accent/10 text-ink"
                     : "border-line bg-surface-2/60 text-ink-dim hover:border-accent/40"

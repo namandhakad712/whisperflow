@@ -64,7 +64,7 @@ function bridgeStub() {
       remove: async () => {},
     },
     updates: { onStatus: on("updates") },
-    app: { version: async () => "0.1.42", hardware: async () => ({ cpu: "QA CPU", ramGb: 16, gpu: "QA GPU", tier: "balanced" }), quitAndInstall: () => {}, onboardingComplete: async () => {} },
+    app: { version: async () => "0.1.49", hardware: async () => ({ cpu: "QA CPU Model X", cores: 8, totalMemGb: 16, gpu: "QA GPU", tier: "mid", primaryDisplay: { label: "primary display", sizePx: { w: 2560, h: 1440 }, scaleFactor: 1.25, workArea: { x: 0, y: 0, w: 2048, h: 1120 } } }), quitAndInstall: () => {}, onboardingComplete: async () => {} },
     history: { list: async () => [
       { id: "h1", createdAt: Date.now() - 3600e3, rawText: "ship the demo tomorrow, the launch is monday", finalText: "Ship the demo tomorrow — the launch is Monday.", durationMs: 4200 },
       { id: "h2", createdAt: Date.now() - 3600e3 - 900e3, rawText: "tell the team we're live", finalText: "Tell the team we're live.", durationMs: 2600 },
@@ -160,6 +160,26 @@ async function main() {
   await page.goto(`${base}?qa=1&v=9#/dictation/general`, { waitUntil: "networkidle" });
   await page.waitForTimeout(700);
   await shot("23-your-press");
+
+  // ---- v0.1.50: the live room ----
+  // rail groups + live rail (wide)
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto(`${base}?qa=1#/home/front`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("30-rail-groups-liverail");
+
+  // checklist collapsed state: seed done flags via localStorage + reload
+  await page.evaluate(() => {
+    localStorage.removeItem("wf-setup-done");
+  });
+  await page.goto(`${base}?qa=1&v=10#/dictation/general`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(800);
+  await shot("31-checklist-progress");
+
+  // overlay stage v2: hardware strip + live tag visible
+  await page.goto(`${base}?qa=1&v=11#/dictation/overlay`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("32-stage-v2-hardware");
 
 
   await page.goto(`${base}?qa=1#/models/models`, { waitUntil: "networkidle" });

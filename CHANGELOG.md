@@ -2,6 +2,37 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.50] — 2026-11-21
+
+### Fixed — the checklist finally finishes, rows stop overflowing
+- **Setup checklist collapses**: all five steps done now collapses to a
+  single "The press is ready" strip (dismissible, remembered in
+  localStorage) instead of sitting at 5/5 struck-through forever. The
+  hotkey step's hint now says what actually ticks it (dictate once).
+- **Settings rows wrap**: `Row` flex-wraps, so wide control groups (the
+  7 position pills) drop under the label instead of overflowing the
+  card. Position pills gained hint tooltips.
+
+### Added — the live room: real mics, real specs, real numbers
+- **Overlay stage v2**: the rehearsal is now REAL — *test mic* runs the
+  actual microphone (getUserMedia → AnalyserNode → the phosphor trace);
+  the capsule mirrors the live dictation state (hold your hotkey and the
+  stage follows); the chrome bar shows the REAL primary display
+  (resolution · scale · label) and a spec strip below shows cpu · ram ·
+  gpu · work area · tier (AppHardware IPC extended with screen info).
+- **Live rail v2**: *test the mic* button when the meter sits at its
+  floor; the today cell now counts the WHOLE day — chars plus
+  "N runs · Ns spoken" — recomputed live as history lands.
+- **Navigation v2**: the rail reads in three mono sections — the press /
+  the records / the system — and channels renumber from 00. Alt+1…9
+  jumps straight to a channel.
+- **Contrast pass**: rail section headers, channel numbers, and the
+  stage's spec line brightened after the VLM QA flagged them faint.
+- **README**: v0.1.50 badge, four console screenshots (front page,
+  stage, stage-transcript, press room), the front page / overlay stage /
+  your press / six prints features, and the console tour rewritten
+  around the grouped rail + channel hotkeys + live rail.
+
 ## [0.1.49] — 2026-11-21
 
 ### Added — the front page: console v3 (home, live previews, your press)

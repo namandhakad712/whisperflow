@@ -112,12 +112,15 @@ export function SectionTitle({ title, hint }: { title: string; hint?: string }) 
 
 export function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-6 border-b border-line-soft py-3.5 last:border-0">
-      <div className="min-w-0">
+    // v0.1.50: rows FLEX-WRAP — controls that need more than their half of
+    // the card (the 7 position pills, wide segments) drop below the label
+    // instead of overflowing the card edge.
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5 border-b border-line-soft py-3.5 last:border-0 [&>*]:max-w-full">
+      <div className="min-w-[140px] flex-1">
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="mt-0.5 text-xs leading-5 text-ink-dim">{hint}</p>}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="min-w-0 max-w-full basis-auto">{children}</div>
     </div>
   );
 }

@@ -15,7 +15,7 @@
 <p align="center">
   <a href="#license"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-2952E3?style=flat-square"></a>
   <a href="https://namandhakad712.github.io/whisperflow/"><img alt="Site" src="https://img.shields.io/badge/site-live-8FB0FF?style=flat-square"></a>
-  <a href="https://github.com/namandhakad712/whisperflow/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1.41-5CE1A9?style=flat-square"></a>
+  <a href="https://github.com/namandhakad712/whisperflow/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1.50-5CE1A9?style=flat-square"></a>
   <img alt="Telemetry" src="https://img.shields.io/badge/telemetry-none-1a1a1a?style=flat-square">
   <img alt="Word caps" src="https://img.shields.io/badge/word%20caps-none-DB704C?style=flat-square">
 </p>
@@ -55,13 +55,17 @@ full system):
 
 ## Screenshots
 
+| The console — front page | The overlay stage |
+| --- | --- |
+| ![Console front page](docs/assets/console-frontpage.png) | ![Overlay stage](docs/assets/console-stage.png) |
+
+| The press room | The stage, transcript state |
+| --- | --- |
+| ![Press room](docs/assets/console-pressroom.png) | ![Stage transcript](docs/assets/console-stage-transcript.png) |
+
 | Website — Lab (dark) | Website — paper (light) |
 | --- | --- |
 | ![Home](docs/assets/hero.png) | ![Dawn](docs/assets/dawn.png) |
-
-| Snippets board | Live docs |
-| --- | --- |
-| ![Snippets](docs/assets/snippets.png) | [Live docs →](https://namandhakad712.github.io/whisperflow/docs/) |
 
 ## What it does
 
@@ -84,7 +88,18 @@ full system):
   can be switched off entirely. Backups (config + history) export to one JSON file.
 - **A resting dock, if you want one** — a small dash parked on a screen edge that morphs into
   the dictation capsule when you hover it; click to dictate. Off by default.
-- **Two skins** — Lab (dark instrument) and Daylight (light), switchable live in the top bar.
+- **A front page that answers "is my press okay?"** — the console opens on a home screen:
+  a halftone-plate hero with a start button that fires a real dictation, your recent print
+  runs, live setup status, today's counts, and the six theme sheets one click away.
+- **The overlay stage** — rehearse the capsule before ever pressing the hotkey: a framed
+  desktop showing the real overlay geometry on your real display specs (resolution, scale,
+  work area), cycling rest → listening → printing → transcript. **Test mic** runs your real
+  microphone through the trace, and if you dictate while it's open, the stage follows along.
+- **Your press, tuned** — density (compact / regular / roomy), motion (full / calm / still)
+  and paper grain (off / subtle / full) dials, saved like your theme.
+- **Six prints** — Lab, Press Room, Night Ink, Letterpress, Daylight, Dawn: each a full
+  palette and a type cast (which font plays display), switchable live from the top bar,
+  the theme press, or the front page.
 
 ## Installing
 
@@ -143,10 +158,17 @@ A few things worth knowing:
 
 ## A quick tour of Settings
 
-Settings is **the console**: a channel rail on the left (Dictation / Models / Personalize /
-Activity / System), each page with its own sub-nav, and a **command palette** — press
-`Ctrl+K` anywhere in the app and type to jump to any screen or run an action (switch theme,
-replay onboarding). The screens people touch first:
+Settings is **the console**: a channel rail on the left reading in three sections —
+**the press** (Home / Dictation / Models / Personalize), **the records** (Activity), and
+**the system** (System) — plus a **command palette** (`Ctrl+K`) and **channel hotkeys**
+(`Alt+1`…`Alt+9`, the numbers printed beside each rail icon). On wide windows a live rail
+rides the right edge: a real-time mic meter (with a *test the mic* button), engine state,
+active model, hotkey, and today's print run — runs, chars, seconds spoken, updating live.
+The screens people touch first:
+
+- **Home** — the front page. One button starts a dictation; recent runs, setup status,
+  today's counts, and the six theme sheets live here. The setup checklist ticks itself off
+  as you go and collapses to a single "press ready" strip when everything's set.
 
 - **Models** — your PC's hardware (CPU / RAM / GPU, with a tier), a recommended model set for
   it, and one-click downloads. This is also where you switch the **transcription engine**:
@@ -165,7 +187,9 @@ replay onboarding). The screens people touch first:
   auto-detect toggle. One language selected + auto-detect off = that language is used
   explicitly, no guessing.
 - **Overlay** — the capsule's position (near cursor, floating, pinned corners, top/bottom
-  center), a custom backdrop tint, meeting mode, and audio saving, with a live preview.
+  center), a custom backdrop tint, meeting mode, and audio saving — above it, **the overlay
+  stage**: a rehearsal of the real capsule on your real display specs, with a live mic test
+  and Engine G's mood inks. Dictate while it's open and it follows along.
 - **Shortcuts** — everything in the table above.
 - **Privacy** — the **local-only lock**: when it's on (the default), remote providers are
   impossible — the app cannot send transcript text anywhere, even if an endpoint is

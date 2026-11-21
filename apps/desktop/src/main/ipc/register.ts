@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, nativeTheme, shell, type Tray } from "electron";
+import { app, dialog, ipcMain, nativeTheme, screen, shell, type Tray } from "electron";
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -328,12 +328,29 @@ export function registerIpc(deps: {
     }
     const totalMemGb = os.totalmem() / 1024 ** 3;
     const tier = totalMemGb < 8 ? "low" : totalMemGb < 17.2 ? "mid" : "high";
+    // v0.1.50: the real primary display — this is the stage the overlay
+    // floats on, so the console can preview it at true proportions.
+    const displays = screen.getAllDisplays();
+    const primary = screen.getPrimaryDisplay();
+    const label =
+      displays.length > 1 ? `primary of ${displays.length}` : "primary display";
     return {
       cpu: cpus[0]?.model || "unknown",
       cores: cpus.length,
       totalMemGb: Math.round(totalMemGb * 10) / 10,
       tier,
       gpu,
+      primaryDisplay: {
+        label,
+        sizePx: { w: primary.size.width, h: primary.size.height },
+        scaleFactor: primary.scaleFactor,
+        workArea: {
+          x: primary.workArea.x,
+          y: primary.workArea.y,
+          w: primary.workArea.width,
+          h: primary.workArea.height,
+        },
+      },
     };
   });
   ipcMain.handle(IPC.AppOpenPath, async (_e, req: { path: string }) => {
