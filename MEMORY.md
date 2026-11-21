@@ -144,3 +144,60 @@ WAR STORIES:
 NEXT QUEUE: History mode-split DitherBars, Models tier dots, overlay
 trace in theme accent, website charts on DitherCanvas, MOTION.md entry
 for the 620ms sweep + 150ms word-in.
+
+## Session 14 (2026-11-21) — v0.1.48 "THE PRESS ROOM" — RELEASED ✅
+
+User: desktop app still old design — study reactbits/canvasui/21st.dev,
+full redesign, max creativity. RESEARCH MINED:
+- canvasui.dev: 38 comps (server-rendered 3-4MB pages ARE scrapable:
+  /docs/components/<name> gives description+source; ascii-sweep, dithered/
+  ink/topographic-object, glyph-rain, decrypt-reveal, canvas, frost, peel)
+- reactbits: full catalog via GitHub API DavidHDev/react-bits
+  src/content/{Backgrounds,Components,TextAnimations,Hooks} — 66/49/33
+- 21st.dev: community counts (2k+ buttons, 1.7k cards)
+
+VLM AUDIT OF OUR OWN CONSOLE drove the spec (not the libraries): dead
+sidebar, half-empty content col, NO live data, weak CTA hierarchy, 28px
+tabs, zero motion. Spec: scripts/v2-design-spec.md.
+
+**v0.1.48 SHIPPED** (PR #15, CI 5/5 first try, main @ 36319ec):
+- THE PRESS KIT apps/desktop/src/renderer/src/shared/presskit.tsx (zero
+  deps): PrintButton (ink-flood L→R roller pass + gloss sweep + stamp
+  press; variants fill/plate/ghost/danger), SpotlightCard (rAF-eased
+  cursor ink wash, lags like wet ink; SPREADS ...rest for data-*), PillNav
+  (measured sliding indicator), DecryptText (charset ·:•%#%@&), CountUp,
+  Magnetic, AuroraField (3 lissajous washes, alpha ≤.10), DotRadar,
+  AnimatedRows (--pk-row-delay stagger). All honor prefers-reduced-motion.
+- 3-PANE SHELL App.tsx: rail + sheet (AuroraField fixed inset-0 behind,
+  max-w-3xl) + LIVE RAIL 260px xl:flex (mic halftone meter — GATED behind
+  navigator.permissions.query so settings never prompts for mic; engine
+  decrypt label; model from config.stt.modelId + ModelCatalogEntry.name;
+  today from history[0].finalText length).
+- ui.tsx: Button wraps PrintButton (primary→fill, ghost→plate), Card wraps
+  SpotlightCard, PageHeader H1 decrypts. KEY: SpotlightCard needs prop
+  spread or data-stage-row cascade breaks.
+- GeneralTab: checklist rows = full-width <button> with revisit affordance;
+  ChangeRow = pk-btn-plate.
+- Onboarding: aurora + DecryptText headings (regex decoration of h1s broke
+  JSX twice — duration={560} braces + template literal attr; check after!).
+
+BUGS CAUGHT BY VLM/PIXEL LOOP (all fixed + re-measured):
+1. Aurora invisible: alpha .045 too quiet → .10/.07/.06; verified spread
+   29.6 luminance across columns.
+2. Meter read as dashed line: 8% floor × 34px = 2.7px bars → floor .18 +
+   40px height; verified 7 distinct accent rows.
+3. Spotlight verified localized (26.4 vs 17.8 far side).
+
+WAR STORIES:
+1. electron-vite build "fails" when run from repo root without cd
+   apps/desktop — shell cwd resets between commands; ALWAYS cd in the same
+   command chain. console-qa then screenshots STALE assets silently!
+2. QA script was waiting on body.light (v0.1.44 skin) — themes are
+   data-theme now; waitForFunction on documentElement.dataset.theme.
+3. VLM "checklist out of order" = stub-data artifact (fake config had
+   snippet done but not dictionary) — not a UI bug; verify against harness
+   data before "fixing".
+
+NEXT QUEUE: FieldFX (asciify inputs), GlyphRain error states, topographic
+Insights background, aurora on ThemePicker specimens, MOTION.md entry for
+press kit envelopes.
