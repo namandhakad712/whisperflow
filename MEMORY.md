@@ -258,3 +258,59 @@ NEXT QUEUE: CommandPalette v2 (fuzzy + preview pane), History timeline
 (dither rhythm strip), Insights topographic background, icon set pass
 (consistent 1.75 stroke family), MOTION.md press-kit envelopes, website
 front-page parity with the console home.
+
+## Session 16 (2026-11-21) — v0.1.50 "THE LIVE ROOM" — RELEASED
+
+User: setup checklist stuck at 5/5, overlay buttons overflow, show the
+REAL overlay + live sidebar + PC specs, README + nav redesign.
+
+ROOT CAUSES FOUND:
+1. SetupChecklist had NO completion state — all-done just showed 5/5
+   struck-through forever. Fix: collapse to "press ready" strip +
+   Dismiss (localStorage wf-setup-done). Hotkey step ticks only after
+   first dictation (history is the proof) — hint now says so.
+2. ui.tsx Row pinned controls in non-wrapping right column → 7 position
+   pills overflowed the card. Fix: Row flex-wraps
+   ([&>*]:max-w-full + basis-auto), pills wrap + tooltips.
+
+SHIPPED (PR #19, CI 5/5, main @ 411e697):
+- OverlayStage v2: REAL mic (getUserMedia→AnalyserNode, time-domain
+  trace scaled by band energy — Uint8Array(512) timeBuf + freqBuf,
+  remember ?? 0 guards for TS noUncheckedIndexedAccess), REAL state
+  mirror (busy = liveState not in idle/done/cancelled/error → stage
+  follows real dictation, demo buttons disabled-looking + "rehearsal"
+  tag), REAL specs: AppHardware IPC extended with primaryDisplay
+  {label,sizePx,scaleFactor,workArea} (screen.getPrimaryDisplay in
+  register.ts; import screen from electron). Chrome bar shows
+  "2560×1440 · 1.25× · primary display", spec strip below stage:
+  cpu/ram/gpu/work-area/tier. micError surfaces in chrome.
+- LiveRail v2: "test the mic →" button when all levels ≤0.19 (10s
+  on-demand getUserMedia meter, the ambient one never prompts), today
+  cell = full day (todaysRuns/todayChars/todaySecs useMemo) +
+  live-rail-sub line "N runs · Ns spoken".
+- Nav v2: RailSection mono headers (the press/records/system) via
+  Fragment-wrapped PAGES map — sections keyed off item.id === "activity"
+  / "system"; channels renumber String(i) from 00; Alt+1..9 hotkey in
+  the App keydown effect (window.location.hash = pageHome(target)).
+- README: v0.1.50 badge, console-frontpage/stage/stage-transcript/
+  pressroom shots in docs/assets/, What-it-does + tour rewritten.
+- Contrast: rail-section opacity .92 + weight 600, rail-channel
+  opacity .85, spec strip text-ink-dim (VLM flagged faint).
+
+QA: console-qa stub hardware extended with primaryDisplay; v50 shots
+30 (rail+live rail wide), 31 (checklist progress), 32 (stage v2
+hardware). VLM verified all + contrast recheck.
+
+WAR STORIES:
+- packages/*/dist gets wiped by sandbox recycles — ALWAYS rebuild
+  shared+engine (npx tsc -p tsconfig.json in each) before believing
+  desktop typecheck failures. tsconfig.web.json vs tsconfig.node.json
+  cover renderer vs main respectively.
+- Write tool needs the file Read in the CURRENT message first — for
+  full rewrites of a file I previously wrote, head/read a chunk first.
+- Same self-merge dance (reviews:0 → merge → reviews:1).
+- Release assets take ~8-10 min after tag (two Windows targets).
+
+NEXT QUEUE: CommandPalette v2 (fuzzy + previews), History timeline
+dither strip, website parity with console home, MOTION.md press-kit
+envelopes, icon stroke audit.
