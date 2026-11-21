@@ -256,7 +256,7 @@ import Base from "../layouts/Base.astro";
 </Base>
 
 <script>
-  import { PaintedScene, GlyphScene, SCENE_BLOOM, SCENE_CONTOURS, SCENE_DUNE, GLYPH_SCENE_BLOOM, GLYPH_SCENE_GARDEN } from "@whisperflow/signal-engine";
+  import { PaintedScene, GlyphScene, SCENE_BLOOM, SCENE_CONTOURS, SCENE_DUNE, SCENE_NOCTURNE, GLYPH_SCENE_BLOOM, GLYPH_SCENE_GARDEN } from "@whisperflow/signal-engine";
 
   // v6: light (cream) is the default; "dark" dataset mode switches the print
   const dark = document.documentElement.dataset.mode === "dark";
@@ -281,8 +281,10 @@ import Base from "../layouts/Base.astro";
   const contours = document.getElementById("contours-scene") as HTMLCanvasElement | null;
   if (contours) new PaintedScene(contours, { scene: SCENE_CONTOURS, cell: 9, paper, drift: 0.5 }).mount();
 
+  // the CTA closes on the nocturne: night dunes, a horizon that glows —
+  // "speak. it writes." under the stars (dark mode = deep ink sheet)
   const cta = document.getElementById("cta-scene") as HTMLCanvasElement | null;
-  if (cta) new PaintedScene(cta, { scene: SCENE_BLOOM, cell: 10, paper, drift: 0.6, image: "/whisperflow/prints/orchid.jpg", imageCrop: [0.5, 0.5, 1.2] }).mount();
+  if (cta) new PaintedScene(cta, { scene: SCENE_NOCTURNE, cell: 9, paper: dark ? "ink" : "cream", drift: 0.5 }).mount();
 
   // ---- the overlay specimen: the capsule, live ----
   const RAW = [

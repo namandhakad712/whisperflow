@@ -2,6 +2,42 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.47] — 2026-11-21
+
+### Added — the inkbloom pass: the voice, printed (Engine G)
+- **InkBloom** (signal-engine, zero-dep Canvas2D): a halftone ink field
+  that rises with the voice along the capsule's bottom edge. Louder =
+  bigger dots climbing higher; tone pools at the base like a tide mark.
+  Bayer micro-variation keeps the crest granular; idle shimmer breathes
+  at ~2Hz. An "emotion print" (calm/intent/bright/urgent) is derived
+  from the level stream's mean + variance and tunes ink mix, rise and
+  sweep speed. While the model works, a press-roller sweep crosses the
+  field left→right.
+- **Overlay**: the bloom strip replaces nothing — it layers under the
+  glyph wave and live text, over the glass. Capsule hover micro-pass:
+  hairline leans into the accent, glass lifts (120ms), press sets into
+  the sheet. Attach via callback ref (the overlay returns null while
+  idle — the mount-once effect never saw the canvas; found by the new
+  overlay QA harness).
+- **Website CTA — the nocturne**: SCENE_NOCTURNE closes the page — night
+  dunes with contour striations, a sparse star field, one glowing
+  horizon arc in accent ink; two-ink print in light and dark. Replaces
+  the re-used orchid at the CTA.
+- **Settings cards**: press state (scale 0.997, 80ms) — print
+  discipline, no bounce.
+- Technique lineage: Voice Glow (libraries.dev, browsed Nov 2026) for
+  the audio-reactive rising-field + thinking-sweep grammar; Odyssey's
+  generative nocturnes for the CTA mood. Everything implemented
+  in-house — nothing installed. See INSPIRATION.md.
+- QA: new overlay-qa harness (state machine + fake mic + engine drive
+  hook) and website-qa harness (CTA screenshots, both modes). Bloom
+  verified painted in all states; tide-mark gradient confirmed by band
+  analysis; nocturne confirmed by pixel + VLM audit.
+
+### Fixed
+- InkBloom depth formula was inverted twice during tuning (flame
+  instead of tide) — the QA band analysis caught both.
+
 ## [0.1.46] — 2026-11-20
 
 ### Added — the dither pass: data printed as dots (Engine F)

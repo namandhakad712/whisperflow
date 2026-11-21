@@ -379,6 +379,12 @@ body.light ::selection {
 .card:hover {
   border-color: var(--color-line-strong);
   transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+/* press: the card sets INTO the sheet — print discipline, no bounce */
+.card:active {
+  transform: translateY(0.5px) scale(0.997);
+  transition-duration: 0.08s;
 }
 [data-theme="pressroom"] .card,
 [data-theme="lino"] .card,
