@@ -979,3 +979,521 @@ body.light .wf-palette-panel {
     display: none;
   }
 }
+
+/* ============================================================
+   THE FRONT PAGE — v0.1.49
+   Wall-study grammar (bestdesignsonx, Nov 2026) in print language.
+   ============================================================ */
+
+/* ---- the hero ---- */
+.hero-front {
+  padding: 28px 4px 10px;
+}
+.hero-plate { top: -70px; right: -70px; }
+.hero-title {
+  font-family: var(--wf-display);
+  font-size: clamp(40px, 5.4vw, 62px);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  margin-top: 10px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--color-accent);
+}
+.hero-sub {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-ink-dim);
+  max-width: 56ch;
+}
+
+/* the halftone plate — ink rings + dot core behind the hero. It is a
+   disc, not a glow: three rings + a bayer dot texture at 5% ink. */
+.hero-plate {
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 340px;
+  height: 340px;
+  pointer-events: none;
+  animation: hero-plate-breathe 7s ease-in-out infinite;
+}
+@keyframes hero-plate-breathe {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.85; }
+  50% { transform: scale(1.045) rotate(1.2deg); opacity: 1; }
+}
+.hero-plate-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+.hero-plate-ring.r1 { inset: 0; }
+.hero-plate-ring.r2 { inset: 34px; border-color: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.hero-plate-ring.r3 { inset: 78px; border-color: color-mix(in srgb, var(--color-accent) 11%, transparent); }
+.hero-plate-core {
+  position: absolute;
+  inset: 120px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 38% 34%, color-mix(in srgb, var(--color-accent) 30%, transparent) 0%, transparent 62%),
+    radial-gradient(circle, var(--color-accent) 0.8px, transparent 1.6px);
+  background-size: 100% 100%, 7px 7px;
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-plate { animation: none; }
+}
+
+/* ---- the jumbo CTA pill ---- */
+.pk-btn-cta {
+  padding: 0.85rem 1.5rem;
+  font-size: 14.5px;
+  border-radius: 999px;
+  gap: 0.6rem;
+}
+.cta-kbd {
+  padding: 2px 8px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--color-bg) 30%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 14%, transparent);
+  font-size: 10.5px;
+  opacity: 0.82;
+}
+
+/* ---- bento: fan list, press sheets, stats ---- */
+.fan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fan-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-paper-2) 45%, transparent);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.fan-item:hover {
+  transform: translateX(4px);
+  border-color: var(--color-line);
+}
+.fan-item:nth-child(2) { margin-left: 10px; }
+.fan-item:nth-child(3) { margin-left: 20px; }
+
+.press-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.press-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--color-line-soft);
+  background: color-mix(in srgb, var(--color-paper-2) 40%, transparent);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.press-sheet:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-line-strong);
+}
+.press-sheet.on {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent) inset;
+}
+.press-sheet-swatches {
+  display: flex;
+  gap: 4px;
+}
+.press-sheet-swatches i {
+  width: 16px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid var(--color-line-soft);
+}
+.press-sheet-name {
+  font-family: var(--wf-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-ink-dim);
+}
+
+/* ============================================================
+   PRINT LOADERS — v0.1.49
+   ============================================================ */
+
+/* PressLoader: five halftone dots pulsing in sequence — ink darkens to
+   accent and back, like a press warming up. */
+.press-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 14px;
+}
+.press-loader i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-ink-faint);
+  animation: press-dot 1.15s ease-in-out infinite;
+}
+.press-loader i:nth-child(1) { animation-delay: 0s; }
+.press-loader i:nth-child(2) { animation-delay: 0.09s; }
+.press-loader i:nth-child(3) { animation-delay: 0.18s; }
+.press-loader i:nth-child(4) { animation-delay: 0.27s; }
+.press-loader i:nth-child(5) { animation-delay: 0.36s; }
+@keyframes press-dot {
+  0%, 100% { background: var(--color-ink-faint); transform: scale(1); }
+  40% { background: var(--color-accent); transform: scale(1.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .press-loader i { animation: none; background: var(--color-accent); }
+}
+
+/* PlateSweep: a 2px rule with a comet of bayer dots sweeping L→R —
+   the plate crossing the press bed. For downloads + busy states. */
+.plate-sweep {
+  position: relative;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.plate-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 34%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent));
+  background-image:
+    radial-gradient(circle, var(--color-accent) 0.9px, transparent 1.6px);
+  background-size: 100% 100%, 5px 5px;
+  animation: plate-sweep-move 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes plate-sweep-move {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(320%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate-sweep::after { animation: none; background: var(--color-accent); width: 100%; }
+}
+
+/* ============================================================
+   THE OVERLAY STAGE — v0.1.49 (live preview in OverlayTab)
+   ============================================================ */
+.stage-frame {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--color-line);
+  background:
+    radial-gradient(120% 90% at 70% 10%, color-mix(in srgb, var(--color-accent) 7%, transparent), transparent 55%),
+    radial-gradient(90% 70% at 20% 90%, color-mix(in srgb, var(--color-ink) 5%, transparent), transparent 60%),
+    var(--color-bg);
+  overflow: hidden;
+}
+/* window chrome: traffic-light dots + a mono URL chip */
+.stage-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.stage-chrome i {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--color-line-strong);
+}
+.stage-chrome i:first-child { background: color-mix(in srgb, var(--color-coral) 65%, var(--color-line-strong)); }
+.stage-chrome i:nth-child(2) { background: color-mix(in srgb, var(--color-amber) 65%, var(--color-line-strong)); }
+.stage-chrome i:nth-child(3) { background: color-mix(in srgb, var(--color-accent) 65%, var(--color-line-strong)); }
+.stage-chrome span {
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-line-soft);
+  background: color-mix(in srgb, var(--color-paper) 70%, transparent);
+  font-family: var(--wf-mono), monospace;
+  font-size: 10px;
+  color: var(--color-ink-faint);
+  letter-spacing: 0.06em;
+}
+/* the stage floor: faint dot grid — the "desktop" the capsule floats on */
+.stage-floor {
+  position: relative;
+  min-height: 240px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 26px;
+}
+.stage-floor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--color-ink) 7%, transparent) 0.8px, transparent 1.5px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(to top, #000 30%, transparent 90%);
+}
+.stage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--color-line-soft);
+}
+.stage-btn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-paper-2) 60%, transparent);
+  font-family: var(--wf-mono), monospace;
+  font-size: 11px;
+  color: var(--color-ink-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.stage-btn:hover { color: var(--color-ink); border-color: var(--color-line-strong); }
+.stage-btn.on {
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+/* ============================================================
+   FLUID RESPONSIVE — v0.1.49
+   ============================================================ */
+@media (max-width: 1100px) {
+  /* the live rail folds into a horizontal strip under the topbar */
+  .live-rail {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+    border-left: 0;
+    border-top: 1px solid var(--color-line);
+    overflow-x: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .live-rail .live-rail-cell { margin: 0; flex: 1 0 150px; }
+  .live-rail .live-rail-foot { display: none; }
+}
+@media (max-width: 900px) {
+  /* the rail collapses to icons */
+  aside[aria-label="Sections"] {
+    width: 64px !important;
+  }
+  aside[aria-label="Sections"] .rail-item span:not(.rail-channel) { display: none; }
+  aside[aria-label="Sections"] .rail-item { justify-content: center; padding: 0 0; }
+  aside[aria-label="Sections"] .rail-channel { display: none; }
+  aside[aria-label="Sections"] > div:last-child { display: none; }
+  .hero-plate { width: 220px; height: 220px; top: -30px; right: -20px; }
+  .hero-plate-ring.r2 { inset: 24px; }
+  .hero-plate-ring.r3 { inset: 56px; }
+  .hero-plate-core { inset: 88px; }
+  .press-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---- the capsule replica (stage) — geometry matches Overlay.tsx ---- */
+.stage-capsule {
+  position: relative;
+  width: 384px;
+  height: 56px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+  border: 1px solid var(--color-line-strong);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 color-mix(in srgb, var(--color-ink) 6%, transparent);
+  transition: width 0.38s cubic-bezier(0.7, 0, 0.2, 1), height 0.38s cubic-bezier(0.7, 0, 0.2, 1),
+    border-radius 0.38s cubic-bezier(0.7, 0, 0.2, 1);
+  overflow: hidden;
+}
+.stage-capsule[data-state="card"] { height: 88px; }
+.stage-capsule[data-state="l4"] { height: 300px; }
+.stage-capsule[data-state="rest"] {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  animation: stage-dot-breathe 3.2s ease-in-out infinite;
+}
+@keyframes stage-dot-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 18px 2px color-mix(in srgb, var(--color-accent) 35%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-capsule[data-state="rest"] { animation: none; }
+  .stage-capsule { transition-duration: 0.01ms; }
+}
+.stage-pip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage-pip::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
+.stage-mini-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+}
+.stage-trace {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+}
+.stage-meta {
+  font-family: var(--wf-mono), monospace;
+  font-size: 11px;
+  color: var(--color-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.stage-led {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-ink-faint);
+}
+.stage-led[data-on="live"] {
+  background: var(--color-accent);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--color-accent) 75%, transparent);
+  animation: stage-led-breathe 1.6s ease-in-out infinite;
+}
+.stage-led[data-on="busy"] {
+  background: var(--color-amber);
+  animation: stage-led-breathe 0.9s ease-in-out infinite;
+}
+@keyframes stage-led-breathe { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+.stage-card-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  gap: 6px;
+}
+.stage-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--wf-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.stage-text {
+  font-size: 13.5px;
+  line-height: 19px;
+  color: var(--color-ink);
+}
+.stage-scroll {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.stage-para { font-size: 12.5px; line-height: 18px; color: var(--color-ink); }
+.stage-para.stage-dim { color: var(--color-ink-faint); }
+.stage-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.stage-key {
+  font-family: var(--wf-mono), monospace;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-faint);
+}
+/* the bloom: three ink pads rising under the capsule (Engine G's mood).
+   v2: filled radial ink, not hairline rings — reads at preview size. */
+.stage-capsule-bloom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72%;
+  pointer-events: none;
+}
+.bloom-ring {
+  position: absolute;
+  left: 50%;
+  bottom: -34%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    color-mix(in srgb, var(--bloom-hue, var(--color-accent)) 34%, transparent) 0%,
+    color-mix(in srgb, var(--bloom-hue, var(--color-accent)) 10%, transparent) 55%,
+    transparent 78%
+  );
+  transform: translateX(-50%);
+  animation: bloom-rise 5s ease-in-out infinite;
+}
+.bloom-ring.r1 { width: 92%; height: 78%; }
+.bloom-ring.r2 { width: 64%; height: 60%; animation-delay: 0.6s; }
+.bloom-ring.r3 { width: 36%; height: 42%; animation-delay: 1.2s; }
+@keyframes bloom-rise {
+  0%, 100% { transform: translateX(-50%) translateY(8%) scaleY(1); opacity: 0.7; }
+  50% { transform: translateX(-50%) translateY(-6%) scaleY(1.12); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bloom-ring, .stage-led { animation: none; }
+  .bloom-ring { opacity: 0.8; }
+}
+
+/* ============================================================
+   YOUR PRESS — density / motion / grain (v0.1.49)
+   data-attributes on <html>, set by PressPrefsCard.
+   ============================================================ */
+
+/* density: scales the vertical rhythm of rows + card padding */
+:root, [data-density="regular"] { --press-row-y: 0.875rem; --press-card-y: 1.25rem; }
+[data-density="compact"] { --press-row-y: 0.55rem; --press-card-y: 0.85rem; }
+[data-density="roomy"] { --press-row-y: 1.1rem; --press-card-y: 1.6rem; }
+[data-density] .card { padding-top: var(--press-card-y); padding-bottom: var(--press-card-y); }
+[data-density] .card > div > .border-b,
+[data-density] [class*="divide-y"] > * { padding-top: var(--press-row-y); padding-bottom: var(--press-row-y); }
+
+/* motion: calm = halve durations; still = park everything (aurora stops
+   painting its drift, decrypt resolves instantly, spotlights freeze) */
+[data-motion="calm"] .pk-row-in { animation-duration: 0.5s; }
+[data-motion="still"] .pk-row-in { animation: none; }
+[data-motion="still"] .hero-plate,
+[data-motion="still"] .pk-decrypt { animation: none; }
+[data-motion="still"] .pk-spotlight::before { display: none; }
+
+/* grain: the body::before bayer texture intensity */
+:root, [data-grain="subtle"] body::before { opacity: 0.5; }
+[data-grain="off"] body::before { opacity: 0; }
+[data-grain="full"] body::before { opacity: 0.8; }

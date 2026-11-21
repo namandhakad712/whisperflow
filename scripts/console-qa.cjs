@@ -66,8 +66,9 @@ function bridgeStub() {
     updates: { onStatus: on("updates") },
     app: { version: async () => "0.1.42", hardware: async () => ({ cpu: "QA CPU", ramGb: 16, gpu: "QA GPU", tier: "balanced" }), quitAndInstall: () => {}, onboardingComplete: async () => {} },
     history: { list: async () => [
-      { id: "h1", at: Date.now() - 3600e3, text: "ship the demo tomorrow, the launch is monday", mode: "push-to-talk", durationMs: 4200 },
-      { id: "h2", at: Date.now() - 86400e3, text: "tell the team we're live", mode: "toggle", durationMs: 2600 },
+      { id: "h1", createdAt: Date.now() - 3600e3, rawText: "ship the demo tomorrow, the launch is monday", finalText: "Ship the demo tomorrow — the launch is Monday.", durationMs: 4200 },
+      { id: "h2", createdAt: Date.now() - 3600e3 - 900e3, rawText: "tell the team we're live", finalText: "Tell the team we're live.", durationMs: 2600 },
+      { id: "h3", createdAt: Date.now() - 3600e3 - 1800e3, rawText: "print the weekly numbers for the review", finalText: "Print the weekly numbers for the review.", durationMs: 3100 },
     ], clear: async () => {} },
     capture: { sendPcm: () => {} },
     dictionary: { add: async () => {}, delete: async () => {} },
@@ -138,6 +139,28 @@ async function main() {
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForSelector('aside[aria-label="Sections"]', { timeout: 8000 });
   await shot("01-dictation-general-lab");
+
+  // ---- v0.1.49: the front page ----
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}?qa=1#/home/front`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("20-frontpage-hero");
+
+  // overlay stage live preview
+  await page.goto(`${base}?qa=1#/dictation/overlay`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("21-overlay-stage");
+
+  // l4 state on the stage
+  await page.click(".stage-controls .stage-btn:nth-child(4)");
+  await page.waitForTimeout(700);
+  await shot("22-overlay-stage-l4");
+
+  // prefs card (your press)
+  await page.goto(`${base}?qa=1&v=9#/dictation/general`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(700);
+  await shot("23-your-press");
+
 
   await page.goto(`${base}?qa=1#/models/models`, { waitUntil: "networkidle" });
   await shot("02-models-lab");

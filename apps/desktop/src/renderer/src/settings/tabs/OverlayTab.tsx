@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import { Button, Card, PageHeader, Row, Segmented, TextInput, Toggle } from "../../shared/ui";
+import { OverlayStage } from "./OverlayStage";
 
 type Shape = "pill" | "rect" | "blob";
 type Position = "cursor" | "floating" | "top-left" | "top-right" | "top" | "bottom" | "free";
@@ -48,6 +49,7 @@ export function OverlayTab() {
         tagline="The pill that follows your voice."
         explainer="Shape, position, and your own backdrop — plus dictation modes for meetings and recording."
       />
+      <OverlayStage />
 
       <Card className="mb-5">
         <Row label="Shape" hint="The silhouette of the floating pill.">

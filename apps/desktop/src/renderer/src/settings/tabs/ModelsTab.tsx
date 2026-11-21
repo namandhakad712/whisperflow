@@ -6,7 +6,7 @@ import {
   type ModelRole,
 } from "@whisperflow/shared";
 import { useSettings } from "../store";
-import { Button, Card, PageHeader, Select, TextInput } from "../../shared/ui";
+import { PlateSweep, Button, Card, PageHeader, Select, TextInput } from "../../shared/ui";
 import { formatBytes } from "../../shared/format";
 
 type SttProvider = "whispercpp-local" | "cloud";
@@ -669,7 +669,9 @@ function ModelCard({
       {busy && (
         <div className="mt-3">
           <div className="mb-1 flex items-center justify-between text-[11px] text-ink-dim">
-            <span>Downloading…</span>
+            <span className="inline-flex items-center gap-2">
+              <PlateSweep className="w-16" /> Downloading…
+            </span>
             <span className="tabular-nums">{Math.round(pct)}%</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-line">

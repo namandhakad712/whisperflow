@@ -1,6 +1,7 @@
 import {
   Cpu,
   History,
+  House,
   Mic,
   ShieldCheck,
   UserRound,
@@ -36,6 +37,13 @@ export interface SettingsPage {
 }
 
 export const PAGES: readonly [SettingsPage, ...SettingsPage[]] = [
+  {
+    id: "home",
+    label: "Home",
+    hint: "The front page — the press at a glance, and one button to start.",
+    icon: House,
+    subs: [{ id: "front", label: "Front page" }],
+  },
   {
     id: "dictation",
     label: "Dictation",
@@ -118,7 +126,7 @@ const LEGACY: Record<string, string> = {
   diagnose: "system/diagnose",
 };
 
-export const DEFAULT_ROUTE = "dictation/general";
+export const DEFAULT_ROUTE = "home/front";
 
 export interface ResolvedRoute {
   page: SettingsPage;

@@ -23,6 +23,8 @@ import { ScratchpadTab } from "./tabs/ScratchpadTab";
 import { ModesTab } from "./tabs/ModesTab";
 import { OverlayTab } from "./tabs/OverlayTab";
 import { DiagnoseTab } from "./tabs/DiagnoseTab";
+import { HomeTab } from "./tabs/HomeTab";
+import { initPressPrefs } from "./tabs/PressPrefsCard";
 import { Onboarding } from "./Onboarding";
 import { THEMES, getTheme, readThemeId, applyTheme } from "./themes";
 import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
@@ -78,6 +80,7 @@ export function App() {
   useEffect(() => {
     void loadConfig();
     applyTheme(readThemeId());
+    initPressPrefs();
     const onTheme = () => setThemeId(readThemeId());
     window.addEventListener("wf-theme-changed", onTheme);
     const onHash = () => setRawRoute(currentRoute());
@@ -222,7 +225,8 @@ export function App() {
           <div className="relative mx-auto min-w-0 max-w-3xl px-8 py-7">
             {/* the screen stages on every route change (see styles.css) */}
             <div key={route} className="wf-stage">
-              <SubNav page={page} active={sub.id} route={route} />
+              {page.id !== "home" && <SubNav page={page} active={sub.id} route={route} />}
+              {sub.id === "front" && <HomeTab />}
               {sub.id === "general" && <GeneralTab />}
               {sub.id === "audio" && <AudioTab />}
               {sub.id === "shortcuts" && <ShortcutsTab />}
@@ -396,7 +400,7 @@ function LiveRail({ route }: { route: string }) {
           />
         </p>
       </div>
-      <div className="mt-auto px-1 pb-1 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
+      <div className="live-rail-foot mt-auto px-1 pb-1 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
         the press runs local
         <br />
         nothing leaves this machine

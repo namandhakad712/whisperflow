@@ -14,6 +14,7 @@ deliberately avoided*, so the distinction is auditable.
 | Audio-reactive rising particle field + thinking sweep + emotion states | Voice Glow — libraries.dev/voice + x.com/Jakubantalik/status/2123457524070273426 (browsed Nov 2026; technique grammar only, nothing installed) | InkBloom engine (v0.1.47 overlay — print-native halftone ink, not RGB pixels) |
 | Tonal nocturne landscapes: velvet terrain, star fields, glowing horizon | Odyssey — x.com/odysseyml/status/2123821812349894661 (browsed Nov 2026; mood reference only) | SCENE_NOCTURNE (v0.1.47 website CTA) |
 | Component grammar: ink-flood buttons, spotlight cards, pill nav, decrypt text, aurora washes, dot radar, magnetic hover, staggered rows | reactbits.dev + canvasui.dev + 21st.dev catalogs (browsed Nov 2026; grammar only — zero installs, zero copied code) | The press kit (v0.1.48 console) — every component re-authored in print language |
+| Wall patterns: hero glow focal → halftone plate; chrome-framed live previews → overlay stage; keyboard chips in CTAs; fanned cards; tiny-meta vs display contrast; fluid breakpoints | bestdesignsonx.com rendered wall → 15-pattern VLM extraction (Nov 2026; grammar only) | The front page (v0.1.49) — every pattern re-authored in print language |
 | Luma→glyph ASCII mapping | three.js AsciiEffect docs (jsascii lineage); Efecto writeup (2026) | AsciiRender engine |
 | Halftone dot screens | Classic print repro; same Heckel article | HalftoneReveal engine |
 | Scroll-driven reveals | CSS `animation-timeline: view()` (native, 2024+) | site reveals |
