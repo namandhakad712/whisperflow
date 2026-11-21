@@ -241,6 +241,14 @@ export interface AppHardwareResponse {
   totalMemGb: number;
   tier: import("./models.js").HardwareTier;
   gpu: string;
+  /** v0.1.50: the primary display, so the console can show the REAL
+   *  stage the overlay floats on — resolution, scale, usable area. */
+  primaryDisplay: {
+    label: string;
+    sizePx: { w: number; h: number };
+    scaleFactor: number;
+    workArea: { x: number; y: number; w: number; h: number };
+  };
 }
 export interface AppOpenPathRequest {
   path: string;

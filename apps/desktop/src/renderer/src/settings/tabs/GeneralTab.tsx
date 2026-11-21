@@ -16,15 +16,15 @@ function SetupChecklist() {
   const loadHistory = useSettings((s) => s.loadHistory);
   const bindProgress = useSettings((s) => s.bindProgress);
   const [done, setDone] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    void loadModels();
-    void loadHistory();
-    // Live refresh: re-pull statuses on every download event so the checklist
-    // ticks the moment a download lands — even while this tab was not mounted
-    // when the download started.
-    return bindProgress();
-  }, [loadModels, loadHistory, bindProgress]);
+  /** Once every step is done the checklist collapses to a single
+   *  "press ready" strip; the user can dismiss it for good. */
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem("wf-setup-done") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     const sttCloud = config?.stt.provider === "cloud";
@@ -44,7 +44,7 @@ function SetupChecklist() {
   }, [statuses, config, progress, history]);
 
   const steps: Array<{ id: string; label: string; hint: string; action: () => void; actionLabel: string }> = [
-    { id: "hotkey", label: "Test your hotkey", hint: "Press it anywhere — the overlay appears", action: () => (window.location.hash = "#/shortcuts"), actionLabel: "Open" },
+    { id: "hotkey", label: "Test your hotkey", hint: "Dictate once — the overlay appears, the step checks itself", action: () => (window.location.hash = "#/shortcuts"), actionLabel: "Open" },
     { id: "engine", label: "Get the transcription engine", hint: "whisper.cpp binary (local) — or pick a cloud API in Models", action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
     { id: "models", label: "Download a transcription model", hint: "The active model: " + (config?.stt.modelId ?? "—"), action: () => (window.location.hash = "#/models"), actionLabel: "Open" },
     { id: "dictionary", label: "Add dictionary words", hint: "Names and jargon it should never misspell", action: () => (window.location.hash = "#/dictionary"), actionLabel: "Open" },
@@ -52,6 +52,41 @@ function SetupChecklist() {
   ];
   const completed = steps.filter((s) => done[s.id]).length;
   const pct = Math.round((completed / steps.length) * 100);
+  const allDone = completed === steps.length;
+
+  // ALL DONE → collapse to the ready strip. No more stuck 5/5 list.
+  if (allDone || dismissed) {
+    if (dismissed) return null;
+    return (
+      <div data-stage-row className="pk-spotlight card mb-6 flex items-center gap-3 p-4">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent bg-accent/15 text-accent" aria-hidden="true">
+          ✓
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">The press is ready.</p>
+          <p className="mt-0.5 text-xs text-ink-dim">
+            All five set up — engine, model, hotkey, dictionary, snippets. Hold{" "}
+            <kbd className="rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[11px]">your hotkey</kbd>{" "}
+            anywhere and speak.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              localStorage.setItem("wf-setup-done", "1");
+            } catch {
+              /* session-only dismiss */
+            }
+            setDismissed(true);
+          }}
+          className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-line-strong hover:text-ink"
+        >
+          Dismiss
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div data-stage-row className="pk-spotlight card mb-6 p-5">
