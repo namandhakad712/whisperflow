@@ -2,6 +2,41 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.49] — 2026-11-21
+
+### Added — the front page: console v3 (home, live previews, your press)
+- **THE FRONT PAGE (HomeTab, new default route `#/home/front`)**: hero
+  with the halftone plate (ink rings + bayer core, breathing), 56px+
+  display with italic accent word ("speak. *it writes.*"), decrypting
+  greeting + live engine state, jumbo pill CTA that fires a REAL
+  dictation (window.whisperflow.dictation.start) with the hotkey chip
+  inside, micro-meta line (model · chars-today countup). Below: 4-cell
+  bento — recent print runs (fanned rows), press status (engine/model/
+  dictionary with [ok] states), today's print run (runs/chars/secs
+  countups, honest empty state), the six prints (live swatch sheets,
+  one-click apply). Patterns from the bestdesignsonx wall study
+  (INSPIRATION.md lineage).
+- **THE OVERLAY STAGE (OverlayTab)**: users finally SEE the capsule
+  before ever pressing the hotkey — a chrome-framed "desktop" with a
+  faithful capsule replica (same geometry + scope easing) cycling
+  rest/listening/printing/transcript, with a live mic trace, Engine G
+  mood inks (calm/bright/storm bloom pads), and a voice on/off toggle.
+- **YOUR PRESS (PressPrefsCard, GeneralTab)**: density (compact/
+  regular/roomy), motion (full/calm/still), paper grain (off/subtle/
+  full) — data-attrs on <html>, localStorage-persisted like themes,
+  zero IPC/config change.
+- **Print loaders**: Spinner is now the PressLoader (5-dot halftone
+  warm-up); PlateSweep (bayer-dot comet on a 2px rule) rides the model
+  download rows.
+- **Fluid responsive**: live rail folds to a horizontal strip <1100px;
+  rail collapses to a 64px icon rail <900px; hero title clamp(40→62px);
+  press grid + bento collapse; plate scales down.
+- Nav: Home is channel 00 (House icon); DEFAULT_ROUTE now home/front.
+- QA: console-qa now shoots home/stage/l4/your-press (20-23); stub
+  history fixed to the real TranscriptItem shape (createdAt + raw/final
+  — was rendering Invalid Date). VLM loop closed: hero spacing, empty
+  states, bloom visibility (hairline rings → filled radial ink pads).
+
 ## [0.1.48] — 2026-11-21
 
 ### Added — the press room: console v2 (full redesign)

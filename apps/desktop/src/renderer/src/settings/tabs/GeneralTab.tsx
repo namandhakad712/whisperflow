@@ -3,6 +3,7 @@ import type { ModelStatus } from "@whisperflow/shared";
 import { useSettings } from "../store";
 import { Card, PageHeader, Toggle } from "../../shared/ui";
 import { ThemePicker } from "../ThemePicker";
+import { PressPrefsCard } from "./PressPrefsCard";
 import { useAppVersion } from "../../shared/useAppVersion";
 
 /** Setup card: progress bar + checklist, wired to REAL app state. */
@@ -135,6 +136,7 @@ export function GeneralTab() {
     <section>
       <PageHeader title="Dictation" tagline="The essentials, in one place." />
       <SetupChecklist />
+      <PressPrefsCard />
       <section aria-label="Theme">
         <h2 className="sec-mark mb-3">the theme press</h2>
         <p className="mb-3 max-w-[60ch] text-[12.5px] leading-relaxed text-ink-dim">

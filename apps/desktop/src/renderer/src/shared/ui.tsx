@@ -292,12 +292,23 @@ export function EmptyState({ icon, title, body }: { icon: string; title: string;
 }
 
 export function Spinner({ className = "h-4 w-4" }: { className?: string }) {
+  // v0.1.49: the spinner is now the PressLoader — five halftone dots
+  // warming the press. Same API, so every busy state upgrades at once.
   return (
-    <span
-      className={`inline-block animate-spin rounded-full border-2 border-line border-t-phosphor ${className}`}
-      aria-label="loading"
-    />
+    <span className={`press-loader ${className}`} role="status" aria-label="loading">
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+    </span>
   );
+}
+
+/** PlateSweep — the plate crossing the press bed: a comet of bayer dots
+ *  on a 2px rule. For long busy states (model downloads, engine boot). */
+export function PlateSweep({ className = "" }: { className?: string }) {
+  return <div className={`plate-sweep ${className}`} role="status" aria-label="working" />;
 }
 
 /** Mono kbd chip — inset well. */
