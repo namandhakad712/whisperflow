@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { DictationStateEvent } from "@whisperflow/shared";
+import { InkBloom, type InkMood } from "@whisperflow/signal-engine";
 import { startCapture, type Capture } from "./capture";
 
 /**
@@ -81,6 +82,14 @@ body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
   transition: opacity 0.3s ease;
 }
 .capsule[data-state="rest"]::before { opacity: 0; }
+/* hover micro: the ring leans into the accent and the glass lifts —
+   120ms so it reads as a live instrument, not a transition */
+.capsule:hover {
+  border-color: color-mix(in srgb, var(--cap-glow, #5CE1A9) 38%, transparent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px color-mix(in srgb, var(--cap-glow, #5CE1A9) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.capsule:hover::before { opacity: 1; }
+.capsule:active { transform: translateY(0.5px); }
 .capsule[data-state="card"] { height: 88px; }
 .capsule[data-state="l4"] { height: 336px; }
 /* rest = the standby LED: a breathing phosphor dot. */
@@ -170,6 +179,12 @@ body[data-align="top"] .capsule-zone::after { bottom: auto; top: 0; }
 @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .typing-dots span { animation: none; } }
 
+/* Engine G — InkBloom: the voice printed as rising halftone ink along the
+   capsule's bottom edge. Sits UNDER the content, over the glass. */
+.bloom { position: absolute; left: 0; right: 0; bottom: 0; height: 56%; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }
+.bloom canvas { width: 100%; height: 100%; display: block; }
+.capsule[data-bloom="on"] .bloom { opacity: 0.9; }
+.capsule[data-state="rest"] .bloom { opacity: 0; }
 /* the phosphor trace: canvas, drawn by React (levels → polyline + afterglow) */
 .trace { position: absolute; top: 10px; bottom: 10px; left: 46px; right: 92px; pointer-events: none; }
 .trace canvas { width: 100%; height: 100%; display: block; }
@@ -284,6 +299,10 @@ export function Overlay() {
   /** Mic levels for the phosphor trace. */
   const levelsRef = useRef<number[]>(new Array(TRACE_POINTS).fill(0.04));
   const traceRef = useRef<HTMLCanvasElement | null>(null);
+  const bloomRef = useRef<HTMLCanvasElement | null>(null);
+  const bloomEng = useRef<InkBloom | null>(null);
+  const bloomMood = useRef<InkMood>("calm");
+  const moodWindow = useRef<number[]>([]);
   /** OS theme from main (matchMedia lags the OS in Electron). */
   const [systemDark, setSystemDark] = useState(true);
   /** Resting mode: main keeps the window alive between turns and tells the
@@ -445,8 +464,27 @@ export function Overlay() {
         deviceId: micIdRef.current,
         onChunk: (pcm) => window.whisperflow.capture.sendPcm(pcm),
         onLevel: (rms) => {
-          levelsRef.current.push(Math.min(1, rms * 6));
+          const lvl = Math.min(1, rms * 6);
+          levelsRef.current.push(lvl);
           if (levelsRef.current.length > TRACE_POINTS) levelsRef.current.shift();
+          // Engine G: feed the ink. The mood is an emotion print derived
+          // from the level's recent behavior — sustained loud speech reads
+          // "urgent", quiet steady speech "calm", bursts "bright".
+          bloomEng.current?.drive(lvl);
+          moodWindow.current.push(lvl);
+          if (moodWindow.current.length > 90) moodWindow.current.shift();
+          if (moodWindow.current.length >= 30 && (moodWindow.current.length & 15) === 0) {
+            const arr = moodWindow.current;
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            const variance = arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length;
+            const sd = Math.sqrt(variance);
+            const mood: InkMood =
+              mean > 0.5 ? "urgent" : sd > 0.22 ? "bright" : mean > 0.28 ? "intent" : "calm";
+            if (mood !== bloomMood.current) {
+              bloomMood.current = mood;
+              bloomEng.current?.setMood(mood);
+            }
+          }
         },
       })
         .then((cap) => {
@@ -475,6 +513,31 @@ export function Overlay() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [recording]);
+
+  /** Engine G lifecycle: the capsule itself is conditionally mounted (the
+   *  whole overlay returns null while idle), so the InkBloom must attach
+   *  when the CANVAS appears — a callback ref, not a mount-once effect. */
+  const attachBloom = useCallback((canvas: HTMLCanvasElement | null) => {
+    bloomRef.current = canvas;
+    if (canvas && !bloomEng.current) {
+      const accent =
+        getComputedStyle(document.documentElement).getPropertyValue("--cap-glow").trim() || "#5CE1A9";
+      bloomEng.current = new InkBloom(canvas, { ink: accent, cell: 5 });
+      bloomEng.current.mount();
+      bloomEng.current.setMood(bloomMood.current);
+      // QA hook: the harness drives the engine through this (no mic in CI)
+      (window as unknown as { __wfBloom?: InkBloom }).__wfBloom = bloomEng.current;
+    }
+  }, []);
+
+  // release the engine when the overlay leaves the screen entirely
+  useEffect(() => () => bloomEng.current?.dispose(), []);
+
+  // the thinking sweep: a press roller crosses the field while polishing
+  useEffect(() => {
+    const thinking = event.state === "transcribing" || event.state === "polishing" || event.state === "injecting";
+    bloomEng.current?.setThinking(thinking);
+  }, [event.state]);
 
   /**
    * The phosphor trace: mic levels → a continuous polyline with afterglow
@@ -589,6 +652,7 @@ export function Overlay() {
           animate={capState}
           transition={CAPSULE_TWEEN}
           data-state={capState}
+            data-bloom={event.state === "listening" || processing ? "on" : "off"}
           data-interactive="true"
           onMouseEnter={() => resting && setHovered(true)}
           onMouseLeave={() => setHovered(false)}
@@ -598,6 +662,11 @@ export function Overlay() {
             if (resting) void window.whisperflow.dictation.start();
           }}
         >
+          {/* Engine G — the voice, printed: rising halftone ink */}
+          <div className="bloom" aria-hidden="true" data-active={event.state === "listening" || processing}>
+            <canvas ref={attachBloom} />
+          </div>
+
           {/* the standby core — visible only in rest state */}
           <div className="standby-core" aria-hidden="true">
             <span />

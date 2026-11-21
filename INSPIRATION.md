@@ -11,6 +11,8 @@ deliberately avoided*, so the distinction is auditable.
 | --- | --- | --- |
 | Ordered Bayer dithering | Bayer matrices (1973); "The Art of Dithering and Retro Shading for the Web" — blog.maximeheckel.com/posts/the-art-of-dithering-and-retro-shading-web (2024) | DitherField engine |
 | Dithered UI fills (bars, washes, ramps) + entrance sweep / scrub tooltip / aura bloom grammar | dither-kit docs — tripwire.sh/dither-kit (Boring Software, browsed Nov 2026, technique awareness only; nothing installed, no code copied) | DitherCanvas engine (v0.1.46 Insights + overlay) |
+| Audio-reactive rising particle field + thinking sweep + emotion states | Voice Glow — libraries.dev/voice + x.com/Jakubantalik/status/2123457524070273426 (browsed Nov 2026; technique grammar only, nothing installed) | InkBloom engine (v0.1.47 overlay — print-native halftone ink, not RGB pixels) |
+| Tonal nocturne landscapes: velvet terrain, star fields, glowing horizon | Odyssey — x.com/odysseyml/status/2123821812349894661 (browsed Nov 2026; mood reference only) | SCENE_NOCTURNE (v0.1.47 website CTA) |
 | Luma→glyph ASCII mapping | three.js AsciiEffect docs (jsascii lineage); Efecto writeup (2026) | AsciiRender engine |
 | Halftone dot screens | Classic print repro; same Heckel article | HalftoneReveal engine |
 | Scroll-driven reveals | CSS `animation-timeline: view()` (native, 2024+) | site reveals |

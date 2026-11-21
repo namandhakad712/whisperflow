@@ -181,6 +181,59 @@ vec4 scene(vec2 uv) {
 }
 `;
 
+/**
+ * CTA — "the nocturne". A night landscape printed in two inks: velvet
+ * dunes with contour striations under a star field, and one horizon arc
+ * that glows like an atmosphere rim. Lineage: the tonal nocturnes of
+ * generative landscape reels (Odyssey, Nov 2026 — see INSPIRATION.md);
+ * the composition, palette and technique are ours: bayer-dithered tone,
+ * striation contours, a print-calm drift.
+ */
+export const SCENE_NOCTURNE = /* glsl */ `
+vec4 scene(vec2 uv) {
+  vec2 p = uv * vec2(u_res.x / u_res.y, 1.0);
+  float t = u_time * 0.045;
+
+  // ---- the sky: near-empty paper with a sparse star field ----
+  vec2 sp = p * vec2(1.0, 1.0);
+  float star = step(0.9975, hash21(floor(sp * 90.0) + 7.3));
+  star *= 0.5 + 0.5 * sin(u_time * 1.4 + hash21(floor(sp * 90.0)) * 6.28);
+  // stars only above the sky line, fading toward the horizon glow
+  float skyMask = smoothstep(0.52, 0.62, p.y);
+  float tone = star * skyMask * 0.55;
+
+  // ---- the horizon: one atmosphere arc that glows ----
+  float arc = 1.0 - smoothstep(0.0, 0.10, abs(p.y - 0.52 - 0.06 * sin(p.x * 1.2 - t * 0.5)));
+  float glow = exp(-3.5 * abs(p.y - 0.52)) * 0.42;
+  tone += arc * 0.34 + glow * smoothstep(0.35, 0.75, p.y);
+
+  // ---- the dunes: three velvet ridges with contour striations ----
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i);
+    float y0 = 0.40 - fi * 0.13;
+    float ridge = y0
+      + 0.055 * sin(p.x * (2.2 + fi * 1.4) + t * (0.5 + fi * 0.3) + fi * 2.1)
+      + 0.02 * fbm(vec2(p.x * 3.0 + fi * 9.0, fi));
+    float below = smoothstep(0.003, 0.0, p.y - ridge); // 1 under the ridge line
+    // striations: fine contour bands that follow the ridge — the velvet
+    float stri = 0.5 + 0.5 * sin((ridge - p.y) * 130.0 + fbm(p * 2.0 + fi) * 6.0);
+    float shade = (0.16 - fi * 0.035) * (0.45 + 0.55 * stri);
+    tone += below * shade;
+  }
+
+  // ---- inks: night-blue field, the accent reserved for the arc ----
+  vec3 night = mix(vec3(0.16, 0.22, 0.28), vec3(0.75, 0.82, 0.90), u_dark);
+  vec3 accent = mix(vec3(0.055, 0.478, 0.333), vec3(0.208, 0.702, 0.494), u_dark);
+  float arcness = clamp(arc * 1.6 + glow * 0.8, 0.0, 1.0);
+  vec3 ink = mix(night, accent, arcness * arcness);
+
+  // film speckle: a whisper of grain over everything, print calibre
+  tone *= 0.94 + 0.06 * hash21(p * 300.0 + t);
+
+  return vec4(ink, clamp(tone, 0.0, 1.0));
+}
+`;
+
 /* ============================================================
    GLYPH scenes — authored GLSL for GlyphScene (true ASCII).
    Same contract: rgb = ink color inside the glyphs, a = tone 0..1.
