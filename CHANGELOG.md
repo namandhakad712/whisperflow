@@ -2,6 +2,37 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.48] — 2026-11-21
+
+### Added — the press room: console v2 (full redesign)
+- **The press kit** (shared/presskit.tsx, zero deps): PrintButton (ink
+  floods the label L→R — a roller pass — plus specular sweep and stamp
+  press), SpotlightCard (cursor-tracking ink wash, rAF-eased, lags like
+  wet ink), PillNav (40px tabs, layout-measured sliding indicator),
+  DecryptText (printer's charset ·:•%#%@&), CountUp (odometer), Magnetic
+  (2px lean), AuroraField (two-ink lissajous wash at wash-level alpha),
+  DotRadar (dot grid that grows near the cursor), AnimatedRows (40ms
+  staggered settle). Grammar studied from reactbits / canvasui / 21st.dev
+  (browsed Nov 2026, NOTHING installed — every component authored
+  in-house in our print language; lineage in INSPIRATION.md).
+- **Three-pane shell**: rail + sheet + LIVE rail (mic halftone meter,
+  engine state with decrypt label, model + ready count, hotkey, today's
+  chars via CountUp). Live rail hidden < 1100px. The mic meter never
+  prompts — it only runs when permission is already granted.
+- **The sheet breathes**: content max-w up, AuroraField behind it,
+  cards are all SpotlightCards, page H1 + hints decrypt per route.
+- **SetupChecklist rebuilt**: full-row interactive (click navigates,
+  completed rows show "revisit →" on hover), progress integrated,
+  spotlight card. ChangeRow buttons are ink-flood plates.
+- **Onboarding**: aurora backdrop + decrypt headings on every step.
+- Sub-nav is the PillNav; breadcrumb deduped; rail microcopy contrast
+  bumped; tab underline strengthened.
+- QA: console-qa harness v2 (12 shots: press-room wide, ink-flood
+  hover, spotlight, daylight, onboarding) + theme-qa 6+1 prints. VLM
+  audit loop: aurora verified painting (luminance spread 29.6), meter
+  = 7 distinct bars, spotlight localized (26.4 vs 17.8 far side),
+  ink-flood confirmed on hover.
+
 ## [0.1.47] — 2026-11-21
 
 ### Added — the inkbloom pass: the voice, printed (Engine G)

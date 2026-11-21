@@ -152,16 +152,54 @@ async function main() {
   await page.waitForTimeout(300);
   await shot("04-palette-lab");
 
-  // ---- Daylight (light) skin ----
-  // cache-buster forces a real navigation so the boot-time skin effect re-runs
-  await page.evaluate(() => localStorage.setItem("wf-skin", "daylight"));
+  // ---- Daylight theme (data-theme, v0.1.45+) ----
+  await page.evaluate(() => localStorage.setItem("wf-theme", "daylight"));
   await page.goto(`${base}?qa=1&v=2#/dictation/general`, { waitUntil: "networkidle" });
-  await page.waitForFunction(() => document.body.classList.contains("light"), null, { timeout: 4000 });
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "daylight", null, { timeout: 4000 });
   await shot("05-dictation-general-daylight");
 
   await page.goto(`${base}?qa=1&v=3#/personalize/dictionary`, { waitUntil: "networkidle" });
-  await page.waitForFunction(() => document.body.classList.contains("light"), null, { timeout: 4000 });
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "daylight", null, { timeout: 4000 });
   await shot("06-dictionary-daylight");
+
+  // ---- v0.1.48: the press room — more screens, wide viewport (live rail) ----
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => localStorage.setItem("wf-theme", "lab"));
+  await page.goto(`${base}?qa=1&v=4#/dictation/general`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("10-pressroom-general-wide");
+
+  await page.goto(`${base}?qa=1&v=5#/models/models`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("11-pressroom-models-wide");
+
+  await page.goto(`${base}?qa=1&v=6#/activity/insights`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("12-pressroom-insights-wide");
+
+  // hover state on a button (ink flood mid-pass)
+  await page.goto(`${base}?qa=1&v=7#/dictation/general`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  const btn = (await page.$(".pk-btn-fill")) || (await page.$(".pk-btn"));
+  if (btn) {
+    const box = await btn.boundingBox();
+    if (box) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(220);
+      await shot("13-btn-inkflood-hover");
+    }
+  }
+
+  // spotlight on a card (mouse over content)
+  const card = await page.$(".pk-spotlight");
+  if (card) {
+    const box = await card.boundingBox();
+    if (box) {
+      await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.4);
+      await page.waitForTimeout(500);
+      await shot("14-card-spotlight");
+    }
+  }
 
   // ---- onboarding (fresh profile) ----
   await page.evaluate(() => { localStorage.clear(); });

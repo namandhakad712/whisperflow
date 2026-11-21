@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
 import { Moon, Sun, Command } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { CommandPalette, type PaletteAction } from "../shared/CommandPalette";
+import { AuroraField, CountUp, DecryptText, DotRadar, Magnetic } from "../shared/presskit";
 import { useSettings } from "./store";
 import { GeneralTab } from "./tabs/GeneralTab";
 import { ShortcutsTab } from "./tabs/ShortcutsTab";
@@ -24,15 +25,16 @@ import { OverlayTab } from "./tabs/OverlayTab";
 import { DiagnoseTab } from "./tabs/DiagnoseTab";
 import { Onboarding } from "./Onboarding";
 import { THEMES, getTheme, readThemeId, applyTheme } from "./themes";
-import { Scramble } from "./useScramble";
 import { DEFAULT_ROUTE, PAGES, pageHome, resolveRoute, type SettingsPage } from "./nav";
 
 /**
- * Settings shell — "the console".
+ * The console — v0.1.48 "the press room".
  *
- * Five pages, each with its own sub-nav, plus the command palette (⌘K):
- * the patch bay that jumps to any screen or runs a live action. The Signal
- * Standard skin: Lab (dark) and Daylight (light).
+ * Three panes: the rail (channels), the sheet (content over a two-ink
+ * aurora), and the LIVE rail — mic meter, engine state, model, today's
+ * count — the instrument cluster the v0.1.47 critique asked for. Free-
+ * world grammar (reactbits/canvasui/21st.dev, browsed only) in our print
+ * language; see scripts/v2-design-spec.md and INSPIRATION.md.
  */
 
 function currentRoute(): string {
@@ -50,10 +52,6 @@ function hasOnboarded(): boolean {
     return true;
   }
 }
-
-/* The Theme Press (v0.1.45): six themes, each a print process with its
- * own type cast — see themes.ts. The old two-skin toggle is retired;
- * saved wf-skin values migrate (lab/daylight are theme ids too). */
 
 export function App() {
   // First run starts on onboarding (lazily checked so a completed user is
@@ -156,33 +154,37 @@ export function App() {
             whisperflow
           </span>
           <span className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint sm:inline">
-            · the console
+            · the press room
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            aria-label="Open command palette"
-            aria-keyshortcuts="Control+K"
-            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] text-ink-dim transition-colors duration-150 hover:border-phosphor/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
-          >
-            <Command size={13} />
-            <span className="hidden sm:inline">jump to…</span>
-            <kbd className="rounded border border-line-soft bg-paper-2 px-1 py-0.5 text-[10px] text-ink-faint">
-              ^K
-            </kbd>
-          </button>
-          <button
-            type="button"
-            onClick={cycleTheme}
-            aria-label={`Theme: ${getTheme(themeId).label}. Click for the next print.`}
-            title={`${getTheme(themeId).blurb} — click to cycle the press`}
-            className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
-          >
-            {getTheme(themeId).dark ? <Moon size={14} /> : <Sun size={14} />}
-            <span>{getTheme(themeId).label}</span>
-          </button>
+          <Magnetic strength={1.2}>
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Open command palette"
+              aria-keyshortcuts="Control+K"
+              className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] text-ink-dim transition-colors duration-150 hover:border-phosphor/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
+            >
+              <Command size={13} />
+              <span className="hidden sm:inline">jump to…</span>
+              <kbd className="rounded border border-line-soft bg-paper-2 px-1 py-0.5 text-[10px] text-ink-faint">
+                ^K
+              </kbd>
+            </button>
+          </Magnetic>
+          <Magnetic strength={1.2}>
+            <button
+              type="button"
+              onClick={cycleTheme}
+              aria-label={`Theme: ${getTheme(themeId).label}. Click for the next print.`}
+              title={`${getTheme(themeId).blurb} — click to cycle the press`}
+              className="flex h-8 items-center gap-2 rounded-md border border-line bg-pill px-3 font-mono text-[12px] font-medium text-ink transition-colors duration-150 hover:border-phosphor/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
+            >
+              {getTheme(themeId).dark ? <Moon size={14} /> : <Sun size={14} />}
+              <span>{getTheme(themeId).label}</span>
+            </button>
+          </Magnetic>
         </div>
       </div>
 
@@ -207,15 +209,17 @@ export function App() {
               <item.icon size={17} strokeWidth={1.75} />
             </RailItem>
           ))}
-          <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-rail-text-dim">
+          <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
             local-first · apache-2.0
             <br />
             v{version} · no telemetry
           </div>
         </aside>
 
-        <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-bg px-8 py-7">
-          <div className="mx-auto min-w-0 max-w-2xl">
+        {/* the sheet: content over the two-ink aurora */}
+        <main className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-bg">
+          <AuroraField className="pointer-events-none fixed inset-0" />
+          <div className="relative mx-auto min-w-0 max-w-3xl px-8 py-7">
             {/* the screen stages on every route change (see styles.css) */}
             <div key={route} className="wf-stage">
               <SubNav page={page} active={sub.id} route={route} />
@@ -240,6 +244,9 @@ export function App() {
             </div>
           </div>
         </main>
+
+        {/* the LIVE rail — the instrument cluster (wide sheets only) */}
+        <LiveRail route={route} />
       </div>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} extraActions={paletteActions} />
@@ -248,20 +255,170 @@ export function App() {
 }
 
 /**
- * Sub-navigation for one page. Rendered above the tab body, which keeps
- * owning its own `PageHeader` — one screen per view, unchanged.
+ * The live rail: mic meter, engine + model state, today's line, quick
+ * actions. Hidden under 1100px — the sheet breathes instead.
+ */
+function LiveRail({ route }: { route: string }) {
+  const config = useSettings((s) => s.config);
+  const statuses = useSettings((s) => s.statuses);
+  const barsRef = useRef<HTMLDivElement | null>(null);
+
+  // engine state: listen to dictation for the LED + label
+  const [dictState, setDictState] = useState<string>("idle");
+  useEffect(() => {
+    return window.whisperflow.dictation.onState((ev) => setDictState(ev.state));
+  }, []);
+
+  // the mic meter: analyze the default input while the panel is alive.
+  // Silent rooms read as a calm floor — that IS the signal (live instrument).
+  const [levels, setLevels] = useState<number[]>(() => new Array(14).fill(0.18));
+  useEffect(() => {
+    let raf = 0;
+    let ctx: AudioContext | null = null;
+    let stream: MediaStream | null = null;
+    let stopped = false;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
+    (async () => {
+      try {
+        // never prompt from settings: only meter when permission is already
+        // granted (first-run onboarding / first dictation does the asking)
+        const perm = await navigator.permissions?.query({ name: "microphone" as PermissionName });
+        if (perm && perm.state !== "granted") return;
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (stopped) return;
+        ctx = new AudioContext();
+        const src = ctx.createMediaStreamSource(stream);
+        const an = ctx.createAnalyser();
+        an.fftSize = 512;
+        src.connect(an);
+        const buf = new Uint8Array(an.fftSize);
+        let last = 0;
+        const tick = () => {
+          raf = requestAnimationFrame(tick);
+          const now = performance.now();
+          if (now - last < 90) return; // ~11fps is plenty for a meter
+          last = now;
+          an.getByteTimeDomainData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) {
+            const v = (buf[i]! - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / buf.length);
+          setLevels((prev) => [...prev.slice(1), Math.max(0.18, Math.min(1, rms * 5))]);
+        };
+        raf = requestAnimationFrame(tick);
+      } catch {
+        /* mic denied or absent — the meter stays at its floor */
+      }
+    })();
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+      void ctx?.close();
+    };
+  }, []);
+
+  // model state from the store (downloaded count + the transcription pick)
+  const models = useSettings((s) => s.catalog);
+  const downloaded = statuses.filter((s) => s.state === "downloaded").length;
+  const activeId = config?.stt?.modelId ?? "";
+  const activeModel = models.find((m) => m.id === activeId)?.name ?? (activeId || "—");
+  const hotkey = config?.hotkey?.pushToTalk ?? "—";
+
+  // today: first line of the history day group (cheap, no extra IPC)
+  const today = useSettings((s) => s.history)[0];
+
+  const engineLabel =
+    dictState === "listening"
+      ? "listening"
+      : dictState === "polishing" || dictState === "transcribing"
+        ? "printing"
+        : dictState === "error"
+          ? "error"
+          : "ready";
+
+  return (
+    <aside className="live-rail hidden w-[260px] shrink-0 overflow-y-auto py-4 xl:flex" aria-label="Live status">
+      <DotRadar className="pointer-events-none fixed h-0 w-0" />
+      {/* mic */}
+      <div className="live-rail-cell">
+        <div className="live-rail-label">
+          <span>mic · live</span>
+          <span className={`led ${dictState === "listening" ? "led-breathe" : ""}`} data-on={dictState === "listening" ? "live" : "off"} />
+        </div>
+        <div className="meter-bars" ref={barsRef} aria-hidden="true">
+          {levels.map((v, i) => (
+            <span key={i} style={{ height: `${Math.round(v * 100)}%` }} data-live={v > 0.14} />
+          ))}
+        </div>
+      </div>
+      {/* engine */}
+      <div className="live-rail-cell">
+        <div className="live-rail-label">
+          <span>engine</span>
+          <span className={`led ${engineLabel === "printing" ? "led-breathe" : ""}`} data-on={engineLabel === "error" ? "error" : engineLabel === "printing" ? "busy" : "live"} />
+        </div>
+        <p className="live-rail-value">
+          <DecryptText text={engineLabel} duration={420} runKey={`${route}/${engineLabel}`} />
+        </p>
+      </div>
+      {/* model */}
+      <div className="live-rail-cell">
+        <div className="live-rail-label">
+          <span>model</span>
+          <span className="pr-1">{downloaded} ready</span>
+        </div>
+        <p className="live-rail-value truncate" title={activeModel}>
+          {activeModel}
+        </p>
+      </div>
+      {/* hotkey */}
+      <div className="live-rail-cell">
+        <div className="live-rail-label">
+          <span>hotkey</span>
+        </div>
+        <p className="live-rail-value">{hotkey}</p>
+      </div>
+      {/* today */}
+      <div className="live-rail-cell">
+        <div className="live-rail-label">
+          <span>today</span>
+        </div>
+        <p className="live-rail-value">
+          <CountUp
+            to={(today?.finalText ?? today?.rawText ?? "").length}
+            duration={700}
+            format={(n) => `${n.toLocaleString()} chars`}
+          />
+        </p>
+      </div>
+      <div className="mt-auto px-1 pb-1 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
+        the press runs local
+        <br />
+        nothing leaves this machine
+      </div>
+    </aside>
+  );
+}
+
+/**
+ * Sub-navigation for one page — v0.1.48: the PillNav rides a sticky bar
+ * with the channel marker, and the page hint decrypts on route change.
  */
 function SubNav({ page, active, route }: { page: SettingsPage; active: string; route: string }) {
   return (
     <div className="mb-5 border-b border-line pb-4">
       <p className="wf-header-channel">
-        {page.label.toLowerCase()} · {route.replace("/", " / ")}
+        {route.replace("/", " / ")}
       </p>
-      <p className="mt-1.5 text-[12px] leading-5 text-ink-dim">{page.hint}</p>
-      <nav
-        className="mt-3 flex flex-wrap items-center gap-1"
-        aria-label={`${page.label} sections`}
-      >
+      <p className="mt-1.5 text-[12px] leading-5 text-ink-dim">
+        <DecryptText text={page.hint} duration={480} runKey={route} />
+      </p>
+      <nav className="pk-pillnav mt-3" aria-label={`${page.label} sections`}>
         {page.subs.map((s) => {
           const on = s.id === active;
           return (
@@ -269,11 +426,9 @@ function SubNav({ page, active, route }: { page: SettingsPage; active: string; r
               key={s.id}
               href={`#/${page.id}/${s.id}`}
               aria-current={on ? "page" : undefined}
-              className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 font-mono text-[12.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
-                on ? "bg-paper-2 text-ink" : "text-ink-dim hover:text-ink"
-              }`}
+              className={`pk-pillnav-tab ${on ? "on" : ""}`}
             >
-              <span className={`led ${on ? "" : "opacity-40"}`} data-on={on ? "live" : "off"} aria-hidden="true" />
+              <span className={`led mr-1 ${on ? "" : "opacity-40"}`} data-on={on ? "live" : "off"} aria-hidden="true" />
               {s.label}
             </a>
           );
@@ -369,25 +524,27 @@ function RailItem({
   first?: boolean;
 }) {
   return (
-    <a
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={`rail-item relative flex h-9 items-center gap-3 rounded-md px-3 font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
-        first ? "" : "mt-1"
-      } ${active ? "is-active bg-rail-active text-ink" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"}`}
-    >
-      {/* the phosphor edge: a 2px signal on the live channel */}
-      {active && (
-        <span
-          className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-phosphor shadow-[0_0_8px_rgba(92,225,169,0.7)]"
-          aria-hidden="true"
-        />
-      )}
-      {children}
-      <span className="flex-1">{label}</span>
-      <span className="rail-channel" aria-hidden="true" data-channel={channel}>
-        <Scramble text={channel} />
-      </span>
-    </a>
+    <Magnetic strength={1.4} className={first ? "" : "mt-1"}>
+      <a
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={`rail-item relative flex h-9 items-center gap-3 rounded-md px-3 font-mono text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
+          active ? "is-active bg-rail-active text-ink" : "text-rail-text-dim hover:bg-rail-item hover:text-rail-text"
+        }`}
+      >
+        {/* the phosphor edge: a 2px signal on the live channel */}
+        {active && (
+          <span
+            className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-phosphor shadow-[0_0_8px_rgba(92,225,169,0.7)]"
+            aria-hidden="true"
+          />
+        )}
+        {children}
+        <span className="flex-1">{label}</span>
+        <span className="rail-channel" aria-hidden="true" data-channel={channel}>
+          {channel}
+        </span>
+      </a>
+    </Magnetic>
   );
 }
