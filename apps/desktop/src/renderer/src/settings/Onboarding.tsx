@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ModelCatalogEntry } from "@whisperflow/shared";
 import { useSettings } from "./store";
 import { Button, Card, Spinner } from "../shared/ui";
+import { AuroraField, DecryptText } from "../shared/presskit";
 import { formatBytes } from "../shared/format";
 
 const STEPS = ["Microphone", "Speech engine", "Downloads", "Your first dictation"] as const;
@@ -50,10 +51,13 @@ export function Onboarding() {
   // First-run gate: quick version vs full tour.
   if (!skipped) {
     return (
-      <div className="mx-auto flex h-screen max-w-md flex-col justify-center px-6">
-        <Card className="p-8">
+      <div className="relative mx-auto flex h-screen max-w-md flex-col justify-center px-6">
+        <AuroraField className="pointer-events-none fixed inset-0" />
+        <Card className="relative p-8">
           <p className="sec-mark">signal check</p>
-          <h1 className="font-display mt-4 text-3xl leading-tight">New here?</h1>
+          <h1 className="font-display mt-4 text-3xl leading-tight">
+            <DecryptText text="New here?" duration={640} />
+          </h1>
           <p className="mt-3 text-sm leading-6 text-ink-dim">
             Want the quick version? We'll set up the essentials and let you explore the rest
             later — or take the full tour with every option explained.
@@ -78,8 +82,9 @@ export function Onboarding() {
     );
   }
   return (
-    <div className="mx-auto flex h-screen max-w-xl flex-col justify-center px-6">
-      <div className="mb-6 flex items-center gap-2">
+    <div className="relative mx-auto flex h-screen max-w-xl flex-col justify-center px-6">
+      <AuroraField className="pointer-events-none fixed inset-0" />
+      <div className="relative mb-6 flex items-center gap-2">
         {STEPS.map((label, i) => (
           <div key={label} className="flex items-center gap-2">
             <span
@@ -98,7 +103,7 @@ export function Onboarding() {
           </div>
         ))}
       </div>
-      <Card className="p-8">
+      <Card className="relative p-8">
         {step === 0 && <MicStep onDone={() => setStep(1)} />}
         {step === 1 && <ConfigureStep onDone={() => setStep(2)} />}
         {step === 2 && <ModelsStep onDone={() => setStep(3)} />}
@@ -125,7 +130,9 @@ function MicStep({ onDone }: { onDone: () => void }) {
   return (
     <div>
       <p className="sec-mark">step 01 · input</p>
-      <h1 className="font-display mt-3 text-2xl">Allow the microphone</h1>
+      <h1 className="font-display mt-3 text-2xl">
+        <DecryptText text="Allow the microphone" duration={560} />
+      </h1>
       <p className="mt-2 text-sm leading-6 text-ink-dim">
         Audio is processed on this machine only. Windows may ask for a privacy permission — that
         prompt comes from the OS, not us.
@@ -174,7 +181,9 @@ function ConfigureStep({ onDone }: { onDone: () => void }) {
   return (
     <div>
       <p className="sec-mark">step 02 · engine</p>
-      <h1 className="font-display mt-3 text-2xl">Configure your speech engine</h1>
+      <h1 className="font-display mt-3 text-2xl">
+        <DecryptText text="Configure your speech engine" duration={560} />
+      </h1>
       <p className="mt-2 text-sm leading-6 text-ink-dim">
         Everything runs locally with open models. This machine reports ~{ramGb} GB RAM — you can
         change any of this later in Settings.
@@ -358,7 +367,9 @@ function ModelsStep({ onDone }: { onDone: () => void }) {
   return (
     <div>
       <p className="sec-mark">step 03 · downloads</p>
-      <h1 className="font-display mt-3 text-2xl">{isCloud ? "Cloud engine ready" : "Download your engine"}</h1>
+      <h1 className="font-display mt-3 text-2xl">
+        <DecryptText text={isCloud ? "Cloud engine ready" : "Download your engine"} duration={560} />
+      </h1>
       <p className="mt-2 text-sm leading-6 text-ink-dim">
         {isCloud
           ? "Transcription runs on your cloud key — nothing to download. Press continue when you're set."
@@ -412,7 +423,9 @@ function FinishStep() {
   return (
     <div>
       <p className="sec-mark">step 04 · live</p>
-      <h1 className="font-display mt-3 text-2xl">You're ready</h1>
+      <h1 className="font-display mt-3 text-2xl">
+        <DecryptText text="You're ready" duration={560} />
+      </h1>
       <p className="mt-2 text-sm leading-6 text-ink-dim">
         Open any app with a text field — Notepad counts — and press the hotkey. Speak a sentence,
         pause, and polished text appears at your cursor. Press it again mid-dictation to finish

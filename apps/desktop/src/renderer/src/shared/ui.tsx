@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
+import { DecryptText, SpotlightCard } from "./presskit";
 
 /**
  * Signal Standard primitives.
@@ -8,11 +9,12 @@ import { ChevronRight } from "lucide-react";
  */
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  // data-stage-row: screens cascade their cards in on route change (styles.css)
+  // data-stage-row: screens cascade their cards in on route change (styles.css).
+  // v0.1.48: every card is a SpotlightCard — the cursor drags an ink wash.
   return (
-    <div data-stage-row className={`card p-5 ${className}`}>
+    <SpotlightCard data-stage-row className={`card p-5 ${className}`}>
       {children}
-    </div>
+    </SpotlightCard>
   );
 }
 
@@ -178,23 +180,20 @@ export function Button({
   disabled?: boolean;
   className?: string;
 }) {
-  const styles =
-    variant === "primary"
-      ? "bg-phosphor font-mono text-[#07120D] shadow-[0_0_18px_rgba(92,225,169,0.15)] hover:bg-phosphor-hot hover:shadow-[0_0_28px_rgba(92,225,169,0.3)]"
-      : variant === "danger"
-        ? "border border-coral/40 bg-coral/5 font-mono text-coral hover:bg-coral/10 hover:border-coral/60"
-        : "border border-line bg-paper-2 font-mono text-ink hover:border-line-strong hover:text-ink";
+  // v0.1.48: the ink-flood roller pass. primary = fill, ghost = plate
+  // (secondary), danger = coral. Same API, so every tab upgrades at once.
+  const v = variant === "primary" ? "fill" : variant === "danger" ? "danger" : "plate";
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 focus-visible:ring-offset-1 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-40 ${styles} ${className}`}
-    >
-      {children}
-    </button>
+    <span className={`pk-btn-wrap ${className}`}>
+      <PrintButtonInline variant={v} disabled={disabled} onClick={onClick}>
+        {children}
+      </PrintButtonInline>
+    </span>
   );
 }
+
+/** Local re-export so the file keeps one import surface. */
+import { PrintButton as PrintButtonInline } from "./presskit";
 
 export function TextInput({
   value,
@@ -334,7 +333,9 @@ export function PageHeader({
     <div className="mb-6" data-stage-row>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-display truncate text-2xl leading-tight">{title}</h1>
+          <h1 className="font-display truncate text-2xl leading-tight">
+            <DecryptText text={title} duration={560} />
+          </h1>
           {tagline && <p className="font-display mt-1.5 text-xl">{tagline}</p>}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

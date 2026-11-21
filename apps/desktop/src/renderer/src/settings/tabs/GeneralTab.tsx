@@ -53,7 +53,7 @@ function SetupChecklist() {
   const pct = Math.round((completed / steps.length) * 100);
 
   return (
-    <div className="card mb-6 p-5">
+    <div data-stage-row className="pk-spotlight card mb-6 p-5">
       <div className="flex items-baseline justify-between">
         <p className="text-[15px] font-semibold">Set up WhisperFlow</p>
         <span className="text-xs text-ink-dim">{completed}/{steps.length}</span>
@@ -63,24 +63,35 @@ function SetupChecklist() {
       </div>
       <div className="mt-4 space-y-1">
         {steps.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2">
+          <button
+            key={s.id}
+            type="button"
+            onClick={s.action}
+            title={done[s.id] ? "Done — click to revisit" : undefined}
+            className={`group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors duration-150 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
+              done[s.id] ? "opacity-70 hover:opacity-100" : ""
+            }`}
+          >
             <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] transition-colors ${
                 done[s.id] ? "border-accent bg-accent text-accent-ink" : "border-line text-transparent"
               }`}
             >
               ✓
             </span>
             <div className="min-w-0 flex-1">
-              <p className={`text-sm ${done[s.id] ? "text-ink-dim line-through" : "font-medium"}`}>{s.label}</p>
+              <p className={`text-sm ${done[s.id] ? "text-ink-dim line-through group-hover:no-underline" : "font-medium"}`}>
+                {s.label}
+                {done[s.id] && <span className="ml-2 hidden font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint group-hover:inline">revisit →</span>}
+              </p>
               <p className="text-xs text-ink-dim">{s.hint}</p>
             </div>
             {!done[s.id] && (
-              <button type="button" onClick={s.action} className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-ink">
+              <span className="shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-ink transition-transform duration-150 group-hover:translate-x-0.5">
                 {s.actionLabel}
-              </button>
+              </span>
             )}
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -95,13 +106,17 @@ function ChangeRow({ label, value, onChange }: { label: string; value: React.Rea
         <p className="text-sm font-medium">{label}</p>
         <p className="mt-0.5 truncate text-xs leading-5 text-ink-dim">{value}</p>
       </div>
-      <button
-        type="button"
-        onClick={onChange}
-        className="shrink-0 rounded-lg border border-line bg-surface-2 px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-150 hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
-      >
-        Change
-      </button>
+      <span className="pk-btn-wrap pk-btn-wrap-sm shrink-0">
+        <button
+          type="button"
+          onClick={onChange}
+          className="pk-btn pk-btn-plate"
+        >
+          <span className="pk-btn-ink" aria-hidden="true" />
+          <span className="pk-btn-gloss" aria-hidden="true" />
+          <span className="pk-btn-label">Change</span>
+        </button>
+      </span>
     </div>
   );
 }

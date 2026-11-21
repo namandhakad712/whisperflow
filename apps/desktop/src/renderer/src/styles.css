@@ -655,3 +655,327 @@ body.light .wf-palette-panel {
     transition-duration: 0.01ms;
   }
 }
+
+/* ============================================================
+   THE PRESS KIT — console v0.1.48
+   Free-world grammar (reactbits/canvasui/21st.dev, browsed only)
+   in our print language. Nothing installed; all values authored.
+   ============================================================ */
+
+/* ---- PrintButton: the roller pass --------------------------------
+   fill = ink floods the label L→R on hover; plate = paper raised on a
+   hairline; ghost = ink only; danger = coral ink. Press = the stamp. */
+.pk-btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-family: var(--wf-mono), monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pk-btn-wrap { display: inline-flex; }
+.pk-btn-wrap-sm .pk-btn { padding: 0.35rem 0.85rem; font-size: 12px; }
+.pk-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.pk-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.pk-btn .pk-btn-ink {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.26s cubic-bezier(0.65, 0, 0.2, 1);
+}
+.pk-btn .pk-btn-gloss {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    color-mix(in srgb, var(--color-ink) 14%, transparent) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.2, 1);
+  pointer-events: none;
+}
+.pk-btn:not(:disabled):hover .pk-btn-ink {
+  transform: scaleX(1);
+}
+.pk-btn:not(:disabled):hover .pk-btn-gloss {
+  transform: translateX(120%);
+}
+.pk-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+/* fill: the primary — accent ground from the start, ink flood = deeper */
+.pk-btn-fill {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
+}
+.pk-btn-fill .pk-btn-ink {
+  background: var(--color-accent-strong);
+}
+.pk-btn-fill:not(:disabled):hover {
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.pk-btn-fill:not(:disabled):active {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent) 26%, transparent);
+}
+/* plate: the secondary — paper tile on a hairline */
+.pk-btn-plate {
+  background: var(--color-paper-2);
+  border-color: var(--color-line);
+  color: var(--color-ink);
+}
+.pk-btn-plate .pk-btn-ink {
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-paper-2));
+}
+.pk-btn-plate:not(:disabled):hover {
+  border-color: var(--color-line-strong);
+}
+/* ghost: the tertiary — ink only */
+.pk-btn-ghost {
+  background: transparent;
+  color: var(--color-ink-dim);
+}
+.pk-btn-ghost .pk-btn-ink {
+  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+}
+.pk-btn-ghost:not(:disabled):hover {
+  color: var(--color-ink);
+}
+/* danger: coral ink */
+.pk-btn-danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent);
+  color: var(--color-coral);
+}
+.pk-btn-danger .pk-btn-ink {
+  background: color-mix(in srgb, var(--color-coral) 14%, transparent);
+}
+.pk-btn-danger:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-coral) 70%, transparent);
+}
+
+/* ---- SpotlightCard: the ink wash --------------------------------- */
+.pk-spotlight {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  overflow: hidden;
+}
+.pk-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle var(--pk-spot-r, 320px) at var(--pk-spot-x, -1000px) var(--pk-spot-y, -1000px),
+    color-mix(in srgb, var(--color-accent) 9%, transparent),
+    transparent 70%
+  );
+  opacity: var(--pk-spot-o, 0);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* ---- PillNav: the sliding indicator ------------------------------ */
+.pk-pillnav {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-ink) 4%, transparent);
+  border: 1px solid var(--color-line-soft);
+}
+.pk-pillnav-ind {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 9px;
+  background: var(--color-paper-3);
+  box-shadow: inset 0 0 0 1px var(--color-line),
+    0 1px 0 color-mix(in srgb, var(--color-ink) 5%, transparent);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.2s ease;
+}
+.pk-pillnav-tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 0.9rem;
+  border-radius: 9px;
+  font-family: var(--wf-mono), monospace;
+  font-size: 12.5px;
+  color: var(--color-ink-dim);
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+.pk-pillnav-tab:hover {
+  color: var(--color-ink);
+}
+.pk-pillnav-tab.on {
+  color: var(--color-ink);
+}
+.pk-pillnav-tab.on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 16px;
+  height: 3px;
+  border-radius: 1.5px;
+  transform: translateX(-50%);
+  background: var(--color-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+.pk-pillnav-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* ---- DecryptText / CountUp --------------------------------------- */
+.pk-decrypt {
+  font-variant-ligatures: none;
+}
+.pk-countup {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Magnetic ----------------------------------------------------- */
+.pk-magnetic {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* ---- AuroraField + DotRadar canvases ------------------------------ */
+.pk-aurora {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* when used as a fixed sheet behind a pane, it must anchor all corners */
+.pk-aurora.fixed {
+  inset: 0;
+  z-index: 0;
+}
+.pk-dotradar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---- AnimatedRows: the staggered settle --------------------------- */
+@keyframes pk-row-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pk-row-in {
+  animation: pk-row-settle 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--pk-row-delay, 0ms);
+}
+
+/* ---- the live rail (right pane) ----------------------------------- */
+.live-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 1px solid var(--color-line);
+  background:
+    radial-gradient(120% 40% at 50% 0%, color-mix(in srgb, var(--color-ink) 2%, transparent), transparent 70%),
+    var(--color-rail);
+}
+.live-rail-cell {
+  position: relative;
+  margin: 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-paper) 55%, transparent);
+  overflow: hidden;
+}
+.live-rail-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--wf-mono), monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  margin-bottom: 8px;
+}
+.live-rail-value {
+  font-family: var(--wf-mono), monospace;
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+/* the halftone mic meter — Engine G's sibling, in the rail */
+.meter-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 40px;
+}
+.meter-bars span {
+  flex: 1;
+  border-radius: 2px 2px 1px 1px;
+  background: color-mix(in srgb, var(--color-accent) 34%, var(--color-paper-3));
+  transition: height 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.meter-bars span[data-live="true"] {
+  background: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-btn .pk-btn-ink,
+  .pk-btn .pk-btn-gloss,
+  .pk-pillnav-ind,
+  .pk-magnetic,
+  .pk-row-in {
+    transition: none;
+    animation: none;
+  }
+  .pk-btn:not(:disabled):hover .pk-btn-ink {
+    transform: none;
+  }
+  .pk-spotlight::before {
+    display: none;
+  }
+}
