@@ -9,7 +9,7 @@
  * section markers. Motion per MOTION.md — 240ms out-expo entrance.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { allScreens } from "../settings/nav";
+import { allScreens, PAGES } from "../settings/nav";
 
 export interface PaletteAction {
   id: string;
@@ -41,6 +41,27 @@ function fuzzy(needle: string, haystack: string): number {
   return score;
 }
 
+/** v0.1.51: the last five ran commands ride the top of an empty query —
+ *  the palette learns what you actually use. Persisted locally. */
+const RECENTS_KEY = "wf-palette-recents";
+const RECENTS_MAX = 5;
+function readRecents(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function pushRecent(id: string): void {
+  try {
+    const next = [id, ...readRecents().filter((x) => x !== id)].slice(0, RECENTS_MAX);
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+  } catch {
+    /* session-only */
+  }
+}
+
 export function CommandPalette({
   open,
   onClose,
@@ -52,35 +73,48 @@ export function CommandPalette({
 }) {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
+  const [recents, setRecents] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Navigate actions: one per screen, plus the live extras.
-  const navActions: PaletteAction[] = useMemo(
-    () =>
-      allScreens().map((s) => ({
+  // Navigate actions: one per screen, plus the live extras. The hint shows
+  // the channel hotkey when the page has one (v0.1.51).
+  const navActions: PaletteAction[] = useMemo(() => {
+    const pageIdx = new Map(PAGES.map((p, i) => [p.id, i]));
+    return allScreens().map((s) => {
+      const ch = pageIdx.get(s.pageId);
+      return {
         id: `nav:${s.route}`,
         label: s.label,
         group: `go to · ${s.page}`,
-        hint: s.route,
+        hint: ch !== undefined ? `alt+${ch + 1} · ${s.route}` : s.route,
         run: () => {
           window.location.hash = `/${s.route}`;
         },
-      })),
-    [],
-  );
+      };
+    });
+  }, []);
 
   const items = useMemo<PaletteAction[]>(() => {
     const all = [...extraActions, ...navActions];
     const query = q.trim();
-    if (!query) return all.slice(0, 12);
+    if (!query) {
+      // v0.1.51: recents ride the top, everything else follows
+      const byId = new Map(all.map((a) => [a.id, a]));
+      const recent = recents
+        .map((id) => byId.get(id))
+        .filter((a): a is PaletteAction => Boolean(a))
+        .map((a) => ({ ...a, group: "recent" }));
+      const rest = all.filter((a) => !recents.includes(a.id));
+      return [...recent, ...rest].slice(0, 12);
+    }
     return all
       .map((a) => ({ a, s: Math.max(fuzzy(query, a.label), fuzzy(query, a.hint ?? "") * 0.6) }))
       .filter((x) => x.s > 0)
       .sort((x, y) => y.s - x.s)
       .slice(0, 12)
       .map((x) => x.a);
-  }, [q, navActions, extraActions]);
+  }, [q, navActions, extraActions, recents]);
 
   // Reset selection whenever the result list changes shape.
   useEffect(() => setSel(0), [q]);
@@ -90,6 +124,7 @@ export function CommandPalette({
     if (open) {
       setQ("");
       setSel(0);
+      setRecents(readRecents());
       // next tick: the input exists by then
       const t = window.setTimeout(() => inputRef.current?.focus(), 0);
       return () => window.clearTimeout(t);
@@ -104,6 +139,7 @@ export function CommandPalette({
   if (!open) return null;
 
   const commit = (a: PaletteAction) => {
+    pushRecent(a.id);
     a.run();
     onClose();
   };
@@ -179,6 +215,7 @@ export function CommandPalette({
           <span className="flex items-center gap-3">
             <span>↑↓ select</span>
             <span>↵ open</span>
+            <span>alt+1…9 channel</span>
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { AppUpdateStatus } from "@whisperflow/shared";
-import { Moon, Sun, Command } from "lucide-react";
+import { Moon, Sun, Command, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAppVersion } from "../shared/useAppVersion";
 import { CommandPalette, type PaletteAction } from "../shared/CommandPalette";
 import { AuroraField, CountUp, DecryptText, DotRadar, Magnetic } from "../shared/presskit";
@@ -62,6 +62,24 @@ export function App() {
   const [rawRoute, setRawRoute] = useState(() => (hasOnboarded() ? currentRoute() : "onboarding"));
   const [themeId, setThemeId] = useState<string>(() => readThemeId());
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // v0.1.51: the rail collapses to icons-only — more sheet for the content.
+  const [railCollapsed, setRailCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("wf-rail-collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleRail = () => {
+    setRailCollapsed((v) => {
+      try {
+        localStorage.setItem("wf-rail-collapsed", v ? "0" : "1");
+      } catch {
+        /* session-only */
+      }
+      return !v;
+    });
+  };
   const version = useAppVersion();
   const loadConfig = useSettings((s) => s.loadConfig);
 
@@ -73,6 +91,13 @@ export function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((o) => !o);
+        return;
+      }
+      if (e.key === "[" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const el = document.activeElement;
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+        toggleRail();
         return;
       }
       if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.key)) {
@@ -163,6 +188,16 @@ export function App() {
       {/* top bar — the console nameplate */}
       <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-rail px-4">
         <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleRail}
+            aria-label={railCollapsed ? "Expand the section rail" : "Collapse the section rail"}
+            aria-keyshortcuts="BracketLeft"
+            title="Collapse the rail — ["
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line bg-pill text-ink-dim transition-colors duration-150 hover:border-phosphor/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60"
+          >
+            {railCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          </button>
           <span className="font-mono text-[12px] font-medium uppercase tracking-[0.16em] text-rail-text">
             whisperflow
           </span>
@@ -206,33 +241,36 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         {/* rail — the channel strip */}
         <aside
-          className="flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3"
+          className={`rail-aside flex shrink-0 flex-col gap-0.5 overflow-y-auto bg-rail px-3 py-3 ${railCollapsed ? "rail-collapsed" : ""}`}
           aria-label="Sections"
-          style={{ width: 216 }}
+          style={{ width: railCollapsed ? 68 : 216 }}
         >
           {/* v0.1.50: the rail reads in three sections — the press you
               drive, the records it prints, the system under it. */}
           <RailSection title="the press" />
           {PAGES.map((item, i) => (
             <Fragment key={item.id}>
-              {item.id === "activity" && <RailSection title="the records" />}
-              {item.id === "system" && <RailSection title="the system" />}
+              {item.id === "activity" && <RailSection title="the records" collapsed={railCollapsed} />}
+              {item.id === "system" && <RailSection title="the system" collapsed={railCollapsed} />}
               <RailItem
                 active={page.id === item.id}
                 label={item.label}
                 channel={String(i).padStart(2, "0")}
                 href={`#/${pageHome(item)}`}
                 first={i === 0}
+                collapsed={railCollapsed}
               >
                 <item.icon size={17} strokeWidth={1.75} />
               </RailItem>
             </Fragment>
           ))}
-          <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
-            local-first · apache-2.0
-            <br />
-            v{version} · no telemetry
-          </div>
+          {!railCollapsed && (
+            <div className="mt-auto px-3 pt-3 font-mono text-[9px] uppercase leading-relaxed tracking-[0.12em] text-ink-dim">
+              local-first · apache-2.0
+              <br />
+              v{version} · no telemetry
+            </div>
+          )}
         </aside>
 
         {/* the sheet: content over the two-ink aurora */}
@@ -588,8 +626,10 @@ function summarizeReleaseNotes(raw: string): string {
   return firstLine.length > 180 ? `${text.slice(0, 177)}…` : firstLine;
 }
 
-/** A mono section header in the rail — the press / records / system. */
-function RailSection({ title }: { title: string }) {
+/** A mono section header in the rail — the press / records / system.
+ *  Collapsed: a plain rule, centered width like the icons. */
+function RailSection({ title, collapsed }: { title: string; collapsed?: boolean }) {
+  if (collapsed) return <p className="rail-section rail-section-min" aria-hidden="true">·</p>;
   return <p className="rail-section">{title}</p>;
 }
 
@@ -600,6 +640,7 @@ function RailItem({
   href,
   children,
   first,
+  collapsed,
 }: {
   active: boolean;
   label: string;
@@ -607,7 +648,26 @@ function RailItem({
   href: string;
   children: React.ReactNode;
   first?: boolean;
+  collapsed?: boolean;
 }) {
+  if (collapsed) {
+    return (
+      <a
+        href={href}
+        aria-current={active ? "page" : undefined}
+        aria-label={`${label} (channel ${channel})`}
+        title={`${label} · Alt+${Number(channel) + 1}`}
+        className={`rail-item rail-item-min relative mt-1 flex h-9 items-center justify-center rounded-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phosphor/60 ${
+          active ? "is-active" : ""
+        }`}
+      >
+        {children}
+        {active && (
+          <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-phosphor shadow-[0_0_8px_rgba(92,225,169,0.7)]" />
+        )}
+      </a>
+    );
+  }
   return (
     <Magnetic strength={1.4} className={first ? "" : "mt-1"}>
       <a

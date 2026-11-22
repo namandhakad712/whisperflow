@@ -2,6 +2,34 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.51] — 2026-11-22
+
+### Fixed — the veil
+- **"The whole app looks dark"**: the paper-grain texture built its tile
+  with an SVG `feImage` + nested data-URI — on some Windows Chromium
+  builds that filter chain fails and the base rect renders its DEFAULT
+  BLACK fill at the layer's 0.5 opacity: a half-black veil over the
+  entire window (every surface reading exactly 0.50× its true
+  luminance). Rebuilt with plain `<rect>` bayer dots — nothing to fail,
+  same whisper-quiet grain. Pixel-verified: Lino bg renders at
+  luminance 250 (was ~124 on affected machines).
+
+### Added — the ink-press pass
+- **Rail collapse**: the section rail collapses to icons — toggle in
+  the header or press `[` — tooltips carry the labels + channel
+  numbers, the active ink-bar stays, choice remembered. The animated
+  width respects `prefers-reduced-motion`.
+- **Palette v2**: your five most-used commands ride the top of an
+  empty query as *recent* (persisted locally); navigation rows show
+  their `Alt+N` channel hotkey in the hint; the footer teaches the
+  channel keys.
+- **Ink-press entrance**: cards lay onto the sheet like paper onto a
+  press bed — settle + a late ink shadow, staggered. **Spotlight
+  sweep**: the card wash now travels once per hover entry
+  (printer's-blanket roll). **Press bloom** on the hero Start button.
+  All three gated by the motion dial (calm/still) and
+  `prefers-reduced-motion`.
+
 ## [0.1.50] — 2026-11-21
 
 ### Fixed — the checklist finally finishes, rows stop overflowing

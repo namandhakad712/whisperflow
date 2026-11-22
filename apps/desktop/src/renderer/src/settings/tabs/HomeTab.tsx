@@ -241,7 +241,7 @@ export function HomeTab() {
 /** The jumbo pill CTA — ink floods on hover; the hotkey rides inside. */
 function MagneticCTA({ onPress, hotkey, ready }: { onPress: () => void; hotkey: string; ready: boolean }) {
   return (
-    <button type="button" onClick={onPress} className="pk-btn pk-btn-cta" disabled={!ready}>
+    <button type="button" onClick={onPress} className="pk-btn pk-btn-cta pk-bloom-btn" disabled={!ready}>
       <span className="pk-btn-ink" aria-hidden="true" />
       <span className="pk-btn-gloss" aria-hidden="true" />
       <PlayCircle size={17} strokeWidth={2} />
