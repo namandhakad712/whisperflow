@@ -15,7 +15,7 @@
 <p align="center">
   <a href="#license"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-2952E3?style=flat-square"></a>
   <a href="https://namandhakad712.github.io/whisperflow/"><img alt="Site" src="https://img.shields.io/badge/site-live-8FB0FF?style=flat-square"></a>
-  <a href="https://github.com/namandhakad712/whisperflow/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1.50-5CE1A9?style=flat-square"></a>
+  <a href="https://github.com/namandhakad712/whisperflow/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1.51-5CE1A9?style=flat-square"></a>
   <img alt="Telemetry" src="https://img.shields.io/badge/telemetry-none-1a1a1a?style=flat-square">
   <img alt="Word caps" src="https://img.shields.io/badge/word%20caps-none-DB704C?style=flat-square">
 </p>
@@ -160,8 +160,10 @@ A few things worth knowing:
 
 Settings is **the console**: a channel rail on the left reading in three sections —
 **the press** (Home / Dictation / Models / Personalize), **the records** (Activity), and
-**the system** (System) — plus a **command palette** (`Ctrl+K`) and **channel hotkeys**
-(`Alt+1`…`Alt+9`, the numbers printed beside each rail icon). On wide windows a live rail
+**the system** (System). The rail **collapses to icons** (toggle in the header, or press
+`[`) when you want the whole sheet for content. Plus a **command palette** (`Ctrl+K`,
+v2: subsequence fuzzy match, your five most-used commands pinned as *recent*) and
+**channel hotkeys** (`Alt+1`…`Alt+9`, the numbers printed beside each rail icon). On wide windows a live rail
 rides the right edge: a real-time mic meter (with a *test the mic* button), engine state,
 active model, hotkey, and today's print run — runs, chars, seconds spoken, updating live.
 The screens people touch first:
@@ -201,6 +203,12 @@ import), **History** (with optional audio playback), **Insights**, **Scratchpad*
 (diagnostics), **Hooks**, **Experiments**, **About**.
 
 ## Troubleshooting
+
+**The whole app looks dark / veiled (v0.1.50 and earlier, some Windows machines).**
+The paper-grain texture used an SVG `feImage` filter that renders as solid black on
+some Windows Chromium builds — a half-black veil over the window. v0.1.51 rebuilds
+the grain with plain SVG dots that cannot fail. Update, or set **Personalize → Your
+press → grain: off** as a stopgap.
 
 **The dictation is silent / the mic isn't picked up.**
 Microphone device names appear only after the mic permission is granted (during onboarding or

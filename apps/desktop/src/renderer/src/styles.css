@@ -247,7 +247,12 @@ body {
   100% { opacity: 1; filter: blur(0); }
 }
 
-/* the print grain: 1-bit bayer texture, bg only, whisper-quiet */
+/* the print grain: 1-bit bayer texture, bg only, whisper-quiet.
+ * v0.1.51: the old tile used feImage + a nested SVG data-URI — on some
+ * Windows Chromium builds that filter chain fails and the base rect
+ * renders its DEFAULT BLACK fill at the layer's 0.5 opacity, i.e. a
+ * half-black veil over the whole window (bug report: "app looks dark").
+ * Rebuilt with plain <rect> dots — nothing to fail, same bayer look. */
 body::before {
   content: "";
   position: fixed;
@@ -255,7 +260,7 @@ body::before {
   pointer-events: none;
   z-index: 0;
   opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cfilter id='d'%3E%3CfeImage href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%23000%22 fill-opacity=%220%22/%3E%3Crect x=%220%22 y=%220%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3Crect x=%222%22 y=%221%22 width=%221%22 height=%221%22 fill=%22%23fff%22 fill-opacity=%220.028%22/%3E%3C/svg%3E'/%3E%3C/filter%3E%3Crect width='24' height='24' filter='url(%23d)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='2' y='1' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='6' y='3' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='1' y='4' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='3' y='5' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='5' y='6' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3Crect x='7' y='7' width='1' height='1' fill='%23000' fill-opacity='0.05'/%3E%3C/svg%3E");
 }
 
 body.overlay-body {
@@ -1570,3 +1575,115 @@ body.light .wf-palette-panel {
   background: var(--color-line-soft);
 }
 .rail-section:first-child { padding-top: 4px; }
+
+/* rail collapse (v0.1.51) — icons only, tooltips carry the labels */
+.rail-aside { transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+.rail-section-min {
+  justify-content: center;
+  padding: 12px 0 4px;
+  letter-spacing: 0;
+}
+.rail-section-min::after { display: none; }
+.rail-item-min { color: var(--color-rail-text-dim); }
+.rail-item-min:hover { color: var(--color-rail-text); }
+.rail-item-min.is-active { color: var(--color-ink); }
+@media (prefers-reduced-motion: reduce) { .rail-aside { transition: none; } }
+
+/* ---- v0.1.51: the ink-press pass ---------------------------------- */
+/* Cards enter like paper laid on a press bed: a press-down + settle,
+ * with the ink (border) arriving a beat late — the "roll over it"
+ * feel. Scoped to .card so list rows stay on their faster settle. */
+@keyframes wf-ink-press {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.994);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(0) scale(0.999);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+}
+.wf-stage .card {
+  animation: wf-ink-press 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+/* stagger: children of the stage that are cards lay on one by one */
+.wf-stage > * > .card:nth-child(2) { animation-delay: 0.05s; }
+.wf-stage > * > .card:nth-child(3) { animation-delay: 0.09s; }
+.wf-stage > * > .card:nth-child(4) { animation-delay: 0.13s; }
+.wf-stage > * > .card:nth-child(5) { animation-delay: 0.16s; }
+.wf-stage > * > .card:nth-child(n+6) { animation-delay: 0.18s; }
+
+/* the hero Start button: a press bloom — an ink ring rolls out on hover */
+.pk-bloom-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.pk-bloom-btn::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-paper) 85%, transparent) 0%,
+    transparent 60%
+  );
+  transform: scale(0.2);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  pointer-events: none;
+}
+.pk-bloom-btn:hover::after,
+.pk-bloom-btn:focus-visible::after {
+  transform: scale(1);
+  opacity: 1;
+}
+.pk-bloom-btn:active {
+  transform: scale(0.985);
+  transition: transform 0.08s ease;
+}
+
+/* the spotlight sweep: on card hover the wash now TRAVELS — a short
+   diagonal roll, printer's-blanket style, once per entry */
+.pk-spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--color-accent) 6%, transparent) 48%,
+    transparent 62%
+  );
+  transform: translateX(-70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.pk-spotlight:hover::after {
+  animation: wf-sweep 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+@keyframes wf-sweep {
+  0% { transform: translateX(-70%); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: translateX(70%); opacity: 0; }
+}
+
+/* motion dial + reduced motion own every new effect */
+[data-motion="calm"] .wf-stage .card { animation-duration: 0.6s; }
+[data-motion="still"] .wf-stage .card { animation: none; }
+[data-motion="still"] .pk-spotlight::after { display: none; }
+[data-motion="still"] .pk-bloom-btn::after { display: none; }
+[data-motion="still"] .pk-bloom-btn:active { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .wf-stage .card { animation: none; }
+  .pk-spotlight::after,
+  .pk-bloom-btn::after { display: none; }
+}

@@ -181,6 +181,30 @@ async function main() {
   await page.waitForTimeout(900);
   await shot("32-stage-v2-hardware");
 
+  // ---- v0.1.51: the ink-press pass ----
+  // veil check: grain must NOT dim the sheet (luminance sanity in QA script)
+  await page.goto(`${base}?qa=1&v=12#/home/front`, { waitUntil: "networkidle" });
+  await page.evaluate(() => localStorage.setItem("wf-theme", "lino"));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(800);
+  await shot("40-lino-bright"); // pixel-checked below: must be BRIGHT cream
+
+  // rail collapsed
+  await page.evaluate(() => localStorage.setItem("wf-rail-collapsed", "1"));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(700);
+  await shot("41-rail-collapsed");
+
+  // palette v2: recents + channel hints
+  await page.evaluate(() => localStorage.removeItem("wf-rail-collapsed"));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.keyboard.press("Control+k");
+  await page.waitForTimeout(400);
+  await page.keyboard.type("over");
+  await page.waitForTimeout(300);
+  await shot("42-palette-fuzzy");
+  await page.keyboard.press("Escape");
+
 
   await page.goto(`${base}?qa=1#/models/models`, { waitUntil: "networkidle" });
   await shot("02-models-lab");
