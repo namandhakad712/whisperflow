@@ -314,3 +314,61 @@ WAR STORIES:
 NEXT QUEUE: CommandPalette v2 (fuzzy + previews), History timeline
 dither strip, website parity with console home, MOTION.md press-kit
 envelopes, icon stroke audit.
+
+## Session 17 (2026-11-22) — v0.1.51 "THE INK-PRESS PASS" — RELEASED
+
+User report: "desktop app has a whole black overlay making dark view"
++ screenshot. Then: continue advancing — effects, sidebar collapse.
+
+THE VEIL — root cause via PIXEL FORENSICS (no repro possible on Linux):
+- Every surface in the shot at EXACTLY 0.50× true luminance (Lino bg
+  FAF6ED→(124,121,113), paper FFF→(127,125,122), accent B56A0F→
+  (93,55,10)); blend clipped EXACTLY to window bounds (x26-1415,
+  y59+); desktop + neighboring windows full-saturation (YouTube blue
+  (0,32,166) intact); slate band + purple sliver above window = other
+  apps (cyan icon at x=42).
+- CULPRIT: body::before print grain, opacity 0.5, tile = feImage +
+  NESTED SVG data-URI → on user's Windows Chromium the filter chain
+  fails → base <rect> renders DEFAULT BLACK FILL at 0.5 opacity =
+  half-black veil. Playwright-Chromium (QA) renders it fine — silent.
+- FIX: plain <rect> bayer dots (8×8 tile, 8 dots, fill-opacity 0.05
+  black), nothing to fail. QA pixel check on Lino: lum 250 ✓.
+- RULE: NEVER use feImage/nested-SVG data-URIs in CSS backgrounds —
+  render-as-black failure mode on some Chromium builds. Plain rects
+  only. Check grain first when a "dark/veiled app" report lands.
+
+LESSON: when user reports a visual bug with a screenshot, PIXEL-MATH
+it (PIL region averages vs expected token values) — the 0.50× ratio
+across every hue named the failure mode in minutes.
+
+SHIPPED (PR #21, CI 5/5, main @ f0b60a3, LATEST=v0.1.51):
+- Rail collapse: header PanelLeft toggle + "[" key (guarded vs
+  input/textarea focus), icon-only RailItem (rail-item-min, tooltips
+  "Label · Alt+N", active phosphor bar), RailSection→"·", footer
+  hidden, width 216→68 animated 0.22s, localStorage wf-rail-collapsed.
+- Palette v2: recents (wf-palette-recents, max 5, pinned as "recent"
+  group on empty query), nav hints "alt+N · route" (PAGES static
+  import — NOT require(), ESM renderer), footer teaches alt+1…9.
+- Ink-press effects: wf-ink-press card entrance (staggered via
+  .wf-stage > * > .card:nth-child), pk-spotlight::after sweep
+  (115deg, once per hover), pk-bloom-btn on hero Start. ALL gated:
+  [data-motion=calm/still] + prefers-reduced-motion.
+- README: v0.1.51 badge, collapse + palette copy, veil troubleshooting
+  entry (update or grain:off stopgap).
+
+QA: shots 40 (Lino bright, pixel-checked 250), 41 (collapsed rail,
+VLM ✓), 42 (palette fuzzy "over" + alt+2 hint, VLM ✓).
+
+WAR STORIES:
+- Sandbox recycle wipes packages/*/dist AGAIN (74 phantom errors) —
+  rebuild shared+engine first, always.
+- electron.launch needs executablePath
+  /home/z/my-project/node_modules/electron/dist/electron + a running
+  Xvfb (xvfb-run broken: no xauth; use `Xvfb :99 &` + DISPLAY=:99).
+- feImage probe in real Electron: both old/fix render OK on LINUX
+  Electron 45 — the failure is Windows-Chromium-specific; that's why
+  pixel-forensics on the user's screenshot was the ONLY way in.
+
+NEXT QUEUE: History timeline dither strip, website parity with console
+home, MOTION.md press-kit envelopes, icon stroke audit, onboarding
+v2 (teach [ + Alt+N + palette early).
