@@ -435,3 +435,38 @@ WAR STORIES:
 NEXT QUEUE: MOTION.md press-kit envelopes, website parity with console
 home, DayStrip week/month zoom, history search-inside-DayStrip, onboarding
 teaches the veil-proof (update once users confirm bright).
+
+## Session 19 (2026-11-24) — v0.1.53 "STRIP RANGES" — RELEASED
+
+FEATURES:
+- DayStrip v2 (rewrite): three ranges via RANGE geometry table —
+  day(minute buckets, 00-24 ruler), week(hour buckets, mon-sun ruler,
+  Monday anchor via (getDay()+6)%7), month(day buckets, 01-30 ruler,
+  the-1st anchor). Tooltip formats per range (14:32 / tue 09h / 17 11h).
+  Entrance re-runs on range change; redrawRef pattern lets the range
+  useEffect trigger a redraw without re-mounting the canvas effect.
+- HistoryTab: range state + chips (today/week/month) with
+  aria-pressed; strip window computed from the same anchor logic.
+- MOTION.md press-kit envelopes section (the queued item): press-in
+  entrance, DotRadar wake, Spotlight settle; "range changes redraw in
+  place — the strip is data, not theater."
+
+QA:
+- scripts/app-smoke53.mjs: month-spanning seeds (11 runs across 27
+  days at varied hours/durations), drives chips day→week→month→day,
+  luminance check. All ranges bright 244; VLM read rulers + chips.
+- console-qa: 52-strip-week, 53-strip-month shots.
+
+RULES:
+- Sandbox recycle flips exec bits → git status floods with mode-only
+  diffs. NOW FIXED DURABLY: `git config core.fileMode false` (set
+  repo-wide this session; future sessions: verify with `git status`
+  before panicking).
+- /home/z/.config/WhisperFlow can vanish between recycles — smoke
+  scripts must mkdir -p it before writing history.json seeds.
+- /tmp/refs also vanishes — mkdir -p before redirecting build logs.
+
+NEXT QUEUE: website parity with console home, history
+search-inside-DayStrip (filter strip to query matches), DayStrip
+keyboard scrub (arrow keys walk runs), InsightsTab: strip for
+words-per-day trend.
