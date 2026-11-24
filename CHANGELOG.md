@@ -2,6 +2,25 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.53] — 2026-11-24
+
+### Added — the press runs at three ranges
+- **DayStrip ranges**: the halftone day strip now zooms — TODAY / WEEK /
+  MONTH chips on the History card. Each range re-buckets the runs
+  (minute/hour/day), re-rulers the strip (00–24 / mon–sun / 01–30), and
+  re-anchors the elapsed hairline to the window start (Monday for week,
+  the 1st for month). Tooltip formats follow the range. Verified in the
+  real Electron app with seeded month-long history: all three ranges
+  bright (244), chips toggle, rulers correct.
+- **MOTION.md press-kit envelopes**: the console's authored envelopes
+  are now in the motion grammar — DayStrip press-in entrance (500 ms
+  out-expo, once per mount/range under motion, instant under reduced),
+  DotRadar wake (0.8→2.6 px within 130 px, lerp 0.14/frame), Spotlight
+  settle (240 ms). Range changes redraw in place — the strip is data,
+  not theater.
+- QA: strip-range shots in both harnesses (console 52/53 + real-app
+  53-day/week/month with month-spanning seeds).
+
 ## [0.1.52] — 2026-11-24
 
 ### Fixed — the veil, for real this time
