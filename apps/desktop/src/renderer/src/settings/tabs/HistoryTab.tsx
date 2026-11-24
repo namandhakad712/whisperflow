@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSettings } from "../store";
 import { Button, Card, EmptyState, PageHeader, TextInput } from "../../shared/ui";
 import { formatDuration, formatRelative } from "../../shared/format";
+import { DayStrip } from "../../shared/DayStrip";
 
 export function HistoryTab() {
   const history = useSettings((s) => s.history);
@@ -13,6 +14,19 @@ export function HistoryTab() {
   }, [loadHistory]);
 
   const search = () => void loadHistory(query.trim() || undefined);
+
+  // v0.1.52: today's runs, plotted as the halftone day strip.
+  const today = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return history
+      .filter((it) => it.createdAt >= start)
+      .map((it) => ({
+        at: it.createdAt,
+        durationMs: it.durationMs,
+        excerpt: (it.finalText || it.rawText).slice(0, 42),
+      }));
+  }, [history]);
 
   return (
     <section>
@@ -36,6 +50,17 @@ export function HistoryTab() {
           Clear all
         </Button>
       </div>
+      {history.length > 0 && (
+        <Card className="mb-4">
+          <div className="flex items-baseline justify-between">
+            <p className="sec-mark">the day, in ink</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
+              {today.length} run{today.length === 1 ? "" : "s"} today · dot size = run length
+            </p>
+          </div>
+          <DayStrip points={today} className="mt-3" />
+        </Card>
+      )}
       {history.length === 0 ? (
         <EmptyState icon="🗂️" title={query ? "No matches" : "Nothing dictated yet"} body="Your transcripts will appear here after your first dictation." />
       ) : (

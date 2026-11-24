@@ -1499,8 +1499,12 @@ body.light .wf-palette-panel {
 [data-motion="still"] .pk-decrypt { animation: none; }
 [data-motion="still"] .pk-spotlight::before { display: none; }
 
-/* grain: the body::before bayer texture intensity */
-:root, [data-grain="subtle"] body::before { opacity: 0.5; }
+/* grain: the body::before bayer texture intensity — v0.1.52: `:root` was in the subtle selector list, which
+ * matched <html> ITSELF and painted the whole document at 50% opacity
+ * over the #050505 window background — the REAL "whole app looks
+ * dark" veil (Chromium CDP matched-styles proof). Default now rides
+ * :root[data-grain] only, targeting body::before alone. */
+:root body::before, [data-grain="subtle"] body::before { opacity: 0.5; }
 [data-grain="off"] body::before { opacity: 0; }
 [data-grain="full"] body::before { opacity: 0.8; }
 
@@ -1686,4 +1690,36 @@ body.light .wf-palette-panel {
   .wf-stage .card { animation: none; }
   .pk-spotlight::after,
   .pk-bloom-btn::after { display: none; }
+}
+
+/* ---- DayStrip: the day as a halftone strip (v0.1.52) ------------- */
+.pk-daystrip {
+  position: relative;
+  height: 64px;
+  user-select: none;
+}
+.pk-daystrip-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+.pk-daystrip-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  display: none;
+  white-space: nowrap;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  color: var(--color-ink-dim);
+  font-family: var(--wf-mono), ui-monospace, monospace;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 2;
 }

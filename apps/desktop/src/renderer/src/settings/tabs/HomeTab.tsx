@@ -244,7 +244,7 @@ function MagneticCTA({ onPress, hotkey, ready }: { onPress: () => void; hotkey: 
     <button type="button" onClick={onPress} className="pk-btn pk-btn-cta pk-bloom-btn" disabled={!ready}>
       <span className="pk-btn-ink" aria-hidden="true" />
       <span className="pk-btn-gloss" aria-hidden="true" />
-      <PlayCircle size={17} strokeWidth={2} />
+      <PlayCircle size={17} strokeWidth={1.75} />
       <span className="pk-btn-label">{ready ? "Start dictating" : "Set up the engine first"}</span>
       {hotkey && (
         <kbd className="cta-kbd font-mono text-[10.5px] tracking-[0.06em]">{hotkey}</kbd>
