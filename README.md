@@ -204,11 +204,13 @@ import), **History** (with optional audio playback), **Insights**, **Scratchpad*
 
 ## Troubleshooting
 
-**The whole app looks dark / veiled (v0.1.50 and earlier, some Windows machines).**
-The paper-grain texture used an SVG `feImage` filter that renders as solid black on
-some Windows Chromium builds — a half-black veil over the window. v0.1.51 rebuilds
-the grain with plain SVG dots that cannot fail. Update, or set **Personalize → Your
-press → grain: off** as a stopgap.
+**The whole app looks dark / veiled (v0.1.50 and earlier).**
+Two stacked causes, both fixed by v0.1.52: the paper-grain dial rule
+`opacity: .5` accidentally matched `<html>` itself (painting the whole
+document at half opacity over the dark window background), and the grain
+tile's SVG `feImage` chain could fail to black on some Windows Chromium
+builds. Update to v0.1.52; as a stopgap, set **Personalize → Your press →
+grain: off**.
 
 **The dictation is silent / the mic isn't picked up.**
 Microphone device names appear only after the mic permission is granted (during onboarding or

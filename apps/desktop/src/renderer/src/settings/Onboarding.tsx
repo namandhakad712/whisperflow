@@ -116,6 +116,12 @@ export function Onboarding() {
 function MicStep({ onDone }: { onDone: () => void }) {
   const [state, setState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
 
+  // QA harness: the mic gate can't pass on a headless box with no audio
+  // input — auto-advance so the tour is photographable end to end.
+  useEffect(() => {
+    if (window.location.search.includes("qa=1")) setState("ok");
+  }, []);
+
   const test = async () => {
     setState("testing");
     try {
@@ -435,9 +441,34 @@ function FinishStep() {
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">your dictation hotkey</p>
         <p className="mt-1.5 font-mono text-lg text-phosphor">{config?.hotkey.pushToTalk ?? "Control+Shift+Space"}</p>
       </div>
+      <div className="mt-5 rounded-lg border border-line-soft px-4 py-4">
+        <p className="sec-mark">the console, at a glance</p>
+        <ul className="mt-3 space-y-2.5 text-[13px] leading-5">
+          <li className="flex items-center gap-3">
+            <Kbd>{"["}</Kbd>
+            <span className="text-ink-dim">collapse the section rail when you want the whole sheet</span>
+          </li>
+          <li className="flex items-center gap-3">
+            <Kbd>Alt+1…9</Kbd>
+            <span className="text-ink-dim">jump between channels — the numbers beside each rail icon</span>
+          </li>
+          <li className="flex items-center gap-3">
+            <Kbd>Ctrl+K</Kbd>
+            <span className="text-ink-dim">the command palette — fuzzy-jump anywhere, remembers your five</span>
+          </li>
+        </ul>
+      </div>
       <div className="mt-6">
         <Button onClick={completeOnboarding}>Start dictating</Button>
       </div>
     </div>
+  );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="shrink-0 rounded border border-line bg-paper-2 px-2 py-1 font-mono text-[11px] text-ink">
+      {children}
+    </kbd>
   );
 }
