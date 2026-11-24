@@ -36,6 +36,24 @@ shouldn't be in the product. Authored 2026-11 for the Signal redesign.
 - **Scramble decode** — nav links cycle the glyph ramp on hover; settles in
   ≤ `len + 9` frames at 42 ms. Instant under reduced motion.
 
+## Press-kit envelopes (console surfaces, v0.1.52–53)
+
+The console's press-kit components follow the same grammar with three
+authored envelopes:
+
+- **Press-in entrance (DayStrip)** — dots scale from 0.4 px to their
+  radius on `out-expo` over 500 ms, once per mount and once per range
+  change. Under reduced motion the dots render at full size instantly.
+- **DotRadar wake** — the grid's base dot is 0.8 px; within 130 px of the
+  cursor dots grow toward 2.6 px, eased by the smoothed cursor
+  (lerp 0.14/frame). No entrance; the wake IS the motion.
+- **Spotlight settle (SpotlightCard)** — 240 ms `out-expo` lift on hover;
+  the card lifts ≤ 4 px, the shadow gains one step. Color-only at
+  reduced motion.
+
+Range changes (day → week → month) do NOT re-run the entrance cascade;
+they redraw in place — the strip is data, not theater.
+
 ## Rules
 
 1. Nothing loops faster than a resting breath (3.2 s) except the trace,

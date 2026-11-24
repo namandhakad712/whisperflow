@@ -2,12 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useSettings } from "../store";
 import { Button, Card, EmptyState, PageHeader, TextInput } from "../../shared/ui";
 import { formatDuration, formatRelative } from "../../shared/format";
-import { DayStrip } from "../../shared/DayStrip";
+import { DayStrip, type DayStripRange } from "../../shared/DayStrip";
+
+const RANGE_LABELS: Record<DayStripRange, string> = {
+  day: "today",
+  week: "week",
+  month: "month",
+};
 
 export function HistoryTab() {
   const history = useSettings((s) => s.history);
   const loadHistory = useSettings((s) => s.loadHistory);
   const [query, setQuery] = useState("");
+  const [range, setRange] = useState<DayStripRange>("day");
 
   useEffect(() => {
     void loadHistory();
@@ -15,10 +22,19 @@ export function HistoryTab() {
 
   const search = () => void loadHistory(query.trim() || undefined);
 
-  // v0.1.52: today's runs, plotted as the halftone day strip.
-  const today = useMemo(() => {
+  // v0.1.53: runs inside the selected range window, plotted as the strip.
+  const strip = useMemo(() => {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    let start: number;
+    if (range === "day") {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    } else if (range === "week") {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dow = (d.getDay() + 6) % 7; // Monday = 0
+      start = d.getTime() - dow * 86_400_000;
+    } else {
+      start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    }
     return history
       .filter((it) => it.createdAt >= start)
       .map((it) => ({
@@ -26,7 +42,7 @@ export function HistoryTab() {
         durationMs: it.durationMs,
         excerpt: (it.finalText || it.rawText).slice(0, 42),
       }));
-  }, [history]);
+  }, [history, range]);
 
   return (
     <section>
@@ -53,12 +69,27 @@ export function HistoryTab() {
       {history.length > 0 && (
         <Card className="mb-4">
           <div className="flex items-baseline justify-between">
-            <p className="sec-mark">the day, in ink</p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
-              {today.length} run{today.length === 1 ? "" : "s"} today · dot size = run length
-            </p>
+            <p className="sec-mark">the {range === "day" ? "day" : range === "week" ? "week" : "month"}, in ink</p>
+            <div className="flex items-center gap-1" role="group" aria-label="Strip range">
+              {(Object.keys(RANGE_LABELS) as DayStripRange[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={range === r}
+                  onClick={() => setRange(r)}
+                  className={`rounded-md px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${
+                    range === r ? "bg-surface-2 text-ink" : "text-ink-faint hover:bg-surface-2/60 hover:text-ink-dim"
+                  }`}
+                >
+                  {RANGE_LABELS[r]}
+                </button>
+              ))}
+              <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
+                {strip.length} run{strip.length === 1 ? "" : "s"} · dot size = run length
+              </span>
+            </div>
           </div>
-          <DayStrip points={today} className="mt-3" />
+          <DayStrip points={strip} range={range} className="mt-3" />
         </Card>
       )}
       {history.length === 0 ? (

@@ -228,6 +228,17 @@ async function main() {
   await page.waitForTimeout(900);
   await shot("50-history-daystrip");
 
+  // ---- v0.1.53: strip ranges ----
+  // the seed above lands on the day strip; widen to week/month chips
+  await page.click('button[aria-pressed="false"]:has-text("week")');
+  await page.waitForTimeout(700);
+  await shot("52-strip-week");
+  await page.click('button[aria-pressed="false"]:has-text("month")');
+  await page.waitForTimeout(700);
+  await shot("53-strip-month");
+  await page.click('button[aria-pressed="false"]:has-text("today")');
+  await page.waitForTimeout(500);
+
   // onboarding v2 final step: drive React state directly — the tour steps
   // gate on mic/model state that a fresh QA profile doesn't have, so we
   // click through the gate and then jump to step 3 via its Continue buttons
