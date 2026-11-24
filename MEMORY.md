@@ -372,3 +372,66 @@ WAR STORIES:
 NEXT QUEUE: History timeline dither strip, website parity with console
 home, MOTION.md press-kit envelopes, icon stroke audit, onboarding
 v2 (teach [ + Alt+N + palette early).
+
+## Session 18 (2026-11-24) — v0.1.52 "THE DAY IN INK" — RELEASED
+
+THE VEIL — THE REAL ROOT CAUSE (v0.1.51's fix was half the story):
+- Built the REAL-APP SMOKE TEST (breakthrough): scripts/app-smoke.mjs
+  launches the BUILT dist under Xvfb via Playwright _electron, waits for
+  the real WindowManager window, seeds history.json into userData
+  (~/.config/WhisperFlow — package name gives @whisperflow/desktop, but
+  app.setName pins "WhisperFlow"), drives real UI. App read lum ~118.
+- BISECTION eliminated: grain on/off identical; even body bg
+  !important #F7F4EE painted dark; only bright pixels = mouse cursor;
+  CFT Chromium + plain Electron pages on same Xvfb = BRIGHT. Not CSS
+  painting. NOT Electron+Xvfb. Only OUR app.
+- getComputedStyle revealed <html> computed opacity 0.5 — with NO rule,
+  NO inline, NO animation (getAnimations empty, sheetCount 1).
+- CDP CSS.getMatchedStylesForNode(<html>) = smoking gun:
+  `:root, [data-grain="subtle"] body::before { opacity: 0.5 }` — the
+  `:root` in the comma list MATCHES <html> ITSELF. Whole document at
+  50% opacity over backgroundColor #050505 = the perfect half-black veil
+  in every screenshot. The grain's own 0.5 is why the symptom LOOKED
+  like the grain layer (v0.1.51 chased the wrong half — feImage was
+  fragile but not the veil's cause on the user's box).
+- FIX: selector → `:root body::before, [data-grain=subtle]
+  body::before` (targets body::before only). Real-app re-verified: all
+  four windows lum 244.
+- RULES: (1) NEVER put bare `:root` in a comma selector list — every
+  list item matches INDEPENDENTLY, and `:root` = <html>. (2) When
+  computed styles contradict the paint, walk getComputedStyle UP from
+  body — html opacity was visible all along. (3) CDP
+  getMatchedStylesForNode beats grep for "who sets this property".
+
+FEATURES:
+- DayStrip (shared/DayStrip.tsx): History's halftone day — runs as ink
+  dots sized by duration (1.6px → 3.2px), 3h ruler, elapsed hairline,
+  hover tooltip (minute buckets, ±8px hit zone), press-in entrance,
+  reduced-motion honored. Card renders only when history.length > 0.
+- Onboarding v2 finish step: "the console, at a glance" — Kbd keycaps
+  [ / Alt+1…9 / Ctrl+K. MicStep gets ?qa=1 auto-ok (headless has no
+  mic); QA script force-enables the downloads-gated Continue.
+- Stroke audit: PlayCircle 2 → 1.75 (the last outlier).
+
+QA: console 26 shots (new: 50-history-daystrip, 51-onboarding-keys) +
+real-app smoke 4 shots, all pixel/VLM verified.
+
+WAR STORIES:
+- GitHub push rejected by pre-receive: a 780MB `core` dump (Electron
+  crash from an early probe) got swept into `git add -A`. Delete + amend
+  BEFORE pushing; check `git status` for stray big files.
+- Squash-merge makes local branch shas diverge from main → next PR from
+  the same local branch = "dirty". Recreate the branch from fresh
+  origin/main + cherry-pick, then PR. (PR #23 abandoned, #24 used.)
+- Playwright page.evaluate runs PLAIN JS — TS generics like
+  querySelectorAll<HTMLButtonElement> throw "not iterable".
+- console-qa SHOTS lands in /home/z/download when run from repo root —
+  ROOT resolves via __dirname, copy shots back into the repo's
+  download/ before committing.
+- `await` inside page.evaluate callbacks is fine, but top-level `await`
+  in the OUTER evaluate string breaks if used inside for-loops written
+  in the .cjs file — keep loops in Node, not in the eval string.
+
+NEXT QUEUE: MOTION.md press-kit envelopes, website parity with console
+home, DayStrip week/month zoom, history search-inside-DayStrip, onboarding
+teaches the veil-proof (update once users confirm bright).
