@@ -205,6 +205,59 @@ async function main() {
   await shot("42-palette-fuzzy");
   await page.keyboard.press("Escape");
 
+  // ---- v0.1.52: the day in ink + onboarding v2 ----
+  // seed history through the stubbed bridge so the DayStrip has data
+  await page.evaluate(() => {
+    const now = new Date();
+    const mk = (h, m, dur, text) => ({
+      id: `qa-${h}${m}`,
+      createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime(),
+      app: "QA",
+      rawText: text,
+      finalText: text,
+      durationMs: dur * 1000,
+    });
+    const seed = [mk(8, 10, 12, "qa seed one"), mk(10, 42, 34, "qa seed two"), mk(13, 5, 9, "qa seed three"), mk(16, 48, 27, "qa seed four")];
+    // the QA harness stubs window.whisperflow; history.list returns this
+    (window).__wfQaHistory = seed;
+    if (window.whisperflow?.history) {
+      window.whisperflow.history.list = async () => seed;
+    }
+  });
+  await page.goto(`${base}?qa=1#/activity/history`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await shot("50-history-daystrip");
+
+  // onboarding v2 final step: drive React state directly — the tour steps
+  // gate on mic/model state that a fresh QA profile doesn't have, so we
+  // click through the gate and then jump to step 3 via its Continue buttons
+  // where enabled, else fall back to Skip->step badge. Simplest reliable
+  // path: "Show me everything", then click every visible Continue-style
+  // button up to 4 rounds (disabled ones are skipped by :not([disabled])).
+  await page.goto(`${base}?qa=1&onboarding=1`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  await page.click('button:has-text("Show me everything")');
+  await page.waitForTimeout(500);
+  for (let i = 0; i < 5; i++) {
+    // QA bypass: the models step's Continue is gated on downloads a fresh
+    // profile never does — force-enable it before each round.
+    await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll("button[disabled]"));
+      for (const b of buttons) {
+        const t = b.textContent || "";
+        if (t.includes("Continue") || t.includes("Download everything")) b.disabled = false;
+      }
+    });
+    const btn = page.locator('button:not([disabled]):has-text("Continue")').first();
+    if ((await btn.count()) === 0) break;
+    await btn.click();
+    await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(600);
+  const stepMark = await page.evaluate(() => document.querySelector(".sec-mark")?.textContent ?? "?");
+  console.log("onboarding step at shot:", stepMark);
+  await shot("51-onboarding-keys");
+
 
   await page.goto(`${base}?qa=1#/models/models`, { waitUntil: "networkidle" });
   await shot("02-models-lab");

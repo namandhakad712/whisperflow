@@ -2,6 +2,37 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.52] — 2026-11-24
+
+### Fixed — the veil, for real this time
+- **"The whole app looks dark", root cause found by CDP matched-styles
+  interrogation**: the grain dial rule shipped as
+  `:root, [data-grain="subtle"] body::before { opacity: .5 }` — the
+  `:root` selector in that comma list matches `<html>` ITSELF, painting
+  the entire document at 50% opacity over the window's `#050505`
+  background. Exactly the half-black blend every screenshot showed.
+  The selector now targets `body::before` alone; luminance verified
+  bright (244) in the real Electron app, all four smoke windows.
+- v0.1.51's feImage fix stays (that tile was ALSO fragile); this was
+  the second, deeper half of the same report.
+
+### Added — the day in ink
+- **DayStrip**: the History page opens with the day plotted as a
+  halftone strip — each run an ink dot sized by its length, a 3-hour
+  ruler underneath, today's elapsed span as a hairline, hover tooltip
+  with time · duration · first words. Canvas, dpr-aware,
+  reduced-motion honored.
+- **Onboarding v2 final step**: "the console, at a glance" teaches the
+  keys — `[` collapse, `Alt+1…9` channels, `Ctrl+K` palette — with
+  real keycap styling before the first dictation.
+
+### Changed
+- Icon stroke audit: every rail/header icon now 1.75 stroke (the lone
+  2.0 outlier on Home's Start button brought into the cast).
+- QA: a REAL-Electron smoke harness (Xvfb + the built dist, seeded
+  history.json, real IPC bridge) now runs alongside the console QA —
+  the veil class of bug is testable in CI's environment class.
+
 ## [0.1.51] — 2026-11-22
 
 ### Fixed — the veil
