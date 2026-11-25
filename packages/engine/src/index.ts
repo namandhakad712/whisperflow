@@ -118,6 +118,8 @@ export {
   STOPWORDS,
 } from "./text/learnFromEdits.js";
 export type { LearnedCandidate } from "./text/learnFromEdits.js";
+// Decode-time vocabulary biasing (v0.1.54): dictionary terms → whisper.cpp prompt.
+export { buildSttPrompt } from "./text/sttPrompt.js";
 // whisper.cpp special-tag handling ([BLANK_AUDIO], [NOISE], …) for the host.
 export { isEmptyTranscript, stripWhisperTokens } from "./text/whisperTokens.js";
 
@@ -171,7 +173,14 @@ export async function createEngine(opts: { dirs: EngineDirs; configPath?: string
     const mock = process.env["WF_STT_MOCK"];
     if (!mock) return null;
     return {
-      transcribe: async () => mock,
+      transcribe: async (_pcm, o) => {
+        // Test affordance: WF_STT_ECHO_PROMPT=1 logs the decode prompt so
+        // smoke runs can assert the vocabulary preamble reached the adapter.
+        if (process.env["WF_STT_ECHO_PROMPT"] && o.prompt) {
+          console.debug(`[stt-mock] prompt: ${JSON.stringify(o.prompt)}`);
+        }
+        return mock;
+      },
       modelPathFor: () => "mock",
       ready: () => true,
     };

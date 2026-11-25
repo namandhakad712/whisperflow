@@ -20,6 +20,7 @@ import { resample } from "../audio/resampler.js";
 import { fuzzyCorrect } from "../text/dictionary.js";
 import { applyCommand, detectCommand } from "../text/commands.js";
 import { offlinePolish } from "../text/cleanup.js";
+import { buildSttPrompt } from "../text/sttPrompt.js";
 import { isEmptyTranscript, stripWhisperTokens } from "../text/whisperTokens.js";
 import type { PolishInput, PolishProvider } from "../providers/polish/PolishProvider.js";
 import type { HistoryStore } from "../history/historyStore.js";
@@ -351,7 +352,13 @@ export class DictationSession {
       );
       return;
     }
-    const prompt = this.raw.slice(-220);
+    // v0.1.54: decode-time vocabulary biasing — the dictionary rides the
+    // prompt so names decode right the first time (research P0a).
+    const prompt = buildSttPrompt(
+      config.dictionary.map((d) => d.term),
+      this.raw,
+      config.stt.vocabularyBiasing !== false,
+    );
     this.sttQueue = this.sttQueue.then(async () => {
       if (this.cancelled) return;
       const text = await stt.transcribe(pcm, {

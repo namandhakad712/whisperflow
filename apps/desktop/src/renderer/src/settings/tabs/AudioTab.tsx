@@ -116,6 +116,15 @@ export function AudioTab() {
           />
         </Row>
         <Row
+          label="Vocabulary biasing"
+          hint="Your dictionary words ride the transcription prompt, so names decode right the first time — no cloud, no extra pass."
+        >
+          <Toggle
+            checked={config.stt.vocabularyBiasing !== false}
+            onChange={(v) => void patch({ stt: { vocabularyBiasing: v } })}
+          />
+        </Row>
+        <Row
           label="Dictation chimes"
           hint="A soft chime when a dictation starts and a falling one when you cancel — generated locally, no assets, no network."
         >

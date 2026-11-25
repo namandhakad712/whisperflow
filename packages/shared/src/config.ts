@@ -247,6 +247,13 @@ export const SttConfigSchema = z.object({
   languages: z.array(z.string().min(1)).default([]),
   /** Their auto-detect toggle ("Automatic language detection"). */
   autoDetect: z.boolean().default(true),
+  /**
+   * Decode-time vocabulary biasing (v0.1.54): personal-dictionary terms are
+   * prepended to the whisper.cpp prompt so names decode right the first
+   * time, instead of waiting for post-hoc correction — the pattern Hex
+   * proved locally (their vocabulary list feeds Whisper at decode).
+   */
+  vocabularyBiasing: z.boolean().default(true),
   cloud: CloudSttConfigSchema.prefault({}),
   /**
    * Backup engine used when the primary one fails mid-dictation.
