@@ -470,3 +470,46 @@ NEXT QUEUE: website parity with console home, history
 search-inside-DayStrip (filter strip to query matches), DayStrip
 keyboard scrub (arrow keys walk runs), InsightsTab: strip for
 words-per-day trend.
+
+## Session 20 (2026-11-25) — v0.1.54 "VOCAB BIASING" — RELEASED
+
+RESEARCH (session 20a, delivered mid-session):
+- Competitive report: Wispr Flow vs Hex vs WhisperFlow (download/
+  WhisperFlow-Competitive-Research-WisprFlow-Hex.docx + PDF + 3 charts).
+  Key findings: Wispr = cloud polish machine (fine-tuned Llama on Baseten,
+  p99 < 700ms, 100+ langs, $12-15/mo); Hex = local-first maximalist
+  (12-model zoo, output-steps per app, decode-time vocab biasing, MIT,
+  8.5k stars). WhisperFlow position: local-first like Hex + LLM polish
+  like Wispr + interface craft neither attempts.
+
+FEATURE (session 20b):
+- buildSttPrompt() (packages/engine/src/text/sttPrompt.ts): vocab
+  preamble (400-char budget, case-insensitive dedupe) + rolling 220-char
+  transcript tail. Wired in DictationSession.handleSegment replacing
+  raw.slice(-220). stt.vocabularyBiasing knob (default ON) + Audio-tab
+  toggle beside language detection.
+- WF_STT_ECHO_PROMPT=1 mock-adapter affordance for smoke assertions.
+- Research P0b (streaming interim text): ALREADY BUILT in the engine
+  (interim every ~1.2s broadcast as live partial) — research gap
+  analysis was conservative.
+
+QA:
+- 8/8 sttPrompt tests, 141/141 engine suite, 0 ts errors.
+- Direct-engine proof (scripts/engine-proof54.mjs): real session →
+  mock adapter, PREAMBLE-OK byte-for-byte. EngineDirs = {root, models,
+  bin}; config via configPath opt.
+- Real-app toggle: DOM aria-checked=true + VLM-verified green ON knob.
+  LESSON: Audio-tab page scrolls in an inner overflow container
+  ("relative h-full min-w-0 flex-1 overflow-*"), not the window —
+  window.scrollTo does nothing; scroll the container or enlarge the
+  BrowserWindow (w.setSize(1000,1300) via app.evaluate).
+- Element screenshots: find the smallest element with a DIRECT text node
+  containing the label (textContent matches grab giant ancestors).
+- Settings route format is #/<page>/<sub> e.g. #/dictation/audio (nav.ts).
+
+RELEASE: PR #28, CI 5/5, tag v0.1.54, main @ 7864913.
+
+NEXT QUEUE (from research): output-steps pipeline (P1 — Hex's most
+copyable idea; per-app word replacements/cleanups/user scripts chain),
+latency budget surface in Diagnose tab (P1), local API/SDK (P2), search-
+inside-DayStrip, InsightsTab words-per-day strip.
