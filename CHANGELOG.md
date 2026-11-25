@@ -2,6 +2,26 @@
 
 All notable changes to WhisperFlow. Format: [Keep a Changelog](https://keepachangelog.com), SemVer.
 
+## [0.1.54] — 2026-11-25
+
+### Added — decode-time vocabulary biasing
+- **Dictionary rides the decode prompt**: personal-dictionary terms are
+  prepended to the whisper.cpp prompt (`buildSttPrompt`), so names and
+  jargon decode right the FIRST time instead of waiting for post-hoc
+  fuzzy correction. Compact preamble (400-char budget, case-insensitive
+  dedupe) + the rolling transcript tail — the pattern Hex proved locally
+  with its vocabulary list feeding Whisper at decode. Zero extra passes,
+  zero cloud.
+- **`stt.vocabularyBiasing` config knob** (default on) + a
+  "Vocabulary biasing" toggle on Dictation → Audio, next to language
+  detection.
+- Research (session 20): Wispr Flow / Hex competitive report — the P0a
+  recommendation shipped here, P0b (streaming interim text) found
+  already built in the session engine.
+- Verified: 8/8 unit tests on the prompt builder; 141/141 engine suite;
+  direct-engine proof (real DictationSession → mock adapter) asserting
+  the preamble byte-for-byte; real-app + console QA shots of the toggle.
+
 ## [0.1.53] — 2026-11-24
 
 ### Added — the press runs at three ranges

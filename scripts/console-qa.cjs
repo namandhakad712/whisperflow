@@ -239,6 +239,19 @@ async function main() {
   await page.click('button[aria-pressed="false"]:has-text("today")');
   await page.waitForTimeout(500);
 
+  // ---- v0.1.54: vocabulary biasing toggle on the Audio screen ----
+  await page.goto(`${base}?qa=1#/dictation/audio`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(700);
+  await shot("54-biasing-toggle");
+  const biasOn = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("div")];
+    const row = rows.find((el) => el.textContent?.includes("Vocabulary biasing"));
+    if (!row) return "row-not-found";
+    const btn = row.querySelector("button[role='switch'], button[aria-pressed]") ?? row.querySelector("button");
+    return btn ? (btn.getAttribute("aria-checked") ?? btn.getAttribute("aria-pressed") ?? "found") : "no-button";
+  });
+  console.log("v54 biasing toggle:", biasOn);
+
   // onboarding v2 final step: drive React state directly — the tour steps
   // gate on mic/model state that a fresh QA profile doesn't have, so we
   // click through the gate and then jump to step 3 via its Continue buttons
